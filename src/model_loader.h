@@ -1,5 +1,5 @@
-#ifndef ModelLoader
-#define ModelLoader
+#pragma once
+
 #include<vector>
 #include <GL/glew.h>
 #include<string>
@@ -14,4 +14,4 @@ struct Mat {
 
 int open_obj(std::string path, std::vector<std::vector<GLfloat>>* vertices, std::vector<std::string>* mat_n);
 int open_mtl(std::string path, std::map<std::string, Mat>* materials);
-#endif 
+

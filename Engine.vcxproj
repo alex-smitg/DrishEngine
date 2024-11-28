@@ -21,6 +21,45 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\imgui_docking\imconfig.h" />
+    <ClInclude Include="include\imgui_docking\imgui.h" />
+    <ClInclude Include="include\imgui_docking\imgui_impl_glfw.h" />
+    <ClInclude Include="include\imgui_docking\imgui_impl_opengl3.h" />
+    <ClInclude Include="include\imgui_docking\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="include\imgui_docking\imgui_internal.h" />
+    <ClInclude Include="include\imgui_docking\imgui_stdlib.h" />
+    <ClInclude Include="include\imgui_docking\imstb_rectpack.h" />
+    <ClInclude Include="include\imgui_docking\imstb_textedit.h" />
+    <ClInclude Include="include\imgui_docking\imstb_truetype.h" />
+    <ClInclude Include="src\model_loader.h" />
+    <ClInclude Include="src\objects.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="include\imgui_docking\imgui.cpp" />
+    <ClCompile Include="include\imgui_docking\imgui_demo.cpp" />
+    <ClCompile Include="include\imgui_docking\imgui_draw.cpp" />
+    <ClCompile Include="include\imgui_docking\imgui_impl_glfw.cpp" />
+    <ClCompile Include="include\imgui_docking\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="include\imgui_docking\imgui_stdlib.cpp" />
+    <ClCompile Include="include\imgui_docking\imgui_tables.cpp" />
+    <ClCompile Include="include\imgui_docking\imgui_widgets.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\model_loader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="include\imgui_docking\.editorconfig" />
+    <None Include="include\imgui_docking\.gitattributes" />
+    <None Include="include\imgui_docking\.gitignore" />
+    <None Include="include\imgui_docking\imgui.natstepfilter" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="include\imgui_docking\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="include\imgui_docking\LICENSE.txt" />
+    <Text Include="include\imgui_docking\README.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -87,14 +126,10 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)include</IncludePath>
-    <LibraryPath>$(SolutionDir)lib</LibraryPath>
     <OutDir>$(SolutionDir)build\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)include</IncludePath>
-    <LibraryPath>$(SolutionDir)lib</LibraryPath>
     <OutDir>$(SolutionDir)build\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -171,12 +206,13 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>nfd.lib;glfw3.lib;glew32s.lib;lua54.lib;$(SolutionDir)lib\Debug\Bullet\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -203,14 +239,15 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>nfd.lib;glfw3.lib;glew32s.lib;lua54.lib;$(SolutionDir)lib\Release\Bullet\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -225,109 +262,6 @@
       </Command>
     </PreLinkEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="include\imgui_docking\imgui.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_demo.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_draw.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_impl_glfw.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_impl_win32.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_stdlib.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_tables.cpp" />
-    <ClCompile Include="include\imgui_docking\imgui_widgets.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\model_loader.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\imgui_docking\imconfig.h" />
-    <ClInclude Include="include\imgui_docking\imgui.h" />
-    <ClInclude Include="include\imgui_docking\imgui_impl_glfw.h" />
-    <ClInclude Include="include\imgui_docking\imgui_impl_opengl3.h" />
-    <ClInclude Include="include\imgui_docking\imgui_impl_opengl3_loader.h" />
-    <ClInclude Include="include\imgui_docking\imgui_impl_win32.h" />
-    <ClInclude Include="include\imgui_docking\imgui_internal.h" />
-    <ClInclude Include="include\imgui_docking\imgui_stdlib.h" />
-    <ClInclude Include="include\imgui_docking\imstb_rectpack.h" />
-    <ClInclude Include="include\imgui_docking\imstb_textedit.h" />
-    <ClInclude Include="include\imgui_docking\imstb_truetype.h" />
-    <ClInclude Include="include\json.hpp" />
-    <ClInclude Include="include\lauxlib.h" />
-    <ClInclude Include="include\lua.h" />
-    <ClInclude Include="include\lua.hpp" />
-    <ClInclude Include="include\luaconf.h" />
-    <ClInclude Include="include\lualib.h" />
-    <ClInclude Include="include\nfd.h" />
-    <ClInclude Include="include\nfd.hpp" />
-    <ClInclude Include="include\sol\config.hpp" />
-    <ClInclude Include="include\sol\forward.hpp" />
-    <ClInclude Include="include\sol\sol.hpp" />
-    <ClInclude Include="include\stb_image.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="include\imgui_docking\.editorconfig" />
-    <None Include="include\imgui_docking\.gitattributes" />
-    <None Include="include\imgui_docking\.gitignore" />
-    <None Include="lib\bullet\Bullet2FileLoader_Debug.pdb" />
-    <None Include="lib\bullet\Bullet3Collision_Debug.pdb" />
-    <None Include="lib\bullet\Bullet3Common_Debug.pdb" />
-    <None Include="lib\bullet\Bullet3Dynamics_Debug.pdb" />
-    <None Include="lib\bullet\Bullet3Geometry_Debug.pdb" />
-    <None Include="lib\bullet\Bullet3OpenCL_clew_Debug.pdb" />
-    <None Include="lib\bullet\BulletCollision_Debug.pdb" />
-    <None Include="lib\bullet\BulletDynamics_Debug.pdb" />
-    <None Include="lib\bullet\BulletExampleBrowserLib_Debug.pdb" />
-    <None Include="lib\bullet\BulletFileLoader_Debug.pdb" />
-    <None Include="lib\bullet\BulletInverseDynamicsUtils_Debug.pdb" />
-    <None Include="lib\bullet\BulletInverseDynamics_Debug.pdb" />
-    <None Include="lib\bullet\BulletRoboticsGUI_Debug.pdb" />
-    <None Include="lib\bullet\BulletRobotics_Debug.pdb" />
-    <None Include="lib\bullet\BulletSoftBody_Debug.pdb" />
-    <None Include="lib\bullet\BulletWorldImporter_Debug.pdb" />
-    <None Include="lib\bullet\BulletXmlWorldImporter_Debug.pdb" />
-    <None Include="lib\bullet\BussIK_Debug.pdb" />
-    <None Include="lib\bullet\clsocket_Debug.pdb" />
-    <None Include="lib\bullet\ConvexDecomposition_Debug.pdb" />
-    <None Include="lib\bullet\GIMPACTUtils_Debug.pdb" />
-    <None Include="lib\bullet\gtest_Debug.pdb" />
-    <None Include="lib\bullet\gwen_Debug.pdb" />
-    <None Include="lib\bullet\HACD_Debug.pdb" />
-    <None Include="lib\bullet\LinearMath_Debug.pdb" />
-    <None Include="lib\bullet\OpenGLWindow_Debug.pdb" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="imgui_docking\LICENSE.txt" />
-    <Text Include="include\imgui_docking\LICENSE.txt" />
-    <Text Include="shaders\screen.fragment" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\bullet\Bullet2FileLoader_Debug.lib" />
-    <Library Include="lib\bullet\Bullet3Collision_Debug.lib" />
-    <Library Include="lib\bullet\Bullet3Common_Debug.lib" />
-    <Library Include="lib\bullet\Bullet3Dynamics_Debug.lib" />
-    <Library Include="lib\bullet\Bullet3Geometry_Debug.lib" />
-    <Library Include="lib\bullet\Bullet3OpenCL_clew_Debug.lib" />
-    <Library Include="lib\bullet\BulletCollision_Debug.lib" />
-    <Library Include="lib\bullet\BulletDynamics_Debug.lib" />
-    <Library Include="lib\bullet\BulletExampleBrowserLib_Debug.lib" />
-    <Library Include="lib\bullet\BulletFileLoader_Debug.lib" />
-    <Library Include="lib\bullet\BulletInverseDynamicsUtils_Debug.lib" />
-    <Library Include="lib\bullet\BulletInverseDynamics_Debug.lib" />
-    <Library Include="lib\bullet\BulletRoboticsGUI_Debug.lib" />
-    <Library Include="lib\bullet\BulletRobotics_Debug.lib" />
-    <Library Include="lib\bullet\BulletSoftBody_Debug.lib" />
-    <Library Include="lib\bullet\BulletWorldImporter_Debug.lib" />
-    <Library Include="lib\bullet\BulletXmlWorldImporter_Debug.lib" />
-    <Library Include="lib\bullet\BussIK_Debug.lib" />
-    <Library Include="lib\bullet\clsocket_Debug.lib" />
-    <Library Include="lib\bullet\ConvexDecomposition_Debug.lib" />
-    <Library Include="lib\bullet\GIMPACTUtils_Debug.lib" />
-    <Library Include="lib\bullet\gtest_Debug.lib" />
-    <Library Include="lib\bullet\gwen_Debug.lib" />
-    <Library Include="lib\bullet\HACD_Debug.lib" />
-    <Library Include="lib\bullet\LinearMath_Debug.lib" />
-    <Library Include="lib\bullet\OpenGLWindow_Debug.lib" />
-    <Library Include="lib\luabuild.lib" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,10 +1,8 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iostream>
 
 #include <GL/glew.h>
 
@@ -129,5 +127,3 @@ private:
 	}
 };
 
-
-#endif

@@ -1,11 +1,11 @@
-﻿
+﻿#pragma once
 #include <Windows.h>
 #include <iostream>
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #define SOL_ALL_SAFETIES_ON 1
-#include "sol\sol.hpp"
+#include <sol/sol.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBIW_WINDOWS_UTF8
 #include <stb_image.h>
@@ -14,7 +14,7 @@
 #include <filesystem>
 
 #include <nfd.h>
-#pragma comment(lib, "lib/nfd.lib")
+#pragma comment(lib, "opengl32.lib")
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -32,9 +32,6 @@
 #include "cube.h"
 #include "shader.h"
 
-
-#pragma comment(lib,"glfw3_mt.lib")
-#pragma comment(lib,"opengl32.lib")
 
 
 #include "bullet/btBulletDynamicsCommon.h"
@@ -249,6 +246,7 @@ int main()
 
 
 	// Setup Dear ImGui context
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -852,7 +850,7 @@ int main()
 
 		//docking
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGuiID idd = ImGui::DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_PassthruCentralNode);
+		ImGuiID idd = ImGui::DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 		if (one_run) {
 			ImVec2 workCenter = ImGui::GetMainViewport()->GetWorkCenter();
 			// 3. Now we'll need to create our dock node:
@@ -925,7 +923,7 @@ int main()
 					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 1.0, 1.0, 1.0));
 				}
 
-				if (obj->type == MESH) {
+				/*if (obj->type == MESH) {
 					ImGui::Image((void*)(intptr_t)icon, ImVec2(16, 16));
 					ImGui::SameLine(24.0f);
 				}
@@ -935,9 +933,9 @@ int main()
 				}
 				if (obj->type == CURVE) {
 					ImGui::Image((void*)(intptr_t)icon3, ImVec2(16, 16));
-					ImGui::SameLine(24.0f);
+					ImGui::SameLine(24.0f);*/
 
-				}
+				//}
 				
 				
 
@@ -1024,7 +1022,7 @@ int main()
 			}
 			
 			ImGui::SliderFloat("uv", &(mod->material.uv_scale), 0.0, 25.0);
-			ImGui::Image((void*)(intptr_t)mod->textures.diffuse, ImVec2(64, 64));
+			ImGui::Image(mod->textures.diffuse, ImVec2(64, 64));
 			ImGui::SameLine();
 			ImGui::BeginGroup();
 			ImGui::Text("Diffuse");
@@ -1050,7 +1048,7 @@ int main()
 
 			ImGui::EndGroup();
 
-			ImGui::Image((void*)(intptr_t)mod->textures.specular, ImVec2(64, 64));
+			ImGui::Image(mod->textures.specular, ImVec2(64, 64));
 			ImGui::SameLine();
 			ImGui::BeginGroup();
 			ImGui::Text("Specular");
@@ -1068,7 +1066,7 @@ int main()
 
 			ImGui::EndGroup();
 
-			ImGui::Image((void*)(intptr_t)mod->textures.normal, ImVec2(64, 64));
+			ImGui::Image((intptr_t)mod->textures.normal, ImVec2(64, 64));
 			ImGui::SameLine();
 			ImGui::BeginGroup();
 			ImGui::Text("Normal");
@@ -1489,9 +1487,10 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
+	
 	NFD_Quit();
 	glfwTerminate();
+
 	return 0;
 }
 
