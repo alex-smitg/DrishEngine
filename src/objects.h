@@ -26,34 +26,56 @@ enum Type {NO_TYPE, MESH, POINT_LIGHT, CURVE};
 enum Attribute {POSITION, COLOR, TEXTURE, CURVE_VERT, LIGHT};
 
 
+
+
+std::string increment_string(std::string str) {
+
+	return "1";
+
+
+
+
+}
+
+
+
+class Transform {
+	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+};
+
+
 class BaseObject {
 public:
-	glm::mat4 model;
-	std::string name;
 
-	std::string script;
+	
+
+	glm::mat4 model;
+
+	std::string name;
+	std::string script = "";
 
 	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 start_position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	Type type = NO_TYPE;
 	std::vector<Attribute> attributes;
 
 	std::vector<BaseObject*> children;
 
+	BaseObject* parent;
+	
+
 	sol::state lua;
 
-	
-
 	BaseObject() {
-
 		lua.open_libraries(sol::lib::base, sol::lib::math);
-		
-	
-		
+
 	}
 
-	virtual void draw(){
-		;
+	virtual void draw() {
+
 	}
 
 	virtual void update() {
@@ -96,9 +118,69 @@ public:
 
 		model = rot_mat;
 
+		for (BaseObject* baseObject: children) {
+			baseObject->model = glm::translate(baseObject->model, start_position);
+		}
+
 	
 		
 	}
+
+	void add_child(BaseObject* object) {
+		for (BaseObject* child : children) {
+			if (object->name == child->name) {
+
+
+				int number = 1;
+
+				
+
+				std::string n = object->name;
+
+				std::string number_string = "";
+				std::string name_def = "";
+
+				int stop_pos = n.size();
+
+				for (int i = object->name.length() - 1; i > 0; i--) {
+					if (n[i] != '0' && n[i] != '1' && n[i] != '2' && n[i] != '3' && n[i] != '4' && n[i] != '5' && n[i] != '6' && n[i] != '7' && n[i] != '8' && n[i] != '9') {
+						stop_pos = i + 1;
+						
+						break;
+					}
+				}
+
+				for (int i = 0; i < stop_pos; i++) {
+					name_def += n[i];
+				}
+
+				for (int i = stop_pos; i < n.size(); i++) {
+						number_string.push_back(n[i]);
+				}
+
+				if (number_string != "") {
+					number = std::stoi(number_string) + 1;
+				}
+				else {
+					number = 1;
+				}
+				
+
+				object->name = name_def + std::to_string(number);
+
+
+			}
+		}
+
+		
+		object->parent = this;
+		children.push_back(object);
+	}
+
+	void remove() {
+		parent->children.erase(std::remove(parent->children.begin(), parent->children.end(), this), parent->children.end());
+	}
+
 
 	virtual ~BaseObject() {
 		std::cout << "delete";
@@ -126,100 +208,7 @@ public:
 	}
 };
 
-class Space {
-public:
-	glm::vec3 color;
-	GLfloat strength;
-	Shader* shader;
-	unsigned int buffer, VAO, VBO;
-	glm::mat4 model;
-	GLuint MBO;
-	bool visible = true;
 
-	unsigned int amount = 100000;
-	float linear = 3.0;
-	glm::mat4* modelMatrices;
-
-	Space(Shader* shader) {
-		this->strength = strength;
-		this->model = glm::mat4(1.0f);
-		this->color = color;
-		this->shader = shader;
-		
-
-		
-
-		modelMatrices = new glm::mat4[amount];
-
-		for (unsigned int i = 0; i < amount; i++)
-		{
-
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, glm::vec3(std::rand()/ 32767.0f * 10.0 - 5, std::rand() / 32767.0f * 10.0 - 5, std::rand() / 32767.0f * 10.0 - 5));
-			float sc = std::rand() / 32767.0f / 20.0f;
-			model = glm::scale(model, glm::vec3(sc, sc, sc));
-			modelMatrices[i] = model;
-
-		}
-
-		init();
-	};
-
-
-	void draw() {
-		shader->Use();
-
-
-		glBindVertexArray(VAO);
-		glDrawArraysInstanced(GL_TRIANGLES, 0, cube.size(), amount);
-		glBindVertexArray(0);
-		
-
-		
-	}
-
-private:
-	void init() {
-		glGenVertexArrays(1, &VAO);
-		glGenBuffers(1, &buffer);
-		glGenBuffers(1, &VBO);
-
-
-
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, cube.size() * sizeof(GLfloat), &cube[0], GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		
-		glBindVertexArray(0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, buffer);
-		glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
-
-		glBindVertexArray(VAO);
-
-		std::size_t vec4Size = sizeof(glm::vec4);
-		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
-		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
-		glEnableVertexAttribArray(5);
-		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
-		glEnableVertexAttribArray(6);
-		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
-
-		glVertexAttribDivisor(3, 1);
-		glVertexAttribDivisor(4, 1);
-		glVertexAttribDivisor(5, 1);
-		glVertexAttribDivisor(6, 1);
-
-		glBindVertexArray(0);
-	}
-};
 
 
 class PointLight : public BaseObject {
@@ -744,7 +733,7 @@ GLuint load_texture(std::string path) {
 
 	if (!img) {
 		std::cout
-			<< " unable to load image: "
+			<< "Error: can't load image at path: " << path << " "
 			<< stbi_failure_reason()
 			<< "\n";
 	}

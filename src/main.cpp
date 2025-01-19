@@ -55,14 +55,19 @@ int window_height = SCREEN_HEIGHT;
 
 float aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
 
-float fov = 45;
+float fov = 75;
 
 double offs_cur_x, offs_cur_y = 0;
 
 bool show_lines = true;
 bool show_lights = true;
 
+GLuint icon;
+GLuint icon2;
+GLuint icon3;
 
+
+Model* mod;
 Camera* world_camera;
 
 
@@ -78,6 +83,8 @@ std::vector<BaseObject*> objects;
 std::string save_scene_as = "test";
 
 
+std::string script = "";
+
 std::string log_data;
 
 
@@ -85,12 +92,12 @@ void inspector_draw_attributes(BaseObject* selected_p);
 bool update_physics = false;
 
 std::vector<std::string> sky_faces = {
-	"images/skybox/negx.jpg",
-	"images/skybox/posx.jpg",
-	"images/skybox/posy.jpg",
-	"images/skybox/negy.jpg",
-	"images/skybox/negz.jpg",
-	"images/skybox/posz.jpg"
+	"assets/textures/negx.jpg",
+	"assets/textures/posx.jpg",
+	"assets/textures/posy.jpg",
+	"assets/textures/negy.jpg",
+	"assets/textures/negz.jpg",
+	"assets/textures/posz.jpg"
 };
 
 Shader* emission_shader_ptr;
@@ -99,11 +106,87 @@ Shader* shader_ptr;
 const float PI = 3.14;
 
 bool selected = false;
+BaseObject* selected_p = 0;
+
 
 void error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s\n", description);
 	system("pause");
+}
+
+
+
+void jump_into_child(BaseObject *parent, std::vector<BaseObject*> *vector) {
+	vector->push_back(parent);
+
+
+	if (selected_p == parent && selected == true) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0, 1.0, 0.0, 1.0));
+	}
+	else {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 1.0, 1.0, 1.0));
+	}
+
+
+	bool is_node_shown = ImGui::TreeNodeEx((parent->name).c_str(), ImGuiTreeNodeFlags_Leaf);
+
+	
+
+	if (is_node_shown) {
+
+		
+
+		
+		//if (parent->type == MESH) {
+		//	ImGui::Image(icon, ImVec2(16, 16));
+		//	//ImGui::SameLine();
+		//}
+		/*}
+		if (parent->type == POINT_LIGHT) {
+				ImGui::Image(icon2, ImVec2(16, 16));
+				ImGui::SameLine(24.0f);
+		}
+		if (parent->type == CURVE) {
+				ImGui::Image(icon3, ImVec2(16, 16));
+				ImGui::SameLine(24.0f);
+		}*/
+
+
+		
+
+
+		if (ImGui::IsItemClicked())
+		{
+			if (selected_p == parent && selected == true) {
+				selected = false;
+				script = "";
+			}
+			else {
+				selected_p = parent;
+				script = selected_p->script;
+				selected = true;
+				if (selected_p->type == MESH) {
+					mod = static_cast<Mesh*>(selected_p)->models[0];
+				}
+
+			}
+		}
+	}
+
+	ImGui::PopStyleColor();
+
+
+
+	if (parent->children.size() != 0) {
+		for (BaseObject* child : parent->children) {
+			jump_into_child(child, vector);
+		}
+	}
+
+	if (is_node_shown) {
+	ImGui::TreePop();
+	}
 }
 
 unsigned int loadCubemap(std::vector<std::string> faces)
@@ -189,8 +272,47 @@ int main()
 	glfwInit();
 	NFD_Init();
 
+	//-------------------------------IMGUI THEME---------------------------
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.IniFilename = NULL;
 
+	float size_pixels = 15;
+	
+	io.Fonts->AddFontFromFileTTF("assets/fonts/microsoftsansserif.ttf", size_pixels);
 
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImVec4 accent_color = ImVec4(0.1f, 0.05f, 0.0f, 1.0f);
+
+	style.Alpha = 1.0f;
+	style.DockingSeparatorSize = 1.0f;
+	style.WindowBorderSize = 1.0f;
+
+	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.071f, 0.071f, 0.071f, 1.0f);
+	style.Colors[ImGuiCol_FrameBg] = ImVec4(0.051f, 0.051f, 0.051f, 1.0f);
+	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.071f, 0.071f, 0.071f, 1.0f);
+	style.Colors[ImGuiCol_Header] = accent_color;
+	style.Colors[ImGuiCol_Border] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+	style.Colors[ImGuiCol_Tab] = accent_color;
+	style.Colors[ImGuiCol_TabActive] = accent_color;
+	style.Colors[ImGuiCol_TabUnfocused] = accent_color;
+	style.Colors[ImGuiCol_TabUnfocusedActive] = accent_color;
+	style.Colors[ImGuiCol_TitleBg] = accent_color;
+	style.Colors[ImGuiCol_TitleBgActive] = accent_color;
+	style.Colors[ImGuiCol_TitleBgCollapsed] = accent_color;
+
+	//ImVec4 hl_col = ImVec4(0.0f, 0.5f, 0.1f, 1.0f);
+
+	//style.Colors[ImGuiCol_Button] = hl_col;
+	//style.Colors[ImGuiCol_CheckMark] = hl_col;
+	//style.Colors[ImGuiCol_SliderGrab] = hl_col;
+	//style.Colors[ImGuiCol_Header] = hl_col;
+	//style.Colors[ImGuiCol_TitleBg] = hl_col;
+	//--------------------------------------------------------------
+		
 
 
 
@@ -208,14 +330,13 @@ int main()
 	glfwSetErrorCallback(error_callback);
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
 
-	
 	if (window == nullptr)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
-		
 		glfwTerminate();
 		return -1;
 	}
+
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetKeyCallback(window, key_callback);
@@ -223,86 +344,26 @@ int main()
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 	glEnable(GL_DEPTH_TEST);
-	//glDisable(GL_CULL_FACE);
 	glEnable(GL_CULL_FACE);
-
-	
 	glEnable(GL_MULTISAMPLE);
 
-	//physics
+	//---------------------------PHYSICS--------------------------------------
 	btBroadphaseInterface* broadphase = new btDbvtBroadphase();
-
 	// Set up the collision configuration and dispatcher
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
 	// The actual physics solver
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-
 	// The world.
 	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
+	//-----------------------------------------------------------------------
 
 
 
-	// Setup Dear ImGui context
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Contros
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.IniFilename = NULL;
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-	//style foint etc;
-
-	float size_pixels = 15;
-
-	io.Fonts->AddFontFromFileTTF("assets/fonts/microsoftsansserif.ttf", size_pixels);
-	//ImGui::PushFont(font2);
-
-	{
-		ImGuiStyle& style = ImGui::GetStyle();
-		style.Alpha = 1.0f;
-		style.Colors[ImGuiCol_WindowBg] = ImVec4(0.071f, 0.071f, 0.071f, 1.0f);
-		style.Colors[ImGuiCol_FrameBg] = ImVec4(0.051f, 0.051f, 0.051f, 1.0f);
-		//style.Colors[ImGuiCol_TitleBg] = ImVec4(0.071f, 0.071f, 0.071f, 1.0f);
-		style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.071f, 0.071f, 0.071f, 1.0f);
-		style.DockingSeparatorSize = 1.0f;
-
-		ImVec4 some_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-		style.Colors[ImGuiCol_Header] = some_color;
-		style.Colors[ImGuiCol_Border] = some_color;
-		style.Colors[ImGuiCol_Tab] = some_color;
-		style.Colors[ImGuiCol_TabActive] = some_color;
-		style.Colors[ImGuiCol_TabUnfocused] = some_color;
-		style.Colors[ImGuiCol_TabUnfocusedActive] = some_color;
-		style.Colors[ImGuiCol_TitleBg] = some_color;
-		style.Colors[ImGuiCol_TitleBgActive] = some_color;
-		style.Colors[ImGuiCol_TitleBgCollapsed] = some_color;
-
-		style.WindowBorderSize = 1.0f;
-
-
-		//style.Colors[ImGuiCol_Button] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
-		//style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.1f, 0.1f, 0.1f, 1.0f);
-
-		//ImVec4 hl_col = ImVec4(0.0f, 0.5f, 0.1f, 1.0f);
-
-		//style.Colors[ImGuiCol_Button] = hl_col;
-		//style.Colors[ImGuiCol_CheckMark] = hl_col;
-		//style.Colors[ImGuiCol_SliderGrab] = hl_col;
-		//style.Colors[ImGuiCol_Header] = hl_col;
-		//style.Colors[ImGuiCol_TitleBg] = hl_col;
-
-	}
-
-
+	
 	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+	ImGui_ImplGlfw_InitForOpenGL(window, true); // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
 	ImGui_ImplOpenGL3_Init();
 
 	if (glewInit() != GLEW_OK)
@@ -418,39 +479,40 @@ int main()
 	shader_ptr = &shader;
 	emission_shader_ptr = &emission_shader;
 	//Shader space("space.vertex", "space.fragment", true);
-
-
 	//Space* space_obj = new Space(&space);
 
-	int test_num = 100;
 
+	BaseObject *world = new BaseObject();
+	world->name = "root";
 	
 
 	Mesh* obj1 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Cube");
+	Mesh* obj3 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChild");
+	Mesh* obj4 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChildChild");
+	Mesh* obj5 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Last");
 	Mesh* obj2 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/plane.obj", &shader, "Phys");
 	PointLight* obj6 = new PointLight(&emission_shader, "PointLight");
 	obj6->model = glm::translate(obj6->model, glm::vec3(0.0, 3.0, 0.0));
-	//Mesh* obj3 = new Mesh("models/cube.obj", &shader, "Phys2");
-	objects.push_back(obj6);
-	obj6->strength = 3.0f;
-	obj6->radius = 15.0f;
-	//Mesh* obj4 = new Mesh("models/sphere_smooth.obj", &shader, "Phys3");
-	//objects.push_back(obj3);
-	//objects.push_back(obj4);
-	obj2->model = glm::translate(obj2->model, glm::vec3(0.0, -6.0, 0.0));
-	obj1->model = glm::translate(obj1->model, glm::vec3(0.0, -2.5, 0.0));
-	//obj4->model = glm::translate(obj4->model, glm::vec3(0.3, 1.0, 0.0));
-	//Mesh* obj2 = new Mesh("models/cube.obj", &shader, "cube");
-	//Mesh* obj3 = new Mesh("models/monkey.obj", &shader, "monkey");
-	//Mesh* obj4 = new Mesh("models/gear.obj", &shader, "gear");
-
-	objects.push_back(obj2);
-	objects.push_back(obj1);
-
-	//Mesh* cube_mat = new Mesh("models/cube", &shader, "mt_test");
-
+	
 
 	
+
+	obj6->strength = 3.0f;
+	obj6->radius = 15.0f;
+	obj2->model = glm::translate(obj2->model, glm::vec3(0.0, -6.0, 0.0));
+	obj1->model = glm::translate(obj1->model, glm::vec3(0.0, -2.5, 0.0));
+
+
+
+	obj1->add_child(obj3);
+	obj3->add_child(obj4);
+	obj3->add_child(obj5);
+
+	world->add_child(obj6);
+	world->add_child(obj2);
+	world->add_child(obj1);
+
+
 	//btCollisionShape* boxCollisionShape = new btSphereShape(1.0);
 	//btDefaultMotionState* motionstate = new btDefaultMotionState(btTransform(
 		//btQuaternion(0.0, 0.0, 0.0, 1.0),
@@ -458,17 +520,6 @@ int main()
 	//));
 	///
 
-	//btCollisionShape* boxCollisionShape2 = new btBoxShape(btVector3(1.0f, 1.0f, 1.0f));
-	//btDefaultMotionState* motionstate2 = new btDefaultMotionState(btTransform(
-		//btQuaternion(0.0, 0.0, 0.0, 1.0),
-		//btVector3(0.0, -6.0, 0.0)
-	//));
-
-	//btCollisionShape* boxCollisionShape3 = new btSphereShape(1.0);
-	//btDefaultMotionState* motionstate3 = new btDefaultMotionState(btTransform(
-		//btQuaternion(0.0, 0.0, 0.0, 1.0),
-		//btVector3(obj4->model[3].x, obj4->model[3].y, obj4->model[3].z)
-	//));
 
 	//btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(
 		//1,                  // mass, in kg. 0 -> Static object, will never move.
@@ -482,44 +533,10 @@ int main()
 	//dynamicsWorld->addRigidBody(rigidBody);
 
 
-
-	//btRigidBody::btRigidBodyConstructionInfo rigidBodyCI2(
-		//0,                  // mass, in kg. 0 -> Static object, will never move.
-		//motionstate2,
-		//boxCollisionShape2,  // collision shape of body
-		//btVector3(0, 0, 0)    // local inertia
-	//);
-	//btRigidBody* rigidBody2 = new btRigidBody(rigidBodyCI2);
-
-	//dynamicsWorld->addRigidBody(rigidBody2);
-	////BaseObject* some = new Mesh("models/sphere_smooth.obj", &shader, "test");
-	//Mesh* ob = static_cast<Mesh*>(some);
-
-	//std::cout << ob->name;
-	//btRigidBody::btRigidBodyConstructionInfo rigidBodyCI3(
-		//1,                  // mass, in kg. 0 -> Static object, will never move.
-		//motionstate3,
-		//boxCollisionShape3,  // collision shape of body
-		//btVector3(0, 0, 0)    // local inertia
-	//);
-	//btRigidBody* rigidBody3 = new btRigidBody(rigidBodyCI3);
-
-	//dynamicsWorld->addRigidBody(rigidBody3);
-
-
-	//obj1->model = glm::translate(obj1->model, glm::vec3(-1.0f, 0.0f, 3.0f));
-	//obj2->model = glm::translate(obj2->model, glm::vec3(-4.0f, 2.0f, 0.0f));
-	//obj3->model = glm::translate(obj3->model, glm::vec3(-2.0f, 1.0f, 2.0f));
-	//obj4->model = glm::translate(obj4->model, glm::vec3(-4.0f, 1.0f, 4.0f));
-
-	//objects.push_back(obj2);
-
 	Camera* camera = new Camera();
 
 	world_camera = camera;
 
-	//PointLight* obj6 = new PointLight(&emission_shader, "PointLight");
-	//obj6->model = glm::translate(obj6->model, glm::vec3(0.45f, 0.65f, 4.0f));
 
 	
 	std::vector<PointLight*> point_lights;
@@ -542,78 +559,9 @@ int main()
 
 
 	Bezier* l = new Bezier(&emission_shader);
-	objects.push_back(l);
+	world->add_child(l);
 
-	
-
-
-
-
-
-
-
-	//_CrtMemState sOld;
-	//_CrtMemState sNew;
-	//_CrtMemState sDiff;
-
-	//memory leak test
-	//std::cout << "";
-
-	
-	//_CrtMemCheckpoint(&sOld);
-
-
-
-
-	//for (int i = 0; i < test_num; i++) {
-		//Mesh* testt = new Mesh("models/mat/cube.obj", &shader, "Cube", "models/mat/cube.mtl");
-		//testt->model = glm::translate(testt->model, glm::vec3(0.0, 0.0, i*2.0));
-		//objects.push_back(testt);
-	//}
-
-
-	//for (int i = 0; i != test_num; i++) {
-		//delete objects[0];
-		//objects.erase(std::remove(objects.begin(), objects.end(), objects[0]), objects.end());
-
-	//}
-
-	//_CrtMemCheckpoint(&sNew);
-
-
-	//if (_CrtMemDifference(&sDiff, &sOld, &sNew)) // if there is a difference
-	//{
-       //OutputDebugString(L"-----------_CrtMemDumpStatistics ---------");
-      // _CrtMemDumpStatistics(&sDiff);
-      // OutputDebugString(L"-----------_CrtMemDumpAllObjectsSince ---------");
-      // _CrtMemDumpAllObjectsSince(&sOld);
-      // OutputDebugString(L"-----------_CrtDumpMemoryLeaks ---------");
-      // _CrtDumpMemoryLeaks();
-	//}
-
-	//std::cout << "";
-
-
-
-	//objects.push_back(obj1);
-
-	//obj1->model = glm::scale(obj1->model, glm::vec3(0.1, 0.1, 0.1));
-	//objects.push_back(obj2);
-	//objects.push_back(obj3);
-	//objects.push_back(obj4);
-	
-	//cube_mat->model = glm::translate(cube_mat->model, glm::vec3(1.0f, 1.0f, 4.0f));
 	float test = 0;
-	//objects.push_back(cube_mat);
-	//objects.push_back(obj5);
-	//objects.push_back(obj6);
-	//point_lights.push_back(obj5);
-
-
-
-
-
-
 
 
 	float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
@@ -677,9 +625,9 @@ int main()
 
 
 
-	GLuint icon = load_texture("assets/icons/icon.png");
-	GLuint icon2 = load_texture("assets/icons/icon2.png");
-	GLuint icon3 = load_texture("assets/icons/icon3.png");
+	icon = load_texture("assets/icons/icon.png");
+	icon2 = load_texture("assets/icons/icon2.png");
+	icon3 = load_texture("assets/icons/icon3.png");
 
 	shader.Use();
 	glUniform1i(glGetUniformLocation(shader.ID, "oText"), 0);
@@ -706,7 +654,7 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 
-	//unsigned int cubemapTexture = loadCubemap(sky_faces);
+	unsigned int cubemapTexture = loadCubemap(sky_faces);
 
 
 	camera->view = glm::translate(camera->view, glm::vec3(0.0f, -0.2f, -3.0f));
@@ -715,7 +663,6 @@ int main()
 	float speed = 0.3f;
 	float mouseSpeed = 0.005f;
 
-	BaseObject* selected_p = 0;
 	
 
 	bool show_wireframe_if_selected = true;
@@ -737,9 +684,8 @@ int main()
 
 	ImGuiID id;
 
-	std::string script;
 
-	Model* mod;
+	
 
 	//test
 
@@ -863,7 +809,7 @@ int main()
 			ImGui::DockBuilderSetNodeSize(id, size);
 			ImGui::DockBuilderSetNodePos(id, nodePos);
 			ImGuiID dock1 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Left, 0.5f, nullptr, &idd);
-			ImGuiID dock2 = ImGui::DockBuilderSplitNode(dock1, ImGuiDir_Down, 0.5f, nullptr, &dock1);
+			ImGuiID dock2 = ImGui::DockBuilderSplitNode(dock1, ImGuiDir_Down, 0.75f, nullptr, &dock1);
 			ImGuiID dock3 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Right, 0.7f, nullptr, &idd);
 			ImGuiID dock4 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Down, 0.2f, nullptr, &idd);
 			ImGuiID dock5 = ImGui::DockBuilderSplitNode(dock3, ImGuiDir_Down, 0.3f, nullptr, &dock3);
@@ -911,80 +857,34 @@ int main()
 		}
 		ImGui::End();
 
-		//tree
+
+		
+		//tree 
 		ImGui::Begin("Tree");
-		if (ImGui::TreeNodeEx("World", ImGuiTreeNodeFlags_DefaultOpen)) {
-			for (BaseObject* obj : objects) {
-				
-				if (selected_p == obj && selected == true) {
-					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0, 1.0, 0.0, 1.0));
-				}
-				else {
-					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 1.0, 1.0, 1.0));
-				}
-
-				/*if (obj->type == MESH) {
-					ImGui::Image((void*)(intptr_t)icon, ImVec2(16, 16));
-					ImGui::SameLine(24.0f);
-				}
-				if (obj->type == POINT_LIGHT) {
-					ImGui::Image((void*)(intptr_t)icon2, ImVec2(16, 16));
-					ImGui::SameLine(24.0f);
-				}
-				if (obj->type == CURVE) {
-					ImGui::Image((void*)(intptr_t)icon3, ImVec2(16, 16));
-					ImGui::SameLine(24.0f);*/
-
-				//}
-				
-				
-
-				if (ImGui::TreeNodeEx((obj->name).c_str(), ImGuiTreeNodeFlags_Leaf)) {
-					
-
-					for (BaseObject* child : obj->children) {
-						ImGui::TreeNodeEx((child->name + "##child").c_str());
-					}
-
-
-
-
-					if (ImGui::IsItemClicked())
-					{
-						if (selected_p == obj && selected == true) {
-							selected = false;
-							script = "";
-						}
-						else {
-							selected_p = obj;
-							script = selected_p->script;
-							selected = true;
-							if (selected_p->type == MESH) {
-								mod = static_cast<Mesh*>(selected_p)->models[0];
-							}
-						
-						}
-
-						
-						
-
-					}
-					ImGui::TreePop();
-				}
-
-
-				ImGui::PopStyleColor();
-				
-			}
-
-			ImGui::TreePop();
-		};
+		std::vector<BaseObject*> treeObjects;
+		jump_into_child(world, &treeObjects);
 		ImGui::End();
 
 		//inspector
 		ImGui::Begin("Inspector", 0);
 		if (selected) {
 			inspector_draw_attributes(selected_p);
+
+
+			if (selected_p->name != "root") {
+				ImGui::SeparatorText("Actions");
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.639f, 0.153f, 0.153f, 1.0f));
+				if (ImGui::Button("Delete")) {
+					add_to_log(selected_p->name + " deleted", &log_data);
+					selected_p->remove();
+					selected = false;
+				}
+				ImGui::PopStyleColor();
+
+				if (ImGui::Button("Rename")) {
+
+				}
+			}
 		}
 
 		
@@ -1097,21 +997,6 @@ int main()
 			ImGui::RadioButton("Blinn", &e, 1);
 
 			mod->material.use_blinn = e;
-			
-
-			ImGui::SeparatorText("Actions");
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.639f, 0.153f, 0.153f, 1.0f));
-			if (ImGui::Button("Delete")) {
-				add_to_log(selected_p->name + " deleted", &log_data);
-				objects.erase(std::remove(objects.begin(), objects.end(), selected_p), objects.end());
-				delete selected_p;
-
-				selected = false;
-			}
-			ImGui::PopStyleColor();
-
-
-			
 		}
 
 		if (selected && selected_p->type == CURVE) { //3 = curve
@@ -1142,24 +1027,16 @@ int main()
 		ImGui::SeparatorText("Add");
 
 		if (ImGui::Button("Add .obj model")) {
-
-
 			nfdu8char_t* outPath = NULL;
 
 			nfdfilteritem_t filterItem[1] = { { "Models", "obj" } };
 			nfdresult_t result = NFD_OpenDialogU8(&outPath, filterItem, 1, NULL);
 
-
-
-			//meshMesh obj4("models/gear.obj", &shader, "gear");
-
-
-
-			if (result == NFD_OKAY) {
+			if (result == NFD_OKAY && selected) {
 				std::filesystem::path new_path = std::filesystem::u8path(outPath);
 				Mesh* obj_ptr = new Mesh(new_path.generic_string(), &shader, std::filesystem::path(outPath).filename().stem().string());
 
-				objects.push_back(obj_ptr);
+				selected_p->add_child(obj_ptr);
 				
 				
 
@@ -1175,8 +1052,10 @@ int main()
 		ImGui::SameLine();
 		if (ImGui::Button("Add point light")) {
 			PointLight* ob = new PointLight(&emission_shader, "PointLight");
-			//point_lights.push_back(ob);
-			objects.push_back(ob);
+			
+			if (selected) {
+				selected_p->add_child(ob);
+			}
 
 		}
 
@@ -1229,18 +1108,19 @@ int main()
 		projection = glm::perspective(fov / 180.0f * 3.14f, aspectRatio, 0.1f, 1000.0f);
 
 
-		//sky
-		//glm::mat4 view2 = glm::mat4(glm::mat3(camera->view));
-		//glDepthMask(GL_FALSE);
-		//sky_shader.Use();
-		//sky_shader.setMat4("projection", projection);
-		//sky_shader.setMat4("view", view2);
+	
+		glm::mat4 view2 = glm::mat4(glm::mat3(camera->view));
+		glDepthMask(GL_FALSE);
+		sky_shader.Use();
+		sky_shader.setMat4("projection", projection);
+		sky_shader.setMat4("view", view2);
+		sky_shader.setFloat("value", 1.0);
 
 
-		//glBindVertexArray(SKY_VAO);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
-		//glDepthMask(GL_TRUE);
+		glBindVertexArray(SKY_VAO);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDepthMask(GL_TRUE);
 
 
 		
@@ -1249,29 +1129,20 @@ int main()
 		emission_shader.Use();
 		emission_shader.setMat4("projection", projection);
 		emission_shader.setMat4("view", camera->view);
-		//emission_shader.setVec3("color", glm::vec3(ambient_cisolor[0], ambient_color[1], ambient_color[2]));
-
-
-		//space
-		//space.Use();
-		//space.setMat4("projection", projection);
-		//space.setMat4("view", camera->view);
-		//space_obj->draw();
+		//emission_shader.setVec3("color", glm::vec3(ambient_color[0], ambient_color[1], ambient_color[2]));
 
 		// shader standart
-		//glActiveTexture(GL_TEXTURE3);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 
 		shader.Use();
 		shader.setVec3("lightColor", glm::vec3(ambient_color[0], ambient_color[1], ambient_color[2]));
 		shader.setVec3("viewPos", camera->position);
 		shader.setMat4("projection", projection); 
 		shader.setMat4("view", camera->view);
+		shader.setFloat("sky_val", 1.0);
+		
 		//test
-
-		
-		
-
 		if (point_lights.size() > point_lights_max_size) {
 			throw;
 		}
@@ -1279,7 +1150,7 @@ int main()
 		
 		int point_lights_size = 0;
 		int n = 0;
-		for (BaseObject* obj : objects) {
+		for (BaseObject* obj : treeObjects) {
 			if (obj->type == POINT_LIGHT) {
 				PointLight* light = static_cast<PointLight*>(obj);
 
@@ -1299,15 +1170,9 @@ int main()
 		ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 		if (ImGui::BeginMainMenuBar())
 		{
-			//if (ImGui::BeginMenu("Menu")) {
-				//ImGui::EndMenu();
-			//}
-
 			ImGui::Text("Project Name:");
 			std::string filename = project_path.filename().string();
 			ImGui::Text(filename.c_str());
-
-			//ImGui::Text();
 			ImGui::Text("Light Number %i / %i", point_lights_size, point_lights_max_size);
 
 
@@ -1406,15 +1271,15 @@ int main()
 		//simpleDepthShader.Use();
 		//simpleDepthShader.setMat4("projection", projection);
 		//simpleDepthShader.setMat4("view", camera->view);
-		glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+		glViewport(0, 0, window_width, window_height);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
 		glEnable(GL_DEPTH_TEST);
 		//glEnable(GL_FRAMEBUFFER_SRGB);
 
-		for (BaseObject* obj : objects) {
+		for (BaseObject* obj : treeObjects) {
 
 
 
@@ -1460,24 +1325,24 @@ int main()
 
 		}
 		//glDisable(GL_FRAMEBUFFER_SRGB);
-		glViewport(0, 0, window_width, window_height);
+		//glViewport(0, 0, window_width, window_height);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-		glClearColor(1.0f, 1.0f, 0.5f, 1.0f);
-		glDisable(GL_DEPTH_TEST);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+		//glClearColor(1.0f, 1.0f, 0.5f, 1.0f);
+		//glDisable(GL_DEPTH_TEST);
+		//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		//glClear(GL_COLOR_BUFFER_BIT);
 
 
 
 
 	
-		screen_shader.Use();
-		glBindVertexArray(quadVAO);
-		glDisable(GL_DEPTH_TEST);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//screen_shader.Use();
+		//glBindVertexArray(quadVAO);
+		//glDisable(GL_DEPTH_TEST);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
 		glBindVertexArray(0);
