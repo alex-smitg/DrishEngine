@@ -23,7 +23,7 @@
 int open_obj(std::string path, std::vector<std::vector<GLfloat>>* vertices, std::vector<std::string>* mat_n) {
 	if (!std::filesystem::exists(std::filesystem::path(path))) {
 		std::cout << path << " not exists";
-		return -1;
+		return 0;
 	}
 
 	//std::wstring widestr = std::wstring(path.begin(), path.end());
@@ -33,7 +33,7 @@ int open_obj(std::string path, std::vector<std::vector<GLfloat>>* vertices, std:
 	file.open(path);
 	if (!file) {
 		std::cout << "error";
-		return -1;
+		return 0;
 	}
 	std::string str;
 	std::vector<GLfloat> output;
@@ -291,7 +291,7 @@ int open_obj(std::string path, std::vector<std::vector<GLfloat>>* vertices, std:
 	}
 	
 	*mat_n = mat_names;
-	return 0;
+	return 1;
 
 
 }
@@ -360,6 +360,6 @@ int open_mtl(std::string path, std::map<std::string, Mat> *materials) {
 	}
 
 	*materials = mat;
-	return 0;
+	return 1;
 }
 

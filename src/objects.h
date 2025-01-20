@@ -17,7 +17,7 @@
 #include <sol\sol.hpp>
 #include <Windows.h>
 
-GLuint load_texture(std::string path);
+int load_image(std::string path, GLuint *texture_id);
 
 
 //types : 0 == mesh
@@ -37,26 +37,76 @@ std::string increment_string(std::string str) {
 
 }
 
+class Texture {
+public:
+	GLuint id;
+	std::string path;
+
+
+	//~Texture() {
+		//glDeleteTextures(1, &id);
+	//}
+};
+
+class Material {
+public:
+	float normalmap_value = 0.0f;
+	float specular_value = 1.0f;
+	float reflection_value = 0.0f;
+	float diffuse_value = 1.0f;
+	float refract_value = 0.256f;
+	float shine_value = 18.0f;
+
+	glm::vec2 uv_scale = { 1.0f, 1.0f };
+
+	bool use_normalmap = false;
+	bool use_specular = false;
+	bool use_diffuse = true;
+	bool use_blinn = false;
+	bool emit = false;
+
+	glm::vec3 diffuse_color = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	std::string name;
+
+	Texture* diffuse_texture;
+	Texture* specular_texture;
+	Texture* normalmap_texture;
+};
+
+
+
 
 
 class Transform {
+public:
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+
+
+	glm::mat4 get_matrix() {
+		glm::mat4 matrix(1.0f);
+		matrix = glm::translate(matrix, position);
+
+		//matrix = glm::rotate(matrix, rotation.x, glm::vec3(1, 0, 0));
+		//matrix = glm::rotate(matrix, rotation.y, glm::vec3(0, 1, 0));
+		//matrix = glm::rotate(matrix, rotation.z, glm::vec3(0, 0, 1));
+
+		matrix = glm::scale(matrix, scale);
+
+		return matrix;
+	}
 };
 
 
 class BaseObject {
 public:
-
-	
-
-	glm::mat4 model;
+	Transform transform;
 
 	std::string name;
 	std::string script = "";
 
-	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 start_position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	Type type = NO_TYPE;
@@ -80,13 +130,13 @@ public:
 
 	virtual void update() {
 		if (!script.empty()) {
-			lua["pos_x"] = model[3].x;
+			/*lua["pos_x"] = model[3].x;
 			lua["pos_y"] = model[3].y;
 			lua["pos_z"] = model[3].z;
 
 			lua["rot_x"] = rotation.x;
 			lua["rot_y"] = rotation.y;
-			lua["rot_z"] = rotation.z;
+			lua["rot_z"] = rotation.z;*/
 
 
 			try {
@@ -97,29 +147,21 @@ public:
 				script = "";
 			}
 
-			model[3].x = lua["pos_x"];
-			model[3].y = lua["pos_y"];
-			model[3].z = lua["pos_z"];
+			//model[3].x = lua["pos_x"];
+			//model[3].y = lua["pos_y"];
+			//model[3].z = lua["pos_z"];
 
 
-			rotation.x = lua["rot_x"];
-			rotation.y = lua["rot_y"];
-			rotation.z = lua["rot_z"];
+			//rotation.x = lua["rot_x"];
+			//rotation.y = lua["rot_y"];
+			//rotation.z = lua["rot_z"];
 		}
 
 
-		glm::mat4 rot_mat = glm::mat4(1.0);
 
-		rot_mat = glm::translate(rot_mat, glm::vec3(model[3].x, model[3].y, model[3].z)); //non scale 
-
-		rot_mat = glm::rotate(rot_mat, rotation.x, glm::vec3(1, 0, 0));
-		rot_mat = glm::rotate(rot_mat, rotation.y, glm::vec3(0, 1, 0));
-		rot_mat = glm::rotate(rot_mat, rotation.z, glm::vec3(0, 0, 1));
-
-		model = rot_mat;
 
 		for (BaseObject* baseObject: children) {
-			baseObject->model = glm::translate(baseObject->model, start_position);
+			//baseObject->transform.position = start_position;
 		}
 
 	
@@ -224,8 +266,7 @@ public:
 
 	PointLight(Shader* shader, std::string name, glm::vec3 color = glm::vec3(1.0,1.0,1.0), GLfloat strength = 1.0) : BaseObject() {
 		this->strength = strength;
-		this->model = glm::mat4(1.0f);
-		this->model = glm::scale(this->model, glm::vec3(0.2f, 0.2f, 0.2f));
+		this->transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
 		this->color = color;
 		this->shader = shader;
 		this->name = name;
@@ -245,7 +286,7 @@ public:
 	void draw() override {
 		shader->Use();
 		shader->setVec3("color", color);
-		shader->setMat4("model", model);
+		shader->setMat4("model", transform.get_matrix());
 		shader->setFloat("strenght", strength);
 
 		if (visible) {
@@ -258,9 +299,9 @@ public:
 
 	void update() override {
 		if (!script.empty()) {
-			lua["pos_x"] = model[3].x;
+			/*lua["pos_x"] = model[3].x;
 			lua["pos_y"] = model[3].y;
-			lua["pos_z"] = model[3].z;
+			lua["pos_z"] = model[3].z;*/
 			lua["r"] = color.r;
 			lua["g"] = color.g;
 			lua["b"] = color.b;
@@ -273,9 +314,9 @@ public:
 				script = "";
 			}
 
-			model[3].x = lua["pos_x"];
+			/*model[3].x = lua["pos_x"];
 			model[3].y = lua["pos_y"];
-			model[3].z = lua["pos_z"];
+			model[3].z = lua["pos_z"];*/
 			color.r = lua["r"];
 			color.g = lua["g"];
 			color.b = lua["b"];
@@ -478,125 +519,65 @@ public:
 
 
 
-class Model{
+class VertexGroup {
 public:
 	Shader* shader;
 	unsigned int VBO, VAO;
-	std::vector<GLfloat> verts;
-	glm::mat4* model;
-	struct TexturesPath {
-		std::string diffuse_path;
-		std::string specular_path;
-		std::string normal_path;
-	} texturesPath;
-
-	struct Textures {
-		GLuint diffuse;
-		GLuint specular;
-		GLuint normal;
-	} textures;
-
-	struct Material {
-		float normal_bump = 0.0;
-		float specular = 1.0;
-		float reflection = 0.0;
-		float diffuse = 1.0f;
-		float ref_ratio = 0.256f;
-		float shine = 18.0;
-		float uv_scale = 1.0;
-
-		bool use_normal = false;
-		bool use_specular = false;
-		bool use_diffuse = true;
-		bool use_blinn = false;
-		bool emit = false;
-
-		glm::vec3 diffuse_color = glm::vec3(1.0f, 1.0f, 1.0f);
-
-	} material;
+	std::vector<GLfloat> vertices;
+	Transform* transform;
+	Material* material = nullptr;
 
 
+	//change it later;
+	int vertex_stride = 14 * sizeof(GLfloat); //vertices = {{x, y, z, u, v, nx, ny, nz, tx, ty, tz, bx, by, bz}, ....} 
 
-	Model(std::vector<GLfloat> data, Shader* shader) {
-		this->verts = data;
+	VertexGroup(std::vector<GLfloat> data, Shader* shader) {
+		this->vertices = data;
+		//this->vertices = {-1,0,1,0,0,0,1,0, 0,0,0,0,0,0, 1,0,1,0,0,0,1,0, 0,0,0,0,0,0, -1,0,-1,0,0,0,1,0, 0,0,0,0,0,0};
+
 		this->shader = shader;
 		init();
 	}
 
-	~Model() {	
-		clean_up();
-	}
-
-	void clean_up() {
-		glDeleteTextures(1, &textures.diffuse);
-		glDeleteTextures(1, &textures.specular);
-		glDeleteTextures(1, &textures.normal);
-
+	~VertexGroup() {
 		glDeleteBuffers(1, &VBO);
 		glDeleteVertexArrays(1, &VAO);
 	}
 
 
-	void draw(){
-		shader->setMat4("model", *model);
-		shader->setFloat("normal_bump", material.normal_bump);
-		shader->setFloat("spec_factor", material.specular);
-		shader->setFloat("reflection", material.reflection);
-		shader->setFloat("ref_ratio", material.ref_ratio);
-		shader->setBool("use_normal", material.use_normal);
-		shader->setBool("use_specular", material.use_specular);
-		shader->setFloat("shine", material.shine);
-		shader->setFloat("dif", material.diffuse);
-		shader->setVec3("diffuse_color", material.diffuse_color);
-		shader->setBool("use_diffuse", material.use_diffuse);
-		shader->setBool("use_blinn", material.use_blinn);
-		shader->setFloat("uv_scale", material.uv_scale);
-		shader->setInt("emit", material.emit);
+	int get_vertices_number() {
+		return vertices.size() / 14;
+	}
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textures.diffuse);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, textures.specular);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, textures.normal);
+	void draw() {
+		shader->setMat4("model", transform->get_matrix());
+
+		if (material != nullptr) {
+			shader->setFloat("normal_bump", material->normalmap_value);
+			shader->setFloat("spec_factor", material->specular_value);
+			shader->setFloat("reflection", material->reflection_value);
+			shader->setFloat("ref_ratio", material->refract_value);
+			shader->setBool("use_normal", material->use_normalmap);
+			shader->setBool("use_specular", material->use_specular);
+			shader->setFloat("shine", material->shine_value);
+			shader->setFloat("dif", material->diffuse_value);
+			shader->setVec3("diffuse_color", material->diffuse_color);
+			shader->setBool("use_diffuse", material->use_diffuse);
+			shader->setBool("use_blinn", material->use_blinn);
+			shader->setVec2("uv_scale", material->uv_scale);
+			shader->setInt("emit", material->emit);
+		}
+
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, material->diffuse_texture->id);
+		//glActiveTexture(GL_TEXTURE1);
+		//glBindTexture(GL_TEXTURE_2D, material->specular_texture->id);
+		//glActiveTexture(GL_TEXTURE2);
+		//glBindTexture(GL_TEXTURE_2D, material->normalmap_texture->id);
 
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, verts.size() / 14);
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 14);
 	}
-
-	GLint load_tex(std::string path, int type) {
-		std::filesystem::path filepath = std::filesystem::path(path);
-
-		wchar_t szPath[MAX_PATH];
-		GetModuleFileNameW(NULL, szPath, MAX_PATH);
-
-		std::string rel_path;
-
-		if (filepath == "images/no_texture.png") {
-			rel_path = "images/no_texture.png";
-		}
-		else {
-			rel_path = std::filesystem::relative(filepath, std::filesystem::path(szPath).remove_filename()).generic_u8string();
-		}
-
-		
-
-
-		if (type == 0) { //diffuse
-			texturesPath.diffuse_path = rel_path;
-		}
-		if (type == 1) { //diffuse
-			texturesPath.specular_path = rel_path;
-		}
-		if (type == 2) { //diffuse
-			texturesPath.normal_path = rel_path;
-		}
-
-		return load_texture(path);
-	}
-
-
-	
 
 private:
 	void init() {
@@ -607,120 +588,182 @@ private:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(GLfloat), &verts[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), &vertices[0], GL_STATIC_DRAW);
 
-		int vertex_stride = 14 * sizeof(GLfloat);
-		// pos
+		vertex_stride = 14 * sizeof(GLfloat);
+		//Position x,y,z
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertex_stride, 0);
-
-		// tex
+		//Uv u,v
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, vertex_stride, (void*)(3 * sizeof(GLfloat)));
-		//norm
+		//Normal nx, ny, nz
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vertex_stride, (void*)(5 * sizeof(GLfloat)));
-
+		//Tangent tx, ty, yz
 		glEnableVertexAttribArray(3);
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, vertex_stride, (void*)(8 * sizeof(GLfloat)));
-
+		//Bitangent bx, by, bz (idk if it is bitangent)
 		glEnableVertexAttribArray(4);
 		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, vertex_stride, (void*)(11 * sizeof(GLfloat)));
-
-
-		textures.diffuse = load_tex("images/no_texture.png", 0);
-		textures.specular = load_tex("images/no_texture.png", 1);
-		textures.normal = load_tex("images/no_texture.png", 2);
 	}
 };
 
 
 
-class Mesh : public BaseObject {
+
+class Mesh {
 public:
 	std::vector<std::vector<GLfloat>> models_data;
-	std::vector<Model*> models;
-	Shader* shader;
+	std::vector<VertexGroup*> vertexGroupsVector;
+
+	Transform* transform;
+
 	std::vector<std::string> mat_names;
 	std::map<std::string, Mat> materials;
 
-	std::string rel_path;
-	bool no_model = false;
-	bool no_material_data = false;
 
-	Mesh(const std::string path, Shader* shader, std::string name) : BaseObject(){
-		this->model = glm::mat4(1.0f);
+	int vertice_number = 0; //
+
+	void add_vertex_group(VertexGroup* vertexGroup) {
+		vertexGroupsVector.push_back(vertexGroup);
+
+		vertice_number += vertexGroup->get_vertices_number();
+	}
+
+	Mesh() {
+
+	}
+
+
+	void draw() {
+		for (VertexGroup* vertexGroup : vertexGroupsVector) {
+			vertexGroup->transform = transform;
+			vertexGroup->draw();
+		}
+	}
+};
+
+
+class MeshHolder : public BaseObject {
+public:
+	Shader* shader;
+	Mesh* mesh = nullptr;
+
+
+	MeshHolder(const std::string path, Shader* shader, std::string name) : BaseObject(){
 		this->name = name;
 		this->shader = shader;
 		type = MESH;
 
 		attributes.push_back(Attribute::POSITION);
 		attributes.push_back(Attribute::TEXTURE);
-		
-		std::filesystem::path filepath = std::filesystem::path(path);
+	}
 
-		//rel_path = "models/" + filepath.filename().generic_string();
-
-		wchar_t szPath[MAX_PATH];
-		GetModuleFileNameW(NULL, szPath, MAX_PATH);
-
-
-		rel_path = std::filesystem::relative(filepath, std::filesystem::path(szPath).remove_filename()).generic_u8string();
-		
-
-		if (open_obj(path, &models_data, &mat_names)) {//verts = [x, y, z, u, v, nx, ny, nz, tx, ty, tz, bx, by, bz]
-			no_model = true;
-		}
-		else {
-			std::filesystem::path obj_path = std::filesystem::path(path);
-			std::string obj_path_s = obj_path.parent_path().string() + "/" + obj_path.stem().string() + ".mtl";
-
-			
-			if (open_mtl(obj_path_s, &materials)) {
-				no_material_data = true;
-			};
-
-
-			int n = 0;
-			for (std::vector<GLfloat> model_verts : models_data) {
-				Model* mod = new Model(model_verts, shader);
-				mod->model = &model;
-				models.push_back(mod);
-				if (no_material_data == false && materials.size() != 0) {
-					mod->textures.diffuse = mod->load_tex(materials[mat_names[n]].dif_path, 0);
-					mod->material.diffuse_color = materials[mat_names[n]].d_color;
-					if (materials[mat_names[n]].dif_path == "") {
-						mod->material.use_diffuse = false;
-					}
-				}
-
-				n += 1;
-			}
-		}
-	};
-
-	~Mesh() {
-		int s = models.size();
-		for (int i = 0; i < s; i++) {
-			delete models[i];
-		}
-
-		models.clear();
+	~MeshHolder() {
 	}
 
 	void draw() override {
-		shader->Use();
-
-		for (Model* mod : models) {
-			mod->draw();
+		if (mesh != nullptr) {
+			shader->Use();
+			mesh->transform = &transform;
+			mesh->draw();
 		}
+
+		
 	}
 
 
 };
 
 
-GLuint load_texture(std::string path) {
+class ResourceManager {
+public:
+	std::vector<Texture*> textures;
+	std::vector<Material*> materials;
+	std::vector<Mesh*> meshes;
+
+
+	void create_texture(std::string path) {
+		Texture* texture = new Texture();
+		GLuint texture_id;
+
+
+		
+		if (load_image(path, &texture_id)) {
+			texture->id = texture_id;
+			texture->path = path;
+			textures.push_back(texture);
+		}
+		else {
+			std::cout << "ERROR: Texture was not loaded";
+		}
+		
+	}
+
+
+	void create_mesh(std::string path, Shader *shader) {
+		std::filesystem::path filepath = std::filesystem::path(path);
+
+
+		wchar_t szPath[MAX_PATH];
+		GetModuleFileNameW(NULL, szPath, MAX_PATH);
+
+
+		std::vector<std::vector<GLfloat>> vertexGroups_data;
+
+		std::vector<std::string> mat_names;
+		std::map<std::string, Mat> materials;
+
+		if (open_obj(path, &vertexGroups_data, &mat_names)) {
+			std::filesystem::path obj_path = std::filesystem::path(path);
+			std::string obj_path_s = obj_path.parent_path().string() + "/" + obj_path.stem().string() + ".mtl";
+
+
+			open_mtl(obj_path_s, &materials);
+			
+			Mesh* mesh = new Mesh();
+
+			int n = 0;
+			for (std::vector<GLfloat> vertices : vertexGroups_data) {
+				VertexGroup* vertexGroup = new VertexGroup(vertices, shader);
+
+				vertexGroup->material = new Material();
+
+				mesh->add_vertex_group(vertexGroup);
+				
+				if (materials.size() != 0) {
+
+
+					/*mod->material->diffuse_texture->id = mod->load_tex(materials[mat_names[n]].dif_path, 0);
+					mod->material->diffuse_color = materials[mat_names[n]].d_color;
+					if (materials[mat_names[n]].dif_path == "") {
+						mod->material->use_diffuse = false;
+					}*/
+				}
+
+				n += 1;
+			}
+
+
+			
+			meshes.push_back(mesh);
+
+
+		}
+
+	}
+
+
+	void create_material() {
+		//Material* material = new Material();
+		//materials.push_back(material);
+	}
+
+};
+
+
+int load_image(std::string path, GLuint *texture_id) {
 	int width, height, nrChannels;
 
 
@@ -733,12 +776,14 @@ GLuint load_texture(std::string path) {
 
 	if (!img) {
 		std::cout
-			<< "Error: can't load image at path: " << path << " "
+			<< "ERROR: can't load image at path: " << path << " "
 			<< stbi_failure_reason()
 			<< "\n";
-	}
 
-	
+		stbi_image_free(img);
+
+		return 0;
+	}
 
 	GLenum format = GL_RGB;
 	//if (nrChannels == 1)
@@ -776,7 +821,9 @@ GLuint load_texture(std::string path) {
 	
 	stbi_image_free(img);
 
-	return texture;
+	*texture_id = texture;
+
+	return 1;
 }
 
 

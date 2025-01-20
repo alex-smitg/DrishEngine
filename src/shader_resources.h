@@ -1,6 +1,8 @@
 #pragma once
 #include <map>
 #include <string>
+
+//Shader
 std::map<std::string, std::string> shaders = {
 {"emission.fragment", R"(#version 330 core
 out vec4 FragColor;
@@ -231,7 +233,7 @@ uniform float normal_bump;
 uniform float dif;
 
 
-uniform float uv_scale;
+uniform vec2 uv_scale;
 
 uniform float sky_val;
 

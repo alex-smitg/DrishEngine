@@ -67,7 +67,7 @@ GLuint icon2;
 GLuint icon3;
 
 
-Model* mod;
+Material* selectedMaterial;
 Camera* world_camera;
 
 
@@ -102,6 +102,8 @@ std::vector<std::string> sky_faces = {
 
 Shader* emission_shader_ptr;
 Shader* shader_ptr;
+
+ResourceManager resourceManager;
 
 const float PI = 3.14;
 
@@ -167,7 +169,7 @@ void jump_into_child(BaseObject *parent, std::vector<BaseObject*> *vector) {
 				script = selected_p->script;
 				selected = true;
 				if (selected_p->type == MESH) {
-					mod = static_cast<Mesh*>(selected_p)->models[0];
+					//mod = static_cast<MeshHolder*>(selected_p)->mesh->models[0];
 				}
 
 			}
@@ -240,7 +242,7 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 	return textureID;
 }
 
-std::string open_image_dialog() {
+std::string file_open_dialog() {
 	nfdu8char_t* outPath = NULL;
 	nfdfilteritem_t filterItem[1] = {};
 	nfdresult_t result = NFD_OpenDialogU8(&outPath, filterItem, 0, NULL);
@@ -486,29 +488,30 @@ int main()
 	world->name = "root";
 	
 
-	Mesh* obj1 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Cube");
-	Mesh* obj3 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChild");
-	Mesh* obj4 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChildChild");
-	Mesh* obj5 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Last");
-	Mesh* obj2 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/plane.obj", &shader, "Phys");
+	MeshHolder* obj1 = new MeshHolder("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Cube");
+	//Mesh* obj3 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChild");
+	//Mesh* obj4 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChildChild");
+	//Mesh* obj5 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Last");
+	MeshHolder* obj2 = new MeshHolder("C:/Users/AlexSmith/Desktop/GAME/models/plane.obj", &shader, "Phys");
 	PointLight* obj6 = new PointLight(&emission_shader, "PointLight");
-	obj6->model = glm::translate(obj6->model, glm::vec3(0.0, 3.0, 0.0));
+	obj6->transform.position.x = 2.0;
 	
 
 	
 
 	obj6->strength = 3.0f;
 	obj6->radius = 15.0f;
-	obj2->model = glm::translate(obj2->model, glm::vec3(0.0, -6.0, 0.0));
-	obj1->model = glm::translate(obj1->model, glm::vec3(0.0, -2.5, 0.0));
+
+	selected_p = obj1;
+	selected = true;
 
 
 
-	obj1->add_child(obj3);
-	obj3->add_child(obj4);
-	obj3->add_child(obj5);
+	//obj1->add_child(obj3);
+	//obj3->add_child(obj4);
+	//obj3->add_child(obj5);
 
-	world->add_child(obj6);
+	//world->add_child(obj6);
 	world->add_child(obj2);
 	world->add_child(obj1);
 
@@ -625,9 +628,9 @@ int main()
 
 
 
-	icon = load_texture("assets/icons/icon.png");
-	icon2 = load_texture("assets/icons/icon2.png");
-	icon3 = load_texture("assets/icons/icon3.png");
+	//icon = load_texture("assets/icons/icon.png");
+	//icon2 = load_texture("assets/icons/icon2.png");
+	//icon3 = load_texture("assets/icons/icon3.png");
 
 	shader.Use();
 	glUniform1i(glGetUniformLocation(shader.ID, "oText"), 0);
@@ -816,8 +819,8 @@ int main()
 			ImGui::DockBuilderDockWindow("Tree", dock1);
 			ImGui::DockBuilderDockWindow("Inspector", dock2);
 			ImGui::DockBuilderDockWindow("Other", dock3);
-			ImGui::DockBuilderDockWindow("Log", dock4);
-			ImGui::DockBuilderDockWindow("Filesystem", dock5);
+			ImGui::DockBuilderDockWindow("Log", dock5);
+			ImGui::DockBuilderDockWindow("Resources", dock4);
 			ImGui::DockBuilderFinish(id);
 
 
@@ -837,12 +840,71 @@ int main()
 		ImGui::InputTextMultiline("##log_input", &log_data, ImGui::GetWindowSize(), ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
 
-		ImGui::Begin("Filesystem");
+		//ImGui::ShowDemoWindow();
+
+		ImGui::Begin("Resources");
+
+		if (ImGui::Button("Add Texture")) {
+			std::string texture_path = file_open_dialog();
+			if (!texture_path.empty()) {
+				resourceManager.create_texture(texture_path);
+			}
+		}
+		ImGui::SameLine();
+
+		if (ImGui::Button("set mesh")) {//remove later
+			static_cast<MeshHolder*>(selected_p)->mesh = resourceManager.meshes[0];
+		}
+
+		if (ImGui::Button("Add 3d model (.obj)")) {
+			std::string model_path = file_open_dialog();
+			if (!model_path.empty()) {
+				resourceManager.create_mesh(model_path, &shader);
+			}
+
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Add material")) {
+
+		}
 
 		
+		ImGui::BeginChild("Textures", ImVec2(200, 0), ImGuiChildFlags_Border);
+
+		for (Texture* texture : resourceManager.textures) {
+			
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+			ImGui::ImageButton(("id##"+std::to_string(texture->id)).c_str(), texture->id, 
+				ImVec2(32, 32), ImVec2(0.0f,0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
+			
+			ImGui::PopStyleVar();
+
+			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+				ImGui::SetDragDropPayload("TEXTURE", texture, sizeof(Texture*));
+
+				ImGui::Image(texture->id, ImVec2(32, 32));
+				ImGui::EndDragDropSource();
+			}
+
+			ImGui::SameLine();
+			ImGui::Text(texture->path.c_str());
+
+		}
+		ImGui::EndChild();
+
+		ImGui::SameLine();
 
 
-		if (ImGui::BeginListBox("##box")) {
+
+		ImGui::BeginChild("Meshes", ImVec2(200, 0), ImGuiChildFlags_Border);
+
+		for (int i = 0; i < resourceManager.meshes.size(); i++) {
+			ImGui::Text(("Mesh" + std::to_string(i) + " vertices: " + std::to_string(resourceManager.meshes[i]->vertice_number)).c_str());
+		}
+
+		ImGui::EndChild();
+
+		/*if (ImGui::BeginListBox("##box")) {
 			std::filesystem::path new_path = project_path.parent_path();
 
 
@@ -854,7 +916,7 @@ int main()
 
 
 			ImGui::EndListBox();
-		}
+		}*/
 		ImGui::End();
 
 
@@ -890,113 +952,98 @@ int main()
 		
 
 
-		if (selected && selected_p->type == MESH && static_cast<Mesh*>(selected_p)->no_model == false) { //0 = mesh
-			Mesh* obj = static_cast<Mesh*>(selected_p);
-
-			//ImGui::Text("x = %f, y = %f, z = %f", selected_p->model[3][0], selected_p->model[3][1], selected_p->model[3][2]);
-
-			
-
+		if (selected && selected_p->type == MESH && static_cast<MeshHolder*>(selected_p) && static_cast<MeshHolder*>(selected_p)->mesh != nullptr) {
+			MeshHolder* obj = static_cast<MeshHolder*>(selected_p);
 			ImGui::SeparatorText("Textures");
 
-			
-			std::vector<std::string> mat_names = obj->mat_names;
+			//std::vector<std::string> mat_names = obj->mesh->mat_names;
 			static int item_current_idx = 0; // Here we store our selection data as an index.
 
-			if (!obj->no_material_data) {
-				if (ImGui::BeginListBox("Materials", ImVec2(0, 50)))
-				{
-					for (int n = 0; n < mat_names.size(); n++)
-					{
-						const bool is_selected = (item_current_idx == n);
-						if (ImGui::Selectable(mat_names[n].c_str(), is_selected))
-							item_current_idx = n;
 
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
-						mod = obj->models[item_current_idx];
-					}
-					ImGui::EndListBox();
-				}
-			}
-			
-			ImGui::SliderFloat("uv", &(mod->material.uv_scale), 0.0, 25.0);
-			ImGui::Image(mod->textures.diffuse, ImVec2(64, 64));
-			ImGui::SameLine();
-			ImGui::BeginGroup();
-			ImGui::Text("Diffuse");
-			ImGui::Checkbox("On##d", &(mod->material.use_diffuse)); ImGui::SameLine();
-			ImGui::Checkbox("Emit", &(mod->material.emit)); ImGui::SameLine();
 
-			float col[3] = { mod->material.diffuse_color.r, mod->material.diffuse_color.g, mod->material.diffuse_color.b };
-			ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
-			ImGui::ColorEdit3("Color", col);
-			mod->material.diffuse_color = glm::vec3(col[0], col[1], col[2]);
 
-			ImGui::SliderFloat("##diff", &(mod->material.diffuse), 0.0, 5.0);
-			if (ImGui::Button("Load texture##2")) {
-				std::string texture_path = open_image_dialog();
-				if (!texture_path.empty()) {
-					glDeleteTextures(1, &(mod->textures.diffuse));
-					mod->textures.diffuse = mod->load_tex(texture_path, 0);
-				}
-			}
+	
+			//if (ImGui::BeginListBox("Materials", ImVec2(0, 50))) {
+			//	for (int n = 0; n < mat_names.size(); n++)
+			//	{
+			//		const bool is_selected = (item_current_idx == n);
+			//		if (ImGui::Selectable(mat_names[n].c_str(), is_selected)) {
+			//			item_current_idx = n;
 
+			//			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			//			if (is_selected) {
+			//				ImGui::SetItemDefaultFocus();
+			//				mod = obj->mesh->models[item_current_idx];
+			//			}
+			//		}
+			//		ImGui::EndListBox();
+			//	}
+			//}
 			
 			
+			//ImGui::SliderFloat("uv x", &(mod->material->uv_scale.x), 0.0, 25.0);
+			//ImGui::SliderFloat("uv y", &(mod->material->uv_scale.y), 0.0, 25.0);
+			//ImGui::Image(mod->material->diffuse_texture->id, ImVec2(64, 64));
 
-			ImGui::EndGroup();
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
+					assert(payload->DataSize == sizeof(Texture*));
 
-			ImGui::Image(mod->textures.specular, ImVec2(64, 64));
-			ImGui::SameLine();
-			ImGui::BeginGroup();
-			ImGui::Text("Specular");
-			ImGui::Checkbox("On##s", &(mod->material.use_specular));
-			ImGui::SliderFloat("##spect", &(mod->material.specular), 0.0, 5.0);
-			if (ImGui::Button("Load texture##0")) {
-				std::string texture_path = open_image_dialog();
-				if (!texture_path.empty()) {
-					glDeleteTextures(1, &(mod->textures.specular));
-					mod->textures.specular = mod->load_tex(texture_path, 1);
+					//Texture* texture = (Texture*)(payload->Data);
+					//Texture tex = *(Texture*)(payload->Data);
+					//problems with addres
+
+					//mod->material->diffuse_texture = texture;
 
 				}
-
+				ImGui::EndDragDropTarget();
 			}
 
-			ImGui::EndGroup();
 
-			ImGui::Image((intptr_t)mod->textures.normal, ImVec2(64, 64));
-			ImGui::SameLine();
-			ImGui::BeginGroup();
-			ImGui::Text("Normal");
-			//ImGui::PushItemWidth(32.0f);
-			ImGui::Checkbox("On##n", &(mod->material.use_normal));
-			ImGui::SliderFloat("##normal", &(mod->material.normal_bump), 0.0, 5.0);
-			if (ImGui::Button("Load texture##1")) {
-				std::string texture_path = open_image_dialog();
-				if (!texture_path.empty()) {
-					glDeleteTextures(1, &(mod->textures.normal));
-					mod->textures.normal = mod->load_tex(texture_path, 2);;
-				}
+			//ImGui::SameLine();
+			//ImGui::BeginGroup();
+			//ImGui::Text("Diffuse");
+			////ImGui::Checkbox("On##d", &(mod->material->use_diffuse)); ImGui::SameLine();
+			//ImGui::Checkbox("Emit", &(mod->material->emit)); ImGui::SameLine();
 
+			//float col[3] = { mod->material->diffuse_color.r, mod->material->diffuse_color.g, mod->material->diffuse_color.b };
+			//ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
+			//ImGui::ColorEdit3("Color", col);
+			//mod->material->diffuse_color = glm::vec3(col[0], col[1], col[2]);
 
-			}
+			//ImGui::SliderFloat("##diff", &(mod->material->diffuse_value), 0.0, 5.0);
 
-			//delete repeating;
-			ImGui::EndGroup();
+			//ImGui::EndGroup();
 
-			ImGui::SeparatorText("Material vars");
-			ImGui::SliderFloat("SkyReflection", &(mod->material.reflection), 0.0, 1.0);
-			ImGui::SliderFloat("RefRatio", &(mod->material.ref_ratio), 0.0, 1.0);
-			ImGui::SliderFloat("Shine", &(mod->material.shine), 0.01, 64.0);
+			//ImGui::Image(mod->material->specular_texture->id, ImVec2(64, 64));
+			//ImGui::SameLine();
+			//ImGui::BeginGroup();
+			//ImGui::Text("Specular");
+			//ImGui::Checkbox("On##s", &(mod->material->use_specular));
+			//ImGui::SliderFloat("##spect", &(mod->material->specular_value), 0.0, 5.0);
+
+			//ImGui::EndGroup();
+
+			//ImGui::Image(mod->material->normalmap_texture->id, ImVec2(64, 64));
+			//ImGui::SameLine();
+			//ImGui::BeginGroup();
+			//ImGui::Text("Normal");
+			//ImGui::Checkbox("On##n", &(mod->material->use_normalmap));
+			//ImGui::SliderFloat("##normal", &(mod->material->normalmap_value), 0.0, 5.0);
+
+			//ImGui::EndGroup();
+
+			//ImGui::SeparatorText("Material vars");
+			//ImGui::SliderFloat("SkyReflection", &(mod->material->reflection_value), 0.0, 1.0);
+			//ImGui::SliderFloat("RefRatio", &(mod->material->refract_value), 0.0, 1.0);
+			//ImGui::SliderFloat("Shine", &(mod->material->shine_value), 0.01, 64.0);
 			
 		
 			static int e = 0;
 			ImGui::RadioButton("Phong", &e, 0); ImGui::SameLine();
 			ImGui::RadioButton("Blinn", &e, 1);
 
-			mod->material.use_blinn = e;
+			//mod->material->use_blinn = e;
 		}
 
 		if (selected && selected_p->type == CURVE) { //3 = curve
@@ -1034,9 +1081,9 @@ int main()
 
 			if (result == NFD_OKAY && selected) {
 				std::filesystem::path new_path = std::filesystem::u8path(outPath);
-				Mesh* obj_ptr = new Mesh(new_path.generic_string(), &shader, std::filesystem::path(outPath).filename().stem().string());
+				//MeshHolder* obj_ptr = new MeshHolder(new_path.generic_string(), &shader, std::filesystem::path(outPath).filename().stem().string());
 
-				selected_p->add_child(obj_ptr);
+				//selected_p->add_child(obj_ptr);
 				
 				
 
@@ -1156,7 +1203,7 @@ int main()
 
 
 ;				light->visible = show_lights;
-				shader.setVec3("pointLights[" + std::to_string(n) + "].position", light->model[3]);
+				shader.setVec3("pointLights[" + std::to_string(n) + "].position", light->transform.position);
 				shader.setVec3("pointLights[" + std::to_string(n) + "].color", light->color);
 				shader.setFloat("pointLights[" + std::to_string(n) + "].strength", light->strength);
 				shader.setFloat("pointLights[" + std::to_string(n) + "].radius", light->radius);
@@ -1286,14 +1333,10 @@ int main()
 			if (selected_p == obj && selected == true && show_wireframe_if_selected == true) {
 				obj->draw();
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				//glDisable(GL_DEPTH_TEST);
-				glm::mat4 temp_model = obj->model;
-
-				
 				shader.setFloat("emission", 0.7f);
-				obj->model = glm::scale(obj->model, glm::vec3(1.01f, 1.01f, 1.01f));
+				obj->transform.scale += glm::vec3(0.03f, 0.03f, 0.03f);
 				obj->draw();
-				obj->model = temp_model;
+				obj->transform.scale -= glm::vec3(0.03f, 0.03f, 0.03f);
 				//glEnable(GL_DEPTH_TEST);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				shader.setFloat("emission", 0.0);
@@ -1314,14 +1357,6 @@ int main()
 			}
 
 
-			if (obj->type == MESH) {
-				Mesh* mesh = static_cast<Mesh*>(obj);
-
-				if (mesh->no_model == true) {
-					objects.erase(std::remove(objects.begin(), objects.end(), obj), objects.end());
-					delete obj;
-				}
-			}
 
 		}
 		//glDisable(GL_FRAMEBUFFER_SRGB);
@@ -1410,7 +1445,7 @@ void save_scene(std::vector<BaseObject*>* tree, std::string name, Camera* camera
 		for (BaseObject* object : (*tree)) {
 			j["objects"][n]["name"] = object->name;
 			j["objects"][n]["type"] = object->type;
-			j["objects"][n]["position"] = { object->model[3].x, object->model[3].y, object->model[3].z };
+			/*j["objects"][n]["position"] = { object->model[3].x, object->model[3].y, object->model[3].z };*/
 
 			if (object->type == 1) { //light 
 				PointLight* obj = static_cast<PointLight*>(object);
@@ -1422,17 +1457,17 @@ void save_scene(std::vector<BaseObject*>* tree, std::string name, Camera* camera
 			}
 
 			if (object->type == 0) {
-				Mesh* obj = static_cast<Mesh*>(object);
-				j["objects"][n]["path"] = obj->rel_path;
+				//Mesh* obj = static_cast<Mesh*>(object);
+				//j["objects"][n]["path"] = obj->rel_path;
 
-				for (int i = 0; i < obj->models.size(); i++) {
-					j["objects"][n]["materials"][i]["texture_paths"][0] = obj->models[i]->texturesPath.diffuse_path;
-					j["objects"][n]["materials"][i]["texture_paths"][1] = obj->models[i]->texturesPath.specular_path;
-					j["objects"][n]["materials"][i]["texture_paths"][2] = obj->models[i]->texturesPath.normal_path;
-					j["objects"][n]["materials"][i]["use_texture"]["diffuse"] = obj->models[i]->material.use_diffuse;
-					j["objects"][n]["materials"][i]["use_texture"]["specular"] = obj->models[i]->material.use_specular;
-					j["objects"][n]["materials"][i]["use_texture"]["normal"] = obj->models[i]->material.use_normal;
-				}
+				//for (int i = 0; i < obj->models.size(); i++) {
+					//j["objects"][n]["materials"][i]["texture_paths"][0] = obj->models[i]->texturesPath.diffuse_path;
+					//j["objects"][n]["materials"][i]["texture_paths"][1] = obj->models[i]->texturesPath.specular_path;
+					//j["objects"][n]["materials"][i]["texture_paths"][2] = obj->models[i]->texturesPath.normal_path;
+					//j["objects"][n]["materials"][i]["use_texture"]["diffuse"] = obj->models[i]->material.use_diffuse;
+					//j["objects"][n]["materials"][i]["use_texture"]["specular"] = obj->models[i]->material.use_specular;
+					//j["objects"][n]["materials"][i]["use_texture"]["normal"] = obj->models[i]->material.use_normal;
+				//}
 			}
 
 
@@ -1467,19 +1502,19 @@ void load_scene(std::string path) {
 
 	
 			PointLight* ob = new PointLight(emission_shader_ptr, "PointLight", color, elem["strength"]);
-			ob->model[3] = glm::vec4(elem["position"][0], elem["position"][1], elem["position"][2], 1.0);
+			/*ob->model[3] = glm::vec4(elem["position"][0], elem["position"][1], elem["position"][2], 1.0);*/
 			ob->radius = elem["radius"];
 			objects.push_back(ob);
 		}
 
 		if (type == 0) {
-			Mesh* obj = new Mesh(elem["path"], shader_ptr, elem["name"]);
-			objects.push_back(obj);
+			//Mesh* obj = new Mesh(elem["path"], shader_ptr, elem["name"]);
+			//objects.push_back(obj);
 			int n = 0;
 			for (auto& elem2 : elem["materials"]) {
-				obj->models[n]->textures.diffuse = obj->models[n]->load_tex(elem2["texture_paths"][0], 0);
-				obj->models[n]->textures.specular = obj->models[n]->load_tex(elem2["texture_paths"][1], 1);
-				obj->models[n]->textures.normal = obj->models[n]->load_tex(elem2["texture_paths"][2], 2);
+				//obj->models[n]->textures.diffuse = obj->models[n]->load_tex(elem2["texture_paths"][0], 0);
+				//obj->models[n]->textures.specular = obj->models[n]->load_tex(elem2["texture_paths"][1], 1);
+				//obj->models[n]->textures.normal = obj->models[n]->load_tex(elem2["texture_paths"][2], 2);
 
 				//obj->models[n]->material.use_diffuse = elem2["use_texture"]["diffuse"];
 				//obj->models[n]->textures.specular = elem2["use_texture"]["specular"];
@@ -1498,13 +1533,14 @@ void inspector_draw_attributes(BaseObject* selected_p) {
 			ImGui::SeparatorText("Position");
 			ImGui::Text("X");
 			ImGui::SameLine();
-			ImGui::InputFloat("##x", &(selected_p->model[3][0]), 0.05f);
+			ImGui::DragFloat("##x", &(selected_p->transform.position.x));
 			ImGui::Text("Y");
 			ImGui::SameLine();
-			ImGui::InputFloat("##y", &(selected_p->model[3][1]), 0.05f);
+			ImGui::DragFloat("##y", &(selected_p->transform.position.y));
 			ImGui::Text("Z");
 			ImGui::SameLine();
-			ImGui::InputFloat("##z", &(selected_p->model[3][2]), 0.05f);
+			ImGui::DragFloat("##z", &(selected_p->transform.position.z));
+
 		}
 
 		if (attribute == Attribute::LIGHT) {
