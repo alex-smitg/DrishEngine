@@ -32,7 +32,8 @@
 #include "cube.h"
 #include "shader.h"
 
-
+#include "inspector.h"
+#include "santa_claus.h"
 
 #include "bullet/btBulletDynamicsCommon.h"
 
@@ -85,10 +86,7 @@ std::string save_scene_as = "test";
 
 std::string script = "";
 
-std::string log_data;
 
-
-void inspector_draw_attributes(BaseObject* selected_p);
 bool update_physics = false;
 
 std::vector<std::string> sky_faces = {
@@ -113,83 +111,13 @@ BaseObject* selected_p = 0;
 
 void error_callback(int error, const char* description)
 {
-	fprintf(stderr, "Error: %s\n", description);
+	fprintf(stderr, "ERROR: %s\n", description);
 	system("pause");
 }
 
 
 
-void jump_into_child(BaseObject *parent, std::vector<BaseObject*> *vector) {
-	vector->push_back(parent);
 
-
-	if (selected_p == parent && selected == true) {
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0, 1.0, 0.0, 1.0));
-	}
-	else {
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 1.0, 1.0, 1.0));
-	}
-
-
-	bool is_node_shown = ImGui::TreeNodeEx((parent->name).c_str(), ImGuiTreeNodeFlags_Leaf);
-
-	
-
-	if (is_node_shown) {
-
-		
-
-		
-		//if (parent->type == MESH) {
-		//	ImGui::Image(icon, ImVec2(16, 16));
-		//	//ImGui::SameLine();
-		//}
-		/*}
-		if (parent->type == POINT_LIGHT) {
-				ImGui::Image(icon2, ImVec2(16, 16));
-				ImGui::SameLine(24.0f);
-		}
-		if (parent->type == CURVE) {
-				ImGui::Image(icon3, ImVec2(16, 16));
-				ImGui::SameLine(24.0f);
-		}*/
-
-
-		
-
-
-		if (ImGui::IsItemClicked())
-		{
-			if (selected_p == parent && selected == true) {
-				selected = false;
-				script = "";
-			}
-			else {
-				selected_p = parent;
-				script = selected_p->script;
-				selected = true;
-				if (selected_p->type == MESH) {
-					//mod = static_cast<MeshHolder*>(selected_p)->mesh->models[0];
-				}
-
-			}
-		}
-	}
-
-	ImGui::PopStyleColor();
-
-
-
-	if (parent->children.size() != 0) {
-		for (BaseObject* child : parent->children) {
-			jump_into_child(child, vector);
-		}
-	}
-
-	if (is_node_shown) {
-	ImGui::TreePop();
-	}
-}
 
 unsigned int loadCubemap(std::vector<std::string> faces)
 {
@@ -242,7 +170,7 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 	return textureID;
 }
 
-std::string file_open_dialog() {
+std::string open_file_dialog() {
 	nfdu8char_t* outPath = NULL;
 	nfdfilteritem_t filterItem[1] = {};
 	nfdresult_t result = NFD_OpenDialogU8(&outPath, filterItem, 0, NULL);
@@ -264,9 +192,56 @@ void save_scene(std::vector<BaseObject*>* tree, std::string name, Camera* camera
 void load_scene(std::string path);
 
 
-void add_to_log(std::string text, std::string *log_data) {
-	*log_data = *log_data + text + "\n";
+void jump_into_child(BaseObject* parent, std::vector<BaseObject*>* vector) {
+	vector->push_back(parent);
+
+
+	if (selected_p == parent && selected == true) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0, 1.0, 0.0, 1.0));
+	}
+	else {
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 1.0, 1.0, 1.0));
+	}
+
+
+	bool is_node_shown = ImGui::TreeNodeEx((parent->name).c_str(), ImGuiTreeNodeFlags_Leaf);
+
+
+
+	if (true) {
+		if (ImGui::IsItemClicked())
+		{
+			if (selected_p == parent && selected == true) {
+				selected = false;
+				script = "";
+			}
+			else {
+				selected_p = parent;
+				script = selected_p->script;
+				selected = true;
+				if (selected_p->type == MESH) {
+					//mod = static_cast<MeshHolder*>(selected_p)->mesh->models[0];
+				}
+
+			}
+		}
+	}
+
+	ImGui::PopStyleColor();
+
+
+
+	if (parent->children.size() != 0) {
+		for (BaseObject* child : parent->children) {
+			jump_into_child(child, vector);
+		}
+	}
+
+	if (is_node_shown) {
+		ImGui::TreePop();
+	}
 }
+
 
 
 int main() 
@@ -318,9 +293,6 @@ int main()
 
 
 
-
-	
-	add_to_log("Hello", &log_data);
 
 	std::cout << "Hello" << "\n";
 
@@ -511,7 +483,7 @@ int main()
 	//obj3->add_child(obj4);
 	//obj3->add_child(obj5);
 
-	//world->add_child(obj6);
+	world->add_child(obj6);
 	world->add_child(obj2);
 	world->add_child(obj1);
 
@@ -680,17 +652,10 @@ int main()
 	ambient_color[1] = ambientCol.y;
 	ambient_color[2] = ambientCol.z;
 
-
-
-
-	bool one_run = true;
-
 	ImGuiID id;
-
-
-	
-
 	//test
+
+	bool oneRun = true;
 
 	float directions = 16;
 	float size = 0.01;
@@ -796,20 +761,18 @@ int main()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-
-		//docking
+		//docking 
+		
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
 		ImGuiID idd = ImGui::DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
-		if (one_run) {
+		if (oneRun) {
+			
 			ImVec2 workCenter = ImGui::GetMainViewport()->GetWorkCenter();
-			// 3. Now we'll need to create our dock node:
 			id = ImGui::GetID("DrishEngine"); // The string chosen here is arbitrary (it just gives us something to work with)
 			ImGui::DockBuilderRemoveNode(id);             // Clear any preexisting layouts associated with the ID we just chose
 			ImGui::DockBuilderAddNode(id);
-
-			ImVec2 size{ SCREEN_WIDTH, SCREEN_HEIGHT };
-			ImVec2 nodePos{ workCenter.x - size.x * 0.5f, workCenter.y - size.y * 0.5f };
-			ImGui::DockBuilderSetNodeSize(id, size);
+			ImVec2 nodePos{ workCenter.x - SCREEN_WIDTH * 0.5f, workCenter.y - SCREEN_HEIGHT * 0.5f };
+			ImGui::DockBuilderSetNodeSize(id, ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT));
 			ImGui::DockBuilderSetNodePos(id, nodePos);
 			ImGuiID dock1 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Left, 0.5f, nullptr, &idd);
 			ImGuiID dock2 = ImGui::DockBuilderSplitNode(dock1, ImGuiDir_Down, 0.75f, nullptr, &dock1);
@@ -819,33 +782,17 @@ int main()
 			ImGui::DockBuilderDockWindow("Tree", dock1);
 			ImGui::DockBuilderDockWindow("Inspector", dock2);
 			ImGui::DockBuilderDockWindow("Other", dock3);
-			ImGui::DockBuilderDockWindow("Log", dock5);
 			ImGui::DockBuilderDockWindow("Resources", dock4);
 			ImGui::DockBuilderFinish(id);
-
-
-
-
-			one_run = false;
+			oneRun = false;
 		}
-
-
-
 		
 
-
-
-		
-		ImGui::Begin("Log", 0, ImGuiWindowFlags_NoScrollbar);
-		ImGui::InputTextMultiline("##log_input", &log_data, ImGui::GetWindowSize(), ImGuiInputTextFlags_ReadOnly);
-		ImGui::End();
-
-		//ImGui::ShowDemoWindow();
 
 		ImGui::Begin("Resources");
 
 		if (ImGui::Button("Add Texture")) {
-			std::string texture_path = file_open_dialog();
+			std::string texture_path = open_file_dialog();
 			if (!texture_path.empty()) {
 				resourceManager.create_texture(texture_path);
 			}
@@ -857,7 +804,7 @@ int main()
 		}
 
 		if (ImGui::Button("Add 3d model (.obj)")) {
-			std::string model_path = file_open_dialog();
+			std::string model_path = open_file_dialog();
 			if (!model_path.empty()) {
 				resourceManager.create_mesh(model_path, &shader);
 			}
@@ -937,7 +884,6 @@ int main()
 				ImGui::SeparatorText("Actions");
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.639f, 0.153f, 0.153f, 1.0f));
 				if (ImGui::Button("Delete")) {
-					add_to_log(selected_p->name + " deleted", &log_data);
 					selected_p->remove();
 					selected = false;
 				}
@@ -1153,6 +1099,38 @@ int main()
 		glm::mat4 projection(1.0f);
 
 		projection = glm::perspective(fov / 180.0f * 3.14f, aspectRatio, 0.1f, 1000.0f);
+
+
+		
+
+
+		ImGui::Begin("rays");
+
+		double xpos = 0;
+		double ypos = 0;
+
+		glfwGetCursorPos(window, &xpos, &ypos);
+
+
+
+		
+
+		glm::vec3 worldPos = glm::unProject(glm::vec3(xpos, window_height-ypos, 1.0),
+			camera->view, projection,
+			glm::vec4(0, 0, window_width, window_height));
+		glm::vec3 rayMouse = glm::normalize(worldPos - camera->position);
+
+		ImGui::Text("world pos %f", worldPos.x);
+		ImGui::Text("ray_mouse %f,   %f,    %f", rayMouse.x, rayMouse.y, rayMouse.z);
+
+		ImGui::End();
+
+
+		//btCollisionWorld::ClosestRayResultCallback closestResults(from, to);
+		//dynamicsWorld->rayTest(camera->position, camera->position*100);
+
+		world->children[0]->transform.position = camera->position + rayMouse * 4.0f;
+
 
 
 	
@@ -1527,62 +1505,7 @@ void load_scene(std::string path) {
 }
 
 
-void inspector_draw_attributes(BaseObject* selected_p) {
-	for (Attribute attribute : selected_p->attributes) {
-		if (attribute == Attribute::POSITION) {
-			ImGui::SeparatorText("Position");
-			ImGui::Text("X");
-			ImGui::SameLine();
-			ImGui::DragFloat("##x", &(selected_p->transform.position.x));
-			ImGui::Text("Y");
-			ImGui::SameLine();
-			ImGui::DragFloat("##y", &(selected_p->transform.position.y));
-			ImGui::Text("Z");
-			ImGui::SameLine();
-			ImGui::DragFloat("##z", &(selected_p->transform.position.z));
 
-		}
-
-		if (attribute == Attribute::LIGHT) {
-			PointLight* obj = static_cast<PointLight*>(selected_p);
-			ImGui::SeparatorText("Light");
-			ImGui::SliderFloat("Radius", &(obj->radius), 0.0, 50.0);
-			ImGui::SliderFloat("Strength", &(obj->strength), 0.0, 50.0);
-			ImGui::Separator();
-
-			float color[3];
-
-			color[0] = obj->color.x;
-			color[1] = obj->color.y;
-			color[2] = obj->color.z;
-
-			ImGui::ColorPicker3("Light Color", color);
-			
-
-			obj->color = glm::vec3(color[0], color[1], color[2]);
-		}
-	}
-
-
-		
-
-		
-
-		//ImGui::Separator();
-
-		//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.639f, 0.153f, 0.153f, 1.0f));
-		//if (ImGui::Button("Delete")) {
-			//add_to_log(selected_p->name + " deleted", &log_data);
-			//delete selected_p;
-			//objects.erase(std::remove(objects.begin(), objects.end(), selected_p), objects.end());
-			//point_lights.erase(std::remove(point_lights.begin(), point_lights.end(), selected_p), point_lights.end());
-			//selected = false;
-
-		//}
-		//ImGui::PopStyleColor();
-
-
-}
 
 
 void drop_callback(GLFWwindow* window, int count, const char** paths)

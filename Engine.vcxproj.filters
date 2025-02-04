@@ -51,6 +51,12 @@
     <ClInclude Include="src\objects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\inspector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\santa_claus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\imgui_docking\imgui.cpp">
