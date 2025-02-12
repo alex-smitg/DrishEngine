@@ -103,6 +103,8 @@ Shader* shader_ptr;
 
 ResourceManager resourceManager;
 
+VertexGroup* selected_vertex_group;
+
 const float PI = 3.14;
 
 bool selected = false;
@@ -219,9 +221,9 @@ void jump_into_child(BaseObject* parent, std::vector<BaseObject*>* vector) {
 				selected_p = parent;
 				script = selected_p->script;
 				selected = true;
-				if (selected_p->type == MESH) {
-					//mod = static_cast<MeshHolder*>(selected_p)->mesh->models[0];
-				}
+				//if (selected_p->type == MESH) {
+				//	//mod = static_cast<MeshHolder*>(selected_p)->mesh->models[0];
+				//}
 
 			}
 		}
@@ -466,8 +468,14 @@ int main()
 	//Mesh* obj5 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Last");
 	MeshHolder* obj2 = new MeshHolder("C:/Users/AlexSmith/Desktop/GAME/models/plane.obj", &shader, "Phys");
 	PointLight* obj6 = new PointLight(&emission_shader, "PointLight");
+	PointLight* obj7 = new PointLight(&emission_shader, "PointLight");
 	obj6->transform.position.x = 2.0;
+
 	
+	
+
+	resourceManager.create_mesh("C:\\Users\\AlexSmith\\Desktop\\GAME\\models\\mat\\cube2.obj", &shader);
+	obj1->mesh = resourceManager.meshes[0];
 
 	
 
@@ -482,11 +490,11 @@ int main()
 	//obj1->add_child(obj3);
 	//obj3->add_child(obj4);
 	//obj3->add_child(obj5);
-
+	world->add_child(obj7);
 	world->add_child(obj6);
 	world->add_child(obj2);
 	world->add_child(obj1);
-
+	obj7->transform.position.y = 2.0;
 
 	//btCollisionShape* boxCollisionShape = new btSphereShape(1.0);
 	//btDefaultMotionState* motionstate = new btDefaultMotionState(btTransform(
@@ -799,9 +807,6 @@ int main()
 		}
 		ImGui::SameLine();
 
-		if (ImGui::Button("set mesh")) {//remove later
-			static_cast<MeshHolder*>(selected_p)->mesh = resourceManager.meshes[0];
-		}
 
 		if (ImGui::Button("Add 3d model (.obj)")) {
 			std::string model_path = open_file_dialog();
@@ -846,7 +851,13 @@ int main()
 		ImGui::BeginChild("Meshes", ImVec2(200, 0), ImGuiChildFlags_Border);
 
 		for (int i = 0; i < resourceManager.meshes.size(); i++) {
-			ImGui::Text(("Mesh" + std::to_string(i) + " vertices: " + std::to_string(resourceManager.meshes[i]->vertice_number)).c_str());
+			ImGui::Button(("Mesh" + std::to_string(i) + " vertices: " + std::to_string(resourceManager.meshes[i]->vertice_number)).c_str());
+
+			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+				ImGui::SetDragDropPayload("MESH", &i, sizeof(int));
+				ImGui::Text(("Mesh" + std::to_string(i) + " vertices: " + std::to_string(resourceManager.meshes[i]->vertice_number)).c_str());
+				ImGui::EndDragDropSource();
+			}
 		}
 
 		ImGui::EndChild();
@@ -880,7 +891,7 @@ int main()
 			inspector_draw_attributes(selected_p);
 
 
-			if (selected_p->name != "root") {
+			/*if (selected_p->name != "root") {
 				ImGui::SeparatorText("Actions");
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.639f, 0.153f, 0.153f, 1.0f));
 				if (ImGui::Button("Delete")) {
@@ -892,74 +903,113 @@ int main()
 				if (ImGui::Button("Rename")) {
 
 				}
-			}
+			}*/
 		}
 
-		
+		ImGui::ShowDemoWindow();
 
 
-		if (selected && selected_p->type == MESH && static_cast<MeshHolder*>(selected_p) && static_cast<MeshHolder*>(selected_p)->mesh != nullptr) {
+		if (selected && selected_p->type == MESH_HOLDER) {
 			MeshHolder* obj = static_cast<MeshHolder*>(selected_p);
-			ImGui::SeparatorText("Textures");
-
-			//std::vector<std::string> mat_names = obj->mesh->mat_names;
-			static int item_current_idx = 0; // Here we store our selection data as an index.
+			static int item_current_id = 0;
 
 
+			ImGui::SeparatorText("Mesh");
+			std::string text = "";
+
+			if (obj->mesh != nullptr) {
+				text = "Mesh";
+			}
+			else {
+				text = "Empty";
+			}
 
 
-	
-			//if (ImGui::BeginListBox("Materials", ImVec2(0, 50))) {
-			//	for (int n = 0; n < mat_names.size(); n++)
-			//	{
-			//		const bool is_selected = (item_current_idx == n);
-			//		if (ImGui::Selectable(mat_names[n].c_str(), is_selected)) {
-			//			item_current_idx = n;
+			ImGui::Button(text.c_str(), { 64, 64 });
+			ImGui::SameLine();
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH"))
+				{
+					IM_ASSERT(payload->DataSize == sizeof(int));
+					int mesh_i = *(const int*)payload->Data;
 
-			//			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-			//			if (is_selected) {
-			//				ImGui::SetItemDefaultFocus();
-			//				mod = obj->mesh->models[item_current_idx];
-			//			}
-			//		}
-			//		ImGui::EndListBox();
-			//	}
-			//}
-			
-			
-			//ImGui::SliderFloat("uv x", &(mod->material->uv_scale.x), 0.0, 25.0);
-			//ImGui::SliderFloat("uv y", &(mod->material->uv_scale.y), 0.0, 25.0);
-			//ImGui::Image(mod->material->diffuse_texture->id, ImVec2(64, 64));
-
-			if (ImGui::BeginDragDropTarget()) {
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
-					assert(payload->DataSize == sizeof(Texture*));
-
-					//Texture* texture = (Texture*)(payload->Data);
-					//Texture tex = *(Texture*)(payload->Data);
-					//problems with addres
-
-					//mod->material->diffuse_texture = texture;
+					obj->mesh = resourceManager.meshes[mesh_i];
 
 				}
 				ImGui::EndDragDropTarget();
 			}
+					
+			
+
+			if (obj->mesh != nullptr) {
+				if (ImGui::BeginListBox("##Materials", ImVec2(0, 50))) {
+					for (int n = 0; n < obj->mesh->vertexGroups.size(); n++)
+					{
+						const bool is_selected = (item_current_id == n);
+						if (ImGui::Selectable((obj->mesh->vertexGroups[n]->material->name + "##" + std::to_string(n)).c_str(), is_selected)) {
+							item_current_id = n;
+						}
+						if (is_selected) {
+							ImGui::SetItemDefaultFocus();
+							selected_vertex_group = obj->mesh->vertexGroups[item_current_id];
+						}
+						
+					}
+					ImGui::EndListBox();
+				}
+
+			}
+
+			if (selected_vertex_group != nullptr) {
+				if (selected_vertex_group->material != nullptr) {
+					
+					Material *material = selected_vertex_group->material;
+					VertexGroup *svg = selected_vertex_group;
+					ImGui::SeparatorText(material->name.c_str());
+
+					ImGui::SliderFloat("uv x", &(svg->material->uv_scale.x), 0.0, 25.0);
+					ImGui::SliderFloat("uv y", &(svg->material->uv_scale.y), 0.0, 25.0);
+
+					ImGui::BeginGroup();
+					ImGui::Text("Diffuse");
+					ImGui::Checkbox("Enabled", &(svg->material->use_diffuse)); ImGui::SameLine();
+					ImGui::Checkbox("Emit", &(svg->material->emit)); ImGui::SameLine();
+
+					float col[3] = { svg->material->diffuse_color.r, svg->material->diffuse_color.g, svg->material->diffuse_color.b };
+					ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit3("Color", col);
+					svg->material->diffuse_color = glm::vec3(col[0], col[1], col[2]);
+
+					ImGui::SliderFloat("##diff", &(svg->material->diffuse_value), 0.0, 1.0);
+
+					ImGui::EndGroup();
+
+				}
+				else {
+					ImGui::Button("Create new material");
+				}
+			}
+
+			//
+			//ImGui::Image(obj->mesh->vertexGroups[0]->material->diffuse_texture->id, ImVec2(64, 64));
+
+			//if (ImGui::BeginDragDropTarget()) {
+			//	if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
+			//		assert(payload->DataSize == sizeof(Texture*));
+
+			//		//Texture* texture = (Texture*)(payload->Data);
+			//		//Texture tex = *(Texture*)(payload->Data);
+			//		//problems with addres
+
+			//		//mod->material->diffuse_texture = texture;
+
+			//	}
+			//	ImGui::EndDragDropTarget();
+			//}
 
 
-			//ImGui::SameLine();
-			//ImGui::BeginGroup();
-			//ImGui::Text("Diffuse");
-			////ImGui::Checkbox("On##d", &(mod->material->use_diffuse)); ImGui::SameLine();
-			//ImGui::Checkbox("Emit", &(mod->material->emit)); ImGui::SameLine();
-
-			//float col[3] = { mod->material->diffuse_color.r, mod->material->diffuse_color.g, mod->material->diffuse_color.b };
-			//ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
-			//ImGui::ColorEdit3("Color", col);
-			//mod->material->diffuse_color = glm::vec3(col[0], col[1], col[2]);
-
-			//ImGui::SliderFloat("##diff", &(mod->material->diffuse_value), 0.0, 5.0);
-
-			//ImGui::EndGroup();
+			
 
 			//ImGui::Image(mod->material->specular_texture->id, ImVec2(64, 64));
 			//ImGui::SameLine();
@@ -985,9 +1035,9 @@ int main()
 			//ImGui::SliderFloat("Shine", &(mod->material->shine_value), 0.01, 64.0);
 			
 		
-			static int e = 0;
+			/*static int e = 0;
 			ImGui::RadioButton("Phong", &e, 0); ImGui::SameLine();
-			ImGui::RadioButton("Blinn", &e, 1);
+			ImGui::RadioButton("Blinn", &e, 1);*/
 
 			//mod->material->use_blinn = e;
 		}

@@ -3,8 +3,8 @@
 
 
 void inspector_draw_attributes(BaseObject* selected_p) {
-	for (Attribute attribute : selected_p->attributes) {
-		if (attribute == Attribute::POSITION) {
+	for (Property property : selected_p->properties) {
+		if (property == Property::TRANSFORM) {
 			ImGui::SeparatorText("Position");
 			ImGui::PushItemWidth(64.0f);
 			ImGui::Text("X");
@@ -22,7 +22,7 @@ void inspector_draw_attributes(BaseObject* selected_p) {
 
 		}
 
-		if (attribute == Attribute::LIGHT) {
+		if (property == Property::LIGHT) {
 			PointLight* obj = static_cast<PointLight*>(selected_p);
 			ImGui::SeparatorText("Light");
 			ImGui::SliderFloat("Radius", &(obj->radius), 0.0, 50.0);

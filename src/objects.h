@@ -22,8 +22,8 @@ int load_image(std::string path, GLuint *texture_id);
 
 //types : 0 == mesh
 
-enum Type {NO_TYPE, MESH, POINT_LIGHT, CURVE};
-enum Attribute {POSITION, COLOR, TEXTURE, CURVE_VERT, LIGHT};
+enum Property {MESH, LIGHT, CURVE, TRANSFORM};
+enum Type {NO, MESH_HOLDER, POINT_LIGHT};
 
 
 
@@ -61,7 +61,7 @@ public:
 
 	bool use_normalmap = false;
 	bool use_specular = false;
-	bool use_diffuse = true;
+	bool use_diffuse = false;
 	bool use_blinn = false;
 	bool emit = false;
 
@@ -109,10 +109,10 @@ public:
 
 	glm::vec3 start_position = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	Type type = NO_TYPE;
-	std::vector<Attribute> attributes;
-
+	std::vector<Property> properties;
 	std::vector<BaseObject*> children;
+
+	Type type = Type::NO;
 
 	BaseObject* parent;
 	
@@ -275,8 +275,8 @@ public:
 
 		//sol::usertype<PointLight> player_type = lua.new_usertype<PointLight>(name,
 		//sol::constructors<PointLight(Shader*, std::string, glm::vec3, GLfloat)>());
-		attributes.push_back(Attribute::POSITION);
-		attributes.push_back(Attribute::LIGHT);
+		properties.push_back(Property::TRANSFORM);
+		properties.push_back(Property::LIGHT);
 
 		type = POINT_LIGHT;
 		init();
@@ -430,7 +430,7 @@ public:
 	Bezier(Shader* shader) {
 		float i = 0.0f;
 		
-		this->type = Type::CURVE;
+		this->type = Type::NO;
 
 		name = "Curve";
 
@@ -615,7 +615,7 @@ private:
 class Mesh {
 public:
 	std::vector<std::vector<GLfloat>> models_data;
-	std::vector<VertexGroup*> vertexGroupsVector;
+	std::vector<VertexGroup*> vertexGroups;
 
 	Transform* transform;
 
@@ -626,7 +626,7 @@ public:
 	int vertice_number = 0; //
 
 	void add_vertex_group(VertexGroup* vertexGroup) {
-		vertexGroupsVector.push_back(vertexGroup);
+		vertexGroups.push_back(vertexGroup);
 
 		vertice_number += vertexGroup->get_vertices_number();
 	}
@@ -637,7 +637,7 @@ public:
 
 
 	void draw() {
-		for (VertexGroup* vertexGroup : vertexGroupsVector) {
+		for (VertexGroup* vertexGroup : vertexGroups) {
 			vertexGroup->transform = transform;
 			vertexGroup->draw();
 		}
@@ -654,10 +654,10 @@ public:
 	MeshHolder(const std::string path, Shader* shader, std::string name) : BaseObject(){
 		this->name = name;
 		this->shader = shader;
-		type = MESH;
+		type = MESH_HOLDER;
 
-		attributes.push_back(Attribute::POSITION);
-		attributes.push_back(Attribute::TEXTURE);
+		properties.push_back(Property::TRANSFORM);
+		//properties.push_back(Property::TEXTURE);
 	}
 
 	~MeshHolder() {
@@ -734,7 +734,7 @@ public:
 				
 				if (materials.size() != 0) {
 
-
+					vertexGroup->material->name = mat_names[n];
 					/*mod->material->diffuse_texture->id = mod->load_tex(materials[mat_names[n]].dif_path, 0);
 					mod->material->diffuse_color = materials[mat_names[n]].d_color;
 					if (materials[mat_names[n]].dif_path == "") {
