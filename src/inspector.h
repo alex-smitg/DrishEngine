@@ -9,15 +9,30 @@ void inspector_draw_attributes(BaseObject* selected_p) {
 			ImGui::PushItemWidth(64.0f);
 			ImGui::Text("X");
 			ImGui::SameLine();
-			ImGui::DragFloat("##x", &(selected_p->transform.position.x), 1.0f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##x", &(selected_p->transform.position.x), 0.1f, 0.0f, 0.0f, "%.2f");
 			ImGui::SameLine();
 			ImGui::Text("Y");
 			ImGui::SameLine();
-			ImGui::DragFloat("##y", &(selected_p->transform.position.y), 1.0f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##y", &(selected_p->transform.position.y), 0.1f, 0.0f, 0.0f, "%.2f");
 			ImGui::SameLine();
 			ImGui::Text("Z");
 			ImGui::SameLine();
-			ImGui::DragFloat("##z", &(selected_p->transform.position.z), 1.0f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##z", &(selected_p->transform.position.z), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::PopItemWidth();
+
+			ImGui::SeparatorText("Rotation");
+			ImGui::PushItemWidth(64.0f);
+			ImGui::Text("X");
+			ImGui::SameLine();
+			ImGui::DragFloat("##rx", &(selected_p->transform.rotation.x), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::SameLine();
+			ImGui::Text("Y");
+			ImGui::SameLine();
+			ImGui::DragFloat("##ry", &(selected_p->transform.rotation.y), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::SameLine();
+			ImGui::Text("Z");
+			ImGui::SameLine();
+			ImGui::DragFloat("##rz", &(selected_p->transform.rotation.z), 0.1f, 0.0f, 0.0f, "%.2f");
 			ImGui::PopItemWidth();
 
 		}

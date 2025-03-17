@@ -95,6 +95,17 @@
     <None Include="include\imgui_docking\.gitattributes" />
     <None Include="include\imgui_docking\.gitignore" />
     <None Include="include\imgui_docking\imgui.natstepfilter" />
+    <None Include="assets\shaders\emission.fragment" />
+    <None Include="assets\shaders\emission.vertex" />
+    <None Include="assets\shaders\screen.fragment" />
+    <None Include="assets\shaders\screen.vertex" />
+    <None Include="assets\shaders\sky.fragment" />
+    <None Include="assets\shaders\sky.vertex" />
+    <None Include="assets\shaders\space.fragment" />
+    <None Include="assets\shaders\space.vertex" />
+    <None Include="assets\shaders\standart.fragment" />
+    <None Include="assets\shaders\standart.vertex" />
+    <None Include="assets\shaders\standart_test.fragment" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="include\imgui_docking\imgui.natvis" />

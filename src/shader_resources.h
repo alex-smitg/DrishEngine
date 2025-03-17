@@ -1,10 +1,8 @@
 #pragma once
 #include <map>
 #include <string>
-
-//Shader
 std::map<std::string, std::string> shaders = {
-{"emission.fragment", R"(#version 330 core
+{"emission.fragment",R"(#version 330 core
 out vec4 FragColor;
 
 in vec3 TexCoords;
@@ -16,9 +14,7 @@ uniform float strenght;
 void main()
 {    
     FragColor = vec4(color, 1.0) * strenght;
-}
-)"},
-{"emission.vertex", R"(#version 330 core
+})"},{"emission.vertex",R"(#version 330 core
 layout (location = 0) in vec3 aPos;
 
 out vec3 TexCoords;
@@ -31,9 +27,7 @@ void main()
 {
     TexCoords = aPos;
     gl_Position = projection * view * model * vec4(aPos, 1.0);
-}  
-)"},
-{"screen.fragment", R"(#version 330 core
+}  )"},{"screen.fragment",R"(#version 330 core
 out vec4 FragColor;
   
 in vec2 TexCoords;
@@ -83,9 +77,7 @@ void main()
     Color /= Quality * Directions - 15.0;
 
     FragColor = Color + texture(screenTexture, TexCoords);;
-}  
-)"},
-{"screen.vertex", R"(#version 330 core
+}  )"},{"screen.vertex",R"(#version 330 core
 layout (location = 0) in vec2 aPos;
 layout (location = 1) in vec2 aTexCoords;
 
@@ -95,63 +87,7 @@ void main()
 {
     gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0); 
     TexCoords = aTexCoords;
-}  
-)"},
-{"screen_old", R"()"},
-{"screen.fragment", R"(#version 330 core
-out vec4 FragColor;
-  
-in vec2 TexCoords;
-
-uniform sampler2D screenTexture;
-
-const float offset = 1.0 / 300.0;  
-
-void main()
-{
-    vec2 offsets[9] = vec2[](
-        vec2(-offset,  offset), // top-left
-        vec2( 0.0f,    offset), // top-center
-        vec2( offset,  offset), // top-right
-        vec2(-offset,  0.0f),   // center-left
-        vec2( 0.0f,    0.0f),   // center-center
-        vec2( offset,  0.0f),   // center-right
-        vec2(-offset, -offset), // bottom-left
-        vec2( 0.0f,   -offset), // bottom-center
-        vec2( offset, -offset)  // bottom-right    
-    );
-
-    float kernel[9] = float[](
-    1.0 / 16, 2.0 / 16, 1.0 / 16,
-    2.0 / 16, 4.0 / 16, 2.0 / 16,
-    1.0 / 16, 2.0 / 16, 1.0 / 16  
-);
-    
-    vec3 sampleTex[9];
-    for(int i = 0; i < 9; i++)
-    {
-        sampleTex[i] = vec3(texture(screenTexture, TexCoords.st + offsets[i]));
-    }
-    vec3 col = vec3(0.0);
-    for(int i = 0; i < 9; i++)
-        col += sampleTex[i] * kernel[i];
-    
-    FragColor = vec4(col, 1.0);
-}  
-)"},
-{"screen.vertex", R"(#version 330 core
-layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec2 aTexCoords;
-
-out vec2 TexCoords;
-
-void main()
-{
-    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0); 
-    TexCoords = aTexCoords;
-}  
-)"},
-{"sky.fragment", R"(#version 330 core
+}  )"},{"sky.fragment",R"(#version 330 core
 out vec4 FragColor;
 
 in vec3 TexCoords;
@@ -163,9 +99,7 @@ uniform float value;
 void main()
 {    
     FragColor = texture(skybox, TexCoords) * value;
-}
-)"},
-{"sky.vertex", R"(#version 330 core
+})"},{"sky.vertex",R"(#version 330 core
 layout (location = 0) in vec3 aPos;
 
 out vec3 TexCoords;
@@ -177,9 +111,7 @@ void main()
 {
     TexCoords = aPos;
     gl_Position = projection * view * vec4(aPos, 1.0);
-}  
-)"},
-{"space.fragment", R"(#version 330 core
+}  )"},{"space.fragment",R"(#version 330 core
 out vec4 FragColor;
   
 in mat4 matrix;
@@ -187,9 +119,7 @@ in mat4 matrix;
 void main()
 {
     FragColor = vec4(matrix[3].x, matrix[3].y, matrix[3].z, 1.0);
-}
-)"},
-{"space.vertex", R"(#version 330 core
+})"},{"space.vertex",R"(#version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 3) in mat4 instanceMatrix;
 
@@ -204,9 +134,7 @@ void main()
     gl_Position = projection * view * instanceMatrix * vec4(aPos, 1.0); 
 
     matrix = instanceMatrix;
-}
-)"},
-{"standart.fragment", R"(#version 330 core
+})"},{"standart.fragment",R"(#version 330 core
 out vec4 FragColor;
 
 in vec2 TexCoord;
@@ -342,14 +270,8 @@ void main()
     if (emit) {
         result =  vec3(diffuse_color);
     }
-    
-
     FragColor = vec4(result, 1.0);
-}
-
-
-)"},
-{"standart.vertex", R"(#version 330 core
+})"},{"standart.vertex",R"(#version 330 core
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 aTexCoord;
 layout(location = 2) in vec3 aNormal;
@@ -384,9 +306,7 @@ void main()
     gl_Position = projection * view * vec4(FragPos, 1.0);
 
     TexCoord = aTexCoord;
-}
-)"},
-{"standart_test.fragment", R"(#version 330 core
+})"},{"standart_test.fragment",R"(#version 330 core
 
 in vec2 TexCoord; // texture coords
 in vec3 Normal;   // normal
@@ -644,6 +564,4 @@ void main() {
         reflected_light;
 
     color = vec4(result, 1);
-}
-)"},
-};
+})"},};

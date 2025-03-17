@@ -28,6 +28,9 @@
 
 #include <json.hpp>
 
+#include "bullet/btBulletDynamicsCommon.h"
+
+
 #include "objects.h"
 #include "cube.h"
 #include "shader.h"
@@ -35,7 +38,6 @@
 #include "inspector.h"
 #include "santa_claus.h"
 
-#include "bullet/btBulletDynamicsCommon.h"
 
 
 
@@ -186,9 +188,6 @@ std::string open_file_dialog() {
 }
 
 
-
-void add_mesh() {
-}
 
 void save_scene(std::vector<BaseObject*>* tree, std::string name, Camera* camera);
 void load_scene(std::string path);
@@ -364,12 +363,12 @@ int main()
 
 	bool should_close = 0;
 	std::filesystem::path project_path;
-	project_path = "C:/Users/AlexSmith/Desktop/GAME/game.drish";
+	//project_path = "C:/Users/AlexSmith/Desktop/GAME/game.drish";
 
 
 
 
-	while (project_path.empty()) {
+	while (false) {
 		glClearColor(0.0f, 0.1f, 0.0f, 1.0f); //bg color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -442,7 +441,7 @@ int main()
 		return 0;
 	}
 
-	std::cout << project_path;
+	//std::cout << project_path;
 
 
 
@@ -462,21 +461,20 @@ int main()
 	world->name = "root";
 	
 
-	MeshHolder* obj1 = new MeshHolder("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Cube");
+	MeshHolder* obj1 = new MeshHolder(&shader, "Cube");
 	//Mesh* obj3 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChild");
 	//Mesh* obj4 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChildChild");
 	//Mesh* obj5 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Last");
-	MeshHolder* obj2 = new MeshHolder("C:/Users/AlexSmith/Desktop/GAME/models/plane.obj", &shader, "Phys");
+	MeshHolder* obj2 = new MeshHolder(&shader, "Phys");
 	PointLight* obj6 = new PointLight(&emission_shader, "PointLight");
 	PointLight* obj7 = new PointLight(&emission_shader, "PointLight");
 	obj6->transform.position.x = 2.0;
 
 	
 	
-
-	resourceManager.create_mesh("C:\\Users\\AlexSmith\\Desktop\\GAME\\models\\mat\\cube2.obj", &shader);
+	resourceManager.create_mesh("C:\\Users\\Admin\\Desktop\\GAME\\models\\sphere_smooth.obj", &shader);
+	obj2->mesh = resourceManager.meshes[0];
 	obj1->mesh = resourceManager.meshes[0];
-
 	
 
 	obj6->strength = 3.0f;
@@ -492,29 +490,32 @@ int main()
 	//obj3->add_child(obj5);
 	world->add_child(obj7);
 	world->add_child(obj6);
-	world->add_child(obj2);
-	world->add_child(obj1);
+	btCollisionShape* bCS = new btSphereShape(0.5);
+	btCollisionShape* bCS2 = new btBoxShape({50, 1, 50});
+	btCollisionShape* bCS3 = new btSphereShape(0.5);
+	Transform tr;
+	tr.position.y = 5;
+	Transform tr2;
+	tr2.position.y = -5;
+	Transform tr3;
+	tr3.position.y = 0;
+	RigidBody* rgb = new RigidBody(dynamicsWorld, bCS, tr, 1);
+	RigidBody* rgb2 = new RigidBody(dynamicsWorld, bCS2, tr2, 0);
+	RigidBody* rgb3 = new RigidBody(dynamicsWorld, bCS3, tr3, 0);
+	rgb2->transform.scale.x = 100;
+	rgb2->transform.scale.z = 100;
+	
+	rgb->name = "rigidbody";
+	rgb->add_child(obj2);
+	world->add_child(rgb);
+	world->add_child(rgb2);
+	world->add_child(rgb3);
+	rgb2->name = "rgb2";
+	rgb2->add_child(obj1);
 	obj7->transform.position.y = 2.0;
 
-	//btCollisionShape* boxCollisionShape = new btSphereShape(1.0);
-	//btDefaultMotionState* motionstate = new btDefaultMotionState(btTransform(
-		//btQuaternion(0.0, 0.0, 0.0, 1.0),
-		//btVector3(obj2->model[3].x, obj2->model[3].y, obj2->model[3].z)
-	//));
-	///
-
-
-	//btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(
-		//1,                  // mass, in kg. 0 -> Static object, will never move.
-		//motionstate,
-		//boxCollisionShape,  // collision shape of body
-		//btVector3(0, 0, 0)    // local inertia
-	//);
-	//btRigidBody* rigidBody = new btRigidBody(rigidBodyCI);
-
-	//dynamicsWorld->setGravity(btVector3(0, -10, 0));
-	//dynamicsWorld->addRigidBody(rigidBody);
-
+	
+	dynamicsWorld->setGravity(btVector3(0, -10, 0));
 
 	Camera* camera = new Camera();
 
@@ -823,8 +824,9 @@ int main()
 		
 		ImGui::BeginChild("Textures", ImVec2(200, 0), ImGuiChildFlags_Border);
 
-		for (Texture* texture : resourceManager.textures) {
-			
+		for (int i = 0; i < resourceManager.textures.size(); i++) {
+			Texture *texture = resourceManager.textures[i];
+
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 			ImGui::ImageButton(("id##"+std::to_string(texture->id)).c_str(), texture->id, 
 				ImVec2(32, 32), ImVec2(0.0f,0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
@@ -832,7 +834,7 @@ int main()
 			ImGui::PopStyleVar();
 
 			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-				ImGui::SetDragDropPayload("TEXTURE", texture, sizeof(Texture*));
+				ImGui::SetDragDropPayload("TEXTURE", &i, sizeof(int));
 
 				ImGui::Image(texture->id, ImVec2(32, 32));
 				ImGui::EndDragDropSource();
@@ -906,7 +908,7 @@ int main()
 			}*/
 		}
 
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 
 		if (selected && selected_p->type == MESH_HOLDER) {
@@ -970,20 +972,111 @@ int main()
 
 					ImGui::SliderFloat("uv x", &(svg->material->uv_scale.x), 0.0, 25.0);
 					ImGui::SliderFloat("uv y", &(svg->material->uv_scale.y), 0.0, 25.0);
+					//Diffuse
+					{   
+						ImGui::BeginGroup();
+						ImGui::Text("Diffuse");
+						ImGui::Checkbox("Use texture", &(svg->material->use_diffuse)); ImGui::SameLine();
+						ImGui::Checkbox("Emit", &(svg->material->emit)); ImGui::SameLine();
 
-					ImGui::BeginGroup();
-					ImGui::Text("Diffuse");
-					ImGui::Checkbox("Enabled", &(svg->material->use_diffuse)); ImGui::SameLine();
-					ImGui::Checkbox("Emit", &(svg->material->emit)); ImGui::SameLine();
+						float col[3] = { svg->material->diffuse_color.r, svg->material->diffuse_color.g, svg->material->diffuse_color.b };
+						ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
+						ImGui::ColorEdit3("Color", col);
+						svg->material->diffuse_color = glm::vec3(col[0], col[1], col[2]);
 
-					float col[3] = { svg->material->diffuse_color.r, svg->material->diffuse_color.g, svg->material->diffuse_color.b };
-					ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
-					ImGui::ColorEdit3("Color", col);
-					svg->material->diffuse_color = glm::vec3(col[0], col[1], col[2]);
+						ImGui::SliderFloat("##diff", &(svg->material->diffuse_value), 0.0, 1.0);
 
-					ImGui::SliderFloat("##diff", &(svg->material->diffuse_value), 0.0, 1.0);
+						if (material->diffuse_texture != nullptr) {
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+							ImGui::ImageButton(("id##diff" + std::to_string(material->diffuse_texture->id)).c_str(), material->diffuse_texture->id,
+								ImVec2(64, 64), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
 
-					ImGui::EndGroup();
+							ImGui::PopStyleVar();
+						}
+						else {
+							ImGui::Button("Texture", { 64,64 });
+						}
+						if (ImGui::BeginDragDropTarget()) {
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
+								IM_ASSERT(payload->DataSize == sizeof(int));
+								int texture_i = *(const int*)payload->Data;
+
+								svg->material->use_diffuse = true;
+
+								svg->material->diffuse_texture = resourceManager.textures[texture_i];
+
+							}
+							ImGui::EndDragDropTarget();
+						}
+						ImGui::EndGroup();
+					}
+					//Specular
+					{
+						ImGui::BeginGroup();
+						ImGui::Text("Specular");
+						ImGui::Checkbox("Use texture##spec", &(svg->material->use_specular)); ImGui::SameLine();
+
+						ImGui::SliderFloat("##spec", &(svg->material->specular_value), 0.0, 1.0);
+
+						if (material->specular_texture != nullptr) {
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+							ImGui::ImageButton(("id##spec" + std::to_string(material->specular_texture->id)).c_str(), material->specular_texture->id,
+								ImVec2(64, 64), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
+
+							ImGui::PopStyleVar();
+						}
+						else {
+							ImGui::Button("Texture##spec", { 64,64 });
+						}
+						if (ImGui::BeginDragDropTarget()) {
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
+								IM_ASSERT(payload->DataSize == sizeof(int));
+								int texture_i = *(const int*)payload->Data;
+
+								svg->material->use_specular = true;
+
+								svg->material->specular_texture = resourceManager.textures[texture_i];
+
+							}
+							ImGui::EndDragDropTarget();
+						}
+						ImGui::EndGroup();
+					}
+					//Normal
+					{
+						ImGui::BeginGroup();
+						ImGui::Text("Normal");
+						ImGui::Checkbox("Use texture##normal", &(material->use_normalmap)); 
+						ImGui::SameLine();
+						ImGui::SliderFloat("##normal", &(svg->material->normalmap_value), 0.0, 1.0);
+
+						if (material->normalmap_texture != nullptr) {
+							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+							ImGui::ImageButton(("id##normal" + std::to_string(material->normalmap_texture->id)).c_str(), material->normalmap_texture->id,
+								ImVec2(64, 64), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
+
+							ImGui::PopStyleVar();
+						}
+						else {
+							ImGui::Button("Texture##normal", { 64,64 });
+						}
+						if (ImGui::BeginDragDropTarget()) {
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
+								IM_ASSERT(payload->DataSize == sizeof(int));
+								int texture_i = *(const int*)payload->Data;
+
+								svg->material->use_normalmap = true;
+
+								svg->material->normalmap_texture = resourceManager.textures[texture_i];
+
+							}
+							ImGui::EndDragDropTarget();
+						}
+						ImGui::EndGroup();
+					}
+
+					ImGui::SliderFloat("Shine", &(material->shine_value), 0.0, 25.0);
+
 
 				}
 				else {
@@ -994,19 +1087,7 @@ int main()
 			//
 			//ImGui::Image(obj->mesh->vertexGroups[0]->material->diffuse_texture->id, ImVec2(64, 64));
 
-			//if (ImGui::BeginDragDropTarget()) {
-			//	if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
-			//		assert(payload->DataSize == sizeof(Texture*));
-
-			//		//Texture* texture = (Texture*)(payload->Data);
-			//		//Texture tex = *(Texture*)(payload->Data);
-			//		//problems with addres
-
-			//		//mod->material->diffuse_texture = texture;
-
-			//	}
-			//	ImGui::EndDragDropTarget();
-			//}
+			//
 
 
 			
@@ -1063,36 +1144,12 @@ int main()
 
 		ImGui::End();
 
-
+		static float sky_val = 1.0;
 		//other 
 		ImGui::Begin("Other", 0, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::SeparatorText("Add");
 
-		if (ImGui::Button("Add .obj model")) {
-			nfdu8char_t* outPath = NULL;
-
-			nfdfilteritem_t filterItem[1] = { { "Models", "obj" } };
-			nfdresult_t result = NFD_OpenDialogU8(&outPath, filterItem, 1, NULL);
-
-			if (result == NFD_OKAY && selected) {
-				std::filesystem::path new_path = std::filesystem::u8path(outPath);
-				//MeshHolder* obj_ptr = new MeshHolder(new_path.generic_string(), &shader, std::filesystem::path(outPath).filename().stem().string());
-
-				//selected_p->add_child(obj_ptr);
-				
-				
-
-				free(outPath);
-			}
-			else if (result == NFD_CANCEL) {
-				puts("User pressed cancel.");
-			}
-			else {
-				printf("Error: %s\n", NFD_GetError());
-			}
-		}
-		ImGui::SameLine();
 		if (ImGui::Button("Add point light")) {
 			PointLight* ob = new PointLight(&emission_shader, "PointLight");
 			
@@ -1102,7 +1159,17 @@ int main()
 
 		}
 
+		if (ImGui::Button("Add meshHolder")) {
+			MeshHolder* ob = new MeshHolder(&shader, "MeshHolder");
 
+			if (selected) {
+				selected_p->add_child(ob);
+			}
+
+		}
+
+
+		ImGui::SliderFloat("Sky Value", &sky_val, 0.0, 1.0);
 		
 		ImGui::SeparatorText("Scene");
 		ImGui::Text("Drag and drop .scene file to load it");
@@ -1189,7 +1256,7 @@ int main()
 		sky_shader.Use();
 		sky_shader.setMat4("projection", projection);
 		sky_shader.setMat4("view", view2);
-		sky_shader.setFloat("value", 1.0);
+		sky_shader.setFloat("value", sky_val);
 
 
 		glBindVertexArray(SKY_VAO);
@@ -1215,7 +1282,9 @@ int main()
 		shader.setVec3("viewPos", camera->position);
 		shader.setMat4("projection", projection); 
 		shader.setMat4("view", camera->view);
-		shader.setFloat("sky_val", 1.0);
+		shader.setFloat("sky_val", sky_val);
+
+		
 		
 		//test
 		if (point_lights.size() > point_lights_max_size) {
@@ -1230,8 +1299,7 @@ int main()
 				PointLight* light = static_cast<PointLight*>(obj);
 
 
-;				light->visible = show_lights;
-				shader.setVec3("pointLights[" + std::to_string(n) + "].position", light->transform.position);
+				shader.setVec3("pointLights[" + std::to_string(n) + "].position", light->transform.position + light->global_position);
 				shader.setVec3("pointLights[" + std::to_string(n) + "].color", light->color);
 				shader.setFloat("pointLights[" + std::to_string(n) + "].strength", light->strength);
 				shader.setFloat("pointLights[" + std::to_string(n) + "].radius", light->radius);
@@ -1289,9 +1357,9 @@ int main()
 		//obj1->model = glm::translate(obj1->model, glm::vec3(l->GetPoint(test).x, l->GetPoint(test).y, l->GetPoint(test).z)); //rem
 		//obj1->model = glm::scale(obj1->model, glm::vec3(0.1, 0.1, 0.1));
 
-		//if (update_physics) {
-			//dynamicsWorld->stepSimulation(1.0f / 60.0f, 10);
-		//}
+		if (update_physics) {
+			dynamicsWorld->stepSimulation(1.0f / 60.0f);
+		}
 		
 		//btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[0];
 		//btRigidBody * body = btRigidBody::upcast(obj);

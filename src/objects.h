@@ -37,7 +37,13 @@ std::string increment_string(std::string str) {
 
 }
 
-class Texture {
+class Resource {
+public:
+	std::string name;
+};
+
+
+class Texture : public Resource {
 public:
 	GLuint id;
 	std::string path;
@@ -48,9 +54,9 @@ public:
 	//}
 };
 
-class Material {
+class Material : public Resource {
 public:
-	float normalmap_value = 0.0f;
+	float normalmap_value = 1.0f;
 	float specular_value = 1.0f;
 	float reflection_value = 0.0f;
 	float diffuse_value = 1.0f;
@@ -67,11 +73,11 @@ public:
 
 	glm::vec3 diffuse_color = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	std::string name;
 
 	Texture* diffuse_texture;
 	Texture* specular_texture;
 	Texture* normalmap_texture;
+
 };
 
 
@@ -89,15 +95,18 @@ public:
 		glm::mat4 matrix(1.0f);
 		matrix = glm::translate(matrix, position);
 
-		//matrix = glm::rotate(matrix, rotation.x, glm::vec3(1, 0, 0));
-		//matrix = glm::rotate(matrix, rotation.y, glm::vec3(0, 1, 0));
-		//matrix = glm::rotate(matrix, rotation.z, glm::vec3(0, 0, 1));
+		matrix = glm::rotate(matrix, rotation.x, glm::vec3(1, 0, 0));
+		matrix = glm::rotate(matrix, rotation.y, glm::vec3(0, 1, 0));
+		matrix = glm::rotate(matrix, rotation.z, glm::vec3(0, 0, 1));
 
 		matrix = glm::scale(matrix, scale);
 
 		return matrix;
 	}
 };
+
+
+
 
 
 class BaseObject {
@@ -107,7 +116,7 @@ public:
 	std::string name;
 	std::string script = "";
 
-	glm::vec3 start_position = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 global_position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	std::vector<Property> properties;
 	std::vector<BaseObject*> children;
@@ -129,6 +138,7 @@ public:
 	}
 
 	virtual void update() {
+		
 		if (!script.empty()) {
 			/*lua["pos_x"] = model[3].x;
 			lua["pos_y"] = model[3].y;
@@ -162,7 +172,10 @@ public:
 
 		for (BaseObject* baseObject: children) {
 			//baseObject->transform.position = start_position;
+			baseObject->global_position = glm::vec3(0.0f, 0.0f, 0.0f);
+			baseObject->global_position = global_position + baseObject->transform.position;
 		}
+		
 
 	
 		
@@ -236,6 +249,76 @@ public:
 
 
 
+class RigidBody : public BaseObject {
+public:
+	btCollisionShape* collisionShape;
+	Transform transform;
+	btRigidBody* rigidBody;
+
+	RigidBody(btDiscreteDynamicsWorld* dynamicsWorld, btCollisionShape* collisionShape, Transform transform, int mass) {
+		properties.push_back(Property::TRANSFORM);
+
+		this->transform = transform;
+
+		this->collisionShape = collisionShape;
+		btDefaultMotionState* motionstate = new btDefaultMotionState(btTransform(
+			btQuaternion(0.0, 0.0, 0.0, 1.0),
+			btVector3(transform.position.x, transform.position.y, transform.position.z)
+		));
+
+
+		btRigidBody::btRigidBodyConstructionInfo rigidbodyci(
+			mass,                  // mass, in kg. 0 -> static object, will never move.
+			motionstate,
+			collisionShape,  // collision shape of body
+			btVector3(0, 0, 0)    // local inertia
+		);
+		rigidBody = new btRigidBody(rigidbodyci);
+
+
+		dynamicsWorld->addRigidBody(rigidBody);
+	}
+
+	void update() { 
+		BaseObject::update();
+
+		
+
+		btTransform trans;
+		rigidBody->getMotionState()->getWorldTransform(trans);
+
+		//rigidBody->applyCentralForce(btVector3(0.01, 0.0, 0.0));
+
+
+		for (BaseObject *ch : children) {
+			ch->transform = transform;
+		}
+
+		transform.position.x = trans.getOrigin().getX();
+		transform.position.y = trans.getOrigin().getY();
+		transform.position.z = trans.getOrigin().getZ();
+
+		//obj2->model[3][0] = trans.getOrigin().getX();
+		//obj2->model[3][1] = trans.getOrigin().getY();
+		//obj2->model[3][2] = trans.getOrigin().getZ();
+
+		//obj2->rotation.x = trans.getRotation().getX();
+		//obj2->rotation.y = trans.getRotation().getY();
+		//obj2->rotation.z = trans.getRotation().getZ();
+
+	}
+};
+
+
+class PhysicsColission {
+	btCollisionShape* collision_shape;
+
+
+
+
+};
+
+
 
 class Camera {
 public:
@@ -286,7 +369,9 @@ public:
 	void draw() override {
 		shader->Use();
 		shader->setVec3("color", color);
+		transform.position += global_position;
 		shader->setMat4("model", transform.get_matrix());
+		transform.position -= global_position;
 		shader->setFloat("strenght", strength);
 
 		if (visible) {
@@ -298,6 +383,7 @@ public:
 	}
 
 	void update() override {
+
 		if (!script.empty()) {
 			/*lua["pos_x"] = model[3].x;
 			lua["pos_y"] = model[3].y;
@@ -566,10 +652,26 @@ public:
 			shader->setBool("use_blinn", material->use_blinn);
 			shader->setVec2("uv_scale", material->uv_scale);
 			shader->setInt("emit", material->emit);
+
+			if (material->diffuse_texture != nullptr) {
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, material->diffuse_texture->id);
+			}
+
+			if (material->specular_texture != nullptr) {
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, material->specular_texture->id);
+			}
+
+			if (material->normalmap_texture != nullptr) {
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D, material->normalmap_texture->id);
+			}
+
+		
+		
 		}
 
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, material->diffuse_texture->id);
 		//glActiveTexture(GL_TEXTURE1);
 		//glBindTexture(GL_TEXTURE_2D, material->specular_texture->id);
 		//glActiveTexture(GL_TEXTURE2);
@@ -612,7 +714,7 @@ private:
 
 
 
-class Mesh {
+class Mesh : public Resource {
 public:
 	std::vector<std::vector<GLfloat>> models_data;
 	std::vector<VertexGroup*> vertexGroups;
@@ -642,6 +744,7 @@ public:
 			vertexGroup->draw();
 		}
 	}
+
 };
 
 
@@ -651,7 +754,7 @@ public:
 	Mesh* mesh = nullptr;
 
 
-	MeshHolder(const std::string path, Shader* shader, std::string name) : BaseObject(){
+	MeshHolder(Shader* shader, std::string name) : BaseObject(){
 		this->name = name;
 		this->shader = shader;
 		type = MESH_HOLDER;
@@ -663,11 +766,16 @@ public:
 	~MeshHolder() {
 	}
 
+
+
+
 	void draw() override {
 		if (mesh != nullptr) {
 			shader->Use();
 			mesh->transform = &transform;
+			mesh->transform->position += global_position;
 			mesh->draw();
+			mesh->transform->position -= global_position;
 		}
 
 		

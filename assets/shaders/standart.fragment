@@ -25,7 +25,7 @@ uniform float normal_bump;
 uniform float dif;
 
 
-uniform float uv_scale;
+uniform vec2 uv_scale;
 
 uniform float sky_val;
 
@@ -134,9 +134,5 @@ void main()
     if (emit) {
         result =  vec3(diffuse_color);
     }
-    
-
     FragColor = vec4(result, 1.0);
 }
-
-
