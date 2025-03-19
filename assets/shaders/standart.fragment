@@ -126,10 +126,8 @@ void main()
     vec3 R = refract(-viewDir, normalize(-norm), ref_ratio);
     vec3 refl = texture(skybox, R).rgb;
     result += refl * reflection * sky_val;
-
-    if (use_diffuse) {
-        result += ambient;
-    } 
+    result += ambient;
+ 
 
     if (emit) {
         result =  vec3(diffuse_color);

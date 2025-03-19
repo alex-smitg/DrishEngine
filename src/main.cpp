@@ -466,6 +466,7 @@ int main()
 	//Mesh* obj4 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChildChild");
 	//Mesh* obj5 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Last");
 	MeshHolder* obj2 = new MeshHolder(&shader, "Phys");
+	MeshHolder* sphere = new MeshHolder(&shader, "Sphere");
 	PointLight* obj6 = new PointLight(&emission_shader, "PointLight");
 	PointLight* obj7 = new PointLight(&emission_shader, "PointLight");
 	obj6->transform.position.x = 2.0;
@@ -475,6 +476,7 @@ int main()
 	resourceManager.create_mesh("C:\\Users\\Admin\\Desktop\\GAME\\models\\sphere_smooth.obj", &shader);
 	obj2->mesh = resourceManager.meshes[0];
 	obj1->mesh = resourceManager.meshes[0];
+	sphere->mesh = resourceManager.meshes[0];
 	
 
 	obj6->strength = 3.0f;
@@ -497,22 +499,26 @@ int main()
 	tr.position.y = 5;
 	Transform tr2;
 	tr2.position.y = -5;
+	tr.position.x = 0.5;
 	Transform tr3;
 	tr3.position.y = 0;
 	RigidBody* rgb = new RigidBody(dynamicsWorld, bCS, tr, 1);
 	RigidBody* rgb2 = new RigidBody(dynamicsWorld, bCS2, tr2, 0);
-	RigidBody* rgb3 = new RigidBody(dynamicsWorld, bCS3, tr3, 0);
-	rgb2->transform.scale.x = 100;
-	rgb2->transform.scale.z = 100;
+	RigidBody* rgb3 = new RigidBody(dynamicsWorld, bCS3, tr3, 5);
+	obj1->transform.scale.x = 100;
+	obj1->transform.scale.z = 100;
 	
 	rgb->name = "rigidbody";
 	rgb->add_child(obj2);
 	world->add_child(rgb);
 	world->add_child(rgb2);
+	rgb3->add_child(sphere);
 	world->add_child(rgb3);
 	rgb2->name = "rgb2";
 	rgb2->add_child(obj1);
 	obj7->transform.position.y = 2.0;
+
+	
 
 	
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));

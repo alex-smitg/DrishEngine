@@ -112,6 +112,7 @@ public:
 class BaseObject {
 public:
 	Transform transform;
+	Transform global_transform;
 
 	std::string name;
 	std::string script = "";
@@ -170,11 +171,10 @@ public:
 
 
 
-		for (BaseObject* baseObject: children) {
-			//baseObject->transform.position = start_position;
-			baseObject->global_position = glm::vec3(0.0f, 0.0f, 0.0f);
-			baseObject->global_position = global_position + baseObject->transform.position;
-		}
+		/*for (BaseObject* baseObject: children) {
+			baseObject->transform.position = start_position;
+			baseObject->global_transform = baseObject->transform + global_transform;
+		}*/
 		
 
 	
@@ -252,7 +252,6 @@ public:
 class RigidBody : public BaseObject {
 public:
 	btCollisionShape* collisionShape;
-	Transform transform;
 	btRigidBody* rigidBody;
 
 	RigidBody(btDiscreteDynamicsWorld* dynamicsWorld, btCollisionShape* collisionShape, Transform transform, int mass) {
@@ -288,15 +287,13 @@ public:
 		rigidBody->getMotionState()->getWorldTransform(trans);
 
 		//rigidBody->applyCentralForce(btVector3(0.01, 0.0, 0.0));
-
-
-		for (BaseObject *ch : children) {
+		/*for (BaseObject *ch : children) {
 			ch->transform = transform;
-		}
+		}*/
 
-		transform.position.x = trans.getOrigin().getX();
-		transform.position.y = trans.getOrigin().getY();
-		transform.position.z = trans.getOrigin().getZ();
+		this->transform.position.x = trans.getOrigin().getX();
+		this->transform.position.y = trans.getOrigin().getY();
+		this->transform.position.z = trans.getOrigin().getZ();
 
 		//obj2->model[3][0] = trans.getOrigin().getX();
 		//obj2->model[3][1] = trans.getOrigin().getY();
@@ -369,9 +366,16 @@ public:
 	void draw() override {
 		shader->Use();
 		shader->setVec3("color", color);
-		transform.position += global_position;
-		shader->setMat4("model", transform.get_matrix());
-		transform.position -= global_position;
+
+		Transform temp;
+		temp.position.x = parent->transform.position.x + transform.position.x;
+		temp.position.y = parent->transform.position.y + transform.position.y;
+		temp.position.z = parent->transform.position.z + transform.position.z;
+
+		temp.scale = transform.scale;
+		temp.rotation = transform.rotation;
+
+		shader->setMat4("model", temp.get_matrix());
 		shader->setFloat("strenght", strength);
 
 		if (visible) {
@@ -613,6 +617,8 @@ public:
 	Transform* transform;
 	Material* material = nullptr;
 
+	Transform temp;
+
 
 	//change it later;
 	int vertex_stride = 14 * sizeof(GLfloat); //vertices = {{x, y, z, u, v, nx, ny, nz, tx, ty, tz, bx, by, bz}, ....} 
@@ -636,7 +642,9 @@ public:
 	}
 
 	void draw() {
-		shader->setMat4("model", transform->get_matrix());
+		
+
+		shader->setMat4("model", temp.get_matrix());
 
 		if (material != nullptr) {
 			shader->setFloat("normal_bump", material->normalmap_value);
@@ -724,6 +732,8 @@ public:
 	std::vector<std::string> mat_names;
 	std::map<std::string, Mat> materials;
 
+	Transform temp;
+
 
 	int vertice_number = 0; //
 
@@ -739,7 +749,9 @@ public:
 
 
 	void draw() {
+
 		for (VertexGroup* vertexGroup : vertexGroups) {
+			vertexGroup->temp = temp;
 			vertexGroup->transform = transform;
 			vertexGroup->draw();
 		}
@@ -772,15 +784,24 @@ public:
 	void draw() override {
 		if (mesh != nullptr) {
 			shader->Use();
+
+			Transform temp;
+			temp.position.x = parent->transform.position.x + transform.position.x;
+			temp.position.y = parent->transform.position.y + transform.position.y;
+			temp.position.z = parent->transform.position.z + transform.position.z;
+
+			temp.scale = transform.scale;
+			temp.rotation = transform.rotation;
+
+
+			mesh->temp = temp;
 			mesh->transform = &transform;
-			mesh->transform->position += global_position;
 			mesh->draw();
-			mesh->transform->position -= global_position;
 		}
 
 		
 	}
-
+	
 
 };
 
