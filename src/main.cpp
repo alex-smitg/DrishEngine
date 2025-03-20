@@ -550,6 +550,9 @@ int main()
 
 	
 	std::vector<PointLight*> point_lights;
+
+	//std::vector<>
+
 	int point_lights_max_size = 64;
 
 
@@ -936,6 +939,35 @@ int main()
 
 		//ImGui::ShowDemoWindow();
 
+		if (selected && selected_p->type == DIRECTIONAL_LIGHT) {
+			DirectionalLight* obj = static_cast<DirectionalLight*>(selected_p);
+
+			ImGui::SeparatorText("Direction");
+			ImGui::PushItemWidth(64.0f);
+			ImGui::Text("X");
+			ImGui::SameLine();
+			ImGui::DragFloat("##xd", &(obj->direction.x), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::SameLine();
+			ImGui::Text("Y");
+			ImGui::SameLine();
+			ImGui::DragFloat("##yd", &(obj->direction.y), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::SameLine();
+			ImGui::Text("Z");
+			ImGui::SameLine();
+			ImGui::DragFloat("##zd", &(obj->direction.z), 0.1f, 0.0f, 0.0f, "%.2f");
+
+			float color[3];
+
+			color[0] = obj->color.x;
+			color[1] = obj->color.y;
+			color[2] = obj->color.z;
+
+			ImGui::ColorPicker3("Light Color", color);
+
+
+			obj->color = glm::vec3(color[0], color[1], color[2]);
+		}
+
 
 		if (selected && selected_p->type == MESH_HOLDER) {
 			MeshHolder* obj = static_cast<MeshHolder*>(selected_p);
@@ -1185,6 +1217,16 @@ int main()
 
 		}
 
+		if (ImGui::Button("Add dir light")) {
+			DirectionalLight* ob = new DirectionalLight(&emission_shader, "DirLight");
+
+			if (selected) {
+				selected_p->add_child(ob);
+			}
+
+		}
+
+
 		if (ImGui::Button("Add meshHolder")) {
 			MeshHolder* ob = new MeshHolder(&shader, "MeshHolder");
 
@@ -1320,7 +1362,9 @@ int main()
 		
 		
 		int point_lights_size = 0;
+		int directional_lights_number = 0;
 		int n = 0;
+		int n2 = 0;
 		for (BaseObject* obj : treeObjects) {
 			if (obj->type == POINT_LIGHT) {
 				PointLight* light = static_cast<PointLight*>(obj);
@@ -1333,8 +1377,20 @@ int main()
 				n += 1;
 				point_lights_size += 1;
 			}
+
+			if (obj->type == DIRECTIONAL_LIGHT) {
+				DirectionalLight* light = static_cast<DirectionalLight*>(obj);
+
+				shader.setVec3("directionalLights[" + std::to_string(n2) + "].direction", light->direction);
+				shader.setVec3("directionalLights[" + std::to_string(n2) + "].color", light->color);
+				shader.setFloat("directionalLights[" + std::to_string(n2) + "].strength", light->strength);
+				directional_lights_number++;
+				n2++;
+			}
 		}
 		shader.setInt("light_number", point_lights_size);
+		shader.setInt("directional_light_number", directional_lights_number);
+		
 
 
 		ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -1343,6 +1399,7 @@ int main()
 			ImGui::Text("Project Name:");
 			std::string filename = project_path.filename().string();
 			ImGui::Text(filename.c_str());
+			ImGui::Text("LN %f", directional_lights_number);
 			ImGui::Text("Light Number %i / %i", point_lights_size, point_lights_max_size);
 
 
