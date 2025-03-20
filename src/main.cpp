@@ -38,7 +38,7 @@
 #include "inspector.h"
 #include "santa_claus.h"
 
-
+#include "bulletDebugDraw.h"
 
 
 
@@ -292,7 +292,7 @@ int main()
 	//--------------------------------------------------------------
 		
 
-
+	BulletDebugDraw* bulletDebugDraw = new BulletDebugDraw();
 
 
 	std::cout << "Hello" << "\n";
@@ -332,6 +332,8 @@ int main()
 	// The world.
 	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
+
+	dynamicsWorld->setDebugDrawer(bulletDebugDraw);
 	//-----------------------------------------------------------------------
 
 
@@ -471,9 +473,27 @@ int main()
 	PointLight* obj7 = new PointLight(&emission_shader, "PointLight");
 	obj6->transform.position.x = 2.0;
 
-	
-	
+
+	//WARNING: need to be removed to build;
 	resourceManager.create_mesh("C:\\Users\\Admin\\Desktop\\GAME\\models\\sphere_smooth.obj", &shader);
+	resourceManager.create_texture("C:\\Users\\Admin\\Desktop\\GAME\\images\\diff.tga");
+
+	for (int x = 0; x < 25; x++) {
+		MeshHolder* obj = new MeshHolder(&shader, "ShpereC");
+		obj->mesh = resourceManager.meshes[0];
+		obj->mesh->vertexGroups[0]->material->diffuse_texture = resourceManager.textures[0];
+		obj->mesh->vertexGroups[0]->material->use_diffuse = true;
+		Transform transform;
+		btCollisionShape* collisionShape = new btSphereShape(1);
+		transform.position.y = x*3;
+		RigidBody *rigidBody = new RigidBody(dynamicsWorld, collisionShape, transform, 10);
+
+		rigidBody->add_child(obj);
+		world->add_child(rigidBody);
+	}
+	
+	
+	
 	obj2->mesh = resourceManager.meshes[0];
 	obj1->mesh = resourceManager.meshes[0];
 	sphere->mesh = resourceManager.meshes[0];
@@ -492,9 +512,9 @@ int main()
 	//obj3->add_child(obj5);
 	world->add_child(obj7);
 	world->add_child(obj6);
-	btCollisionShape* bCS = new btSphereShape(0.5);
+	btCollisionShape* bCS = new btSphereShape(1);
 	btCollisionShape* bCS2 = new btBoxShape({50, 1, 50});
-	btCollisionShape* bCS3 = new btSphereShape(0.5);
+	btCollisionShape* bCS3 = new btSphereShape(1);
 	Transform tr;
 	tr.position.y = 5;
 	Transform tr2;
@@ -1279,6 +1299,7 @@ int main()
 		emission_shader.setMat4("view", camera->view);
 		//emission_shader.setVec3("color", glm::vec3(ambient_color[0], ambient_color[1], ambient_color[2]));
 
+		\
 		// shader standart
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
@@ -1471,7 +1492,22 @@ int main()
 		//glClear(GL_COLOR_BUFFER_BIT);
 
 
+		emission_shader.Use();
+		emission_shader.setMat4("projection", projection);
+		emission_shader.setMat4("view", camera->view);
+		//emission_shader.setVec3("color", glm::vec3(ambient_color[0], ambient_color[1], ambient_color[2]));
 
+		emission_shader.setVec3("color", glm::vec3(1.0, 0.0, 0.0));
+		
+
+		static bool debugDraw = false;
+
+		ImGui::Begin("debug draw");
+		ImGui::Checkbox("Physics Collisions Draw", &debugDraw);
+		ImGui::End();
+		if (debugDraw == true) {
+			dynamicsWorld->debugDrawWorld();
+		}
 
 	
 		//screen_shader.Use();

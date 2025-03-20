@@ -299,9 +299,9 @@ public:
 		//obj2->model[3][1] = trans.getOrigin().getY();
 		//obj2->model[3][2] = trans.getOrigin().getZ();
 
-		//obj2->rotation.x = trans.getRotation().getX();
-		//obj2->rotation.y = trans.getRotation().getY();
-		//obj2->rotation.z = trans.getRotation().getZ();
+		transform.rotation.x = trans.getRotation().getX();
+		transform.rotation.y = trans.getRotation().getY();
+		transform.rotation.z = trans.getRotation().getZ();
 
 	}
 };

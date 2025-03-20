@@ -57,6 +57,9 @@
     <ClInclude Include="src\santa_claus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\bulletDebugDraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\imgui_docking\imgui.cpp">

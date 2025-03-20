@@ -103,29 +103,31 @@ vec4 calculatePointLight(PointLight light, vec3 norm, vec3 FragPos, vec3 viewDir
 
 void main()
 {
-   
     vec2 new_TexCoord = uv_scale * TexCoord;
-
     vec3 norm = texture(nText, vec2(new_TexCoord.x, 1.0 - new_TexCoord.y)).rgb ;
     norm = norm * 2.0 - 1.0;
     norm.xy *= normal_bump;
     norm = normalize(TBN * norm);
+
     if(normal_bump < 0.01 || use_normal == false) {
         norm = normalize(Normal);
     }
+
     vec3 viewDir = normalize(viewPos - FragPos);
 
     vec3 result = vec3(0.0, 0.0, 0.0);
 
     vec3 ambient = lightColor * sky_val;
-    ambient  = ambient * texture(oText, vec2(new_TexCoord.x, 1.0 - new_TexCoord.y)).rgb;
 
+    if (use_diffuse) {
+        ambient  = ambient * texture(oText, vec2(new_TexCoord.x, 1.0 - new_TexCoord.y)).rgb;
+    }
     for(int i = 0; i < light_number; i++)
         result += calculatePointLight(pointLights[i], norm, FragPos, viewDir, new_TexCoord).rgb;    
 
     vec3 R = refract(-viewDir, normalize(-norm), ref_ratio);
     vec3 refl = texture(skybox, R).rgb;
-    result += refl * reflection * sky_val;
+    //result += refl * reflection * sky_val;
     result += ambient;
  
 
