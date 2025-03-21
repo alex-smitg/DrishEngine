@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <filesystem>
 
+#include "transform.h"
+
 #include <nfd.h>
 #pragma comment(lib, "opengl32.lib")
 
@@ -40,6 +42,9 @@
 
 #include "bulletDebugDraw.h"
 
+#include "resource_manager.h"
+
+#include "camera.h"
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
