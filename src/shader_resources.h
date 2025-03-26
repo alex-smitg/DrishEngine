@@ -2,7 +2,22 @@
 #include <map>
 #include <string>
 std::map<std::string, std::string> shaders = {
-{"emission.fragment",R"(#version 330 core
+{"depth.fragment",R"(#version 330 core
+out vec4 FragColor;
+
+void main()
+{
+	FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+	gl_FragDepth = gl_FragCoord.z;
+})"},{"depth.vertex",R"(#version 330 core
+layout (location = 0) in vec3 aPos;
+uniform mat4 lightSpaceMatrix;
+uniform mat4 model;
+
+void main()
+{
+	gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
+})"},{"emission.fragment",R"(#version 330 core
 out vec4 FragColor;
 
 in vec3 TexCoords;
@@ -142,6 +157,8 @@ in vec3 Normal;
 in vec3 FragPos;
 in mat3 TBN;
 
+in vec4 fragPosLightSpace;
+
 uniform bool use_normal;
 uniform bool use_specular;
 uniform bool use_diffuse;
@@ -172,6 +189,7 @@ uniform sampler2D oText;
 uniform sampler2D sText;
 uniform sampler2D nText;
 uniform samplerCube skybox;
+uniform sampler2D shadowMap;
 
 struct PointLight {    
     vec3 position;
@@ -273,7 +291,16 @@ vec4 calculatePointLight(PointLight light, vec3 norm, vec3 FragPos, vec3 viewDir
     return vec4(result, 1.0) ;
 }
 
-
+float calculateShadow(vec4 fragPosLightSpace) {
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+    projCoords.x = projCoords.x;
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    float currentDepth = projCoords.z;
+    float bias = 0.005;
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    return shadow;
+}
 
 
 
@@ -307,15 +334,19 @@ void main()
 
     vec3 R = refract(-viewDir, normalize(-norm), ref_ratio);
     vec3 refl = texture(skybox, R).rgb;
-    //result += refl * reflection * sky_val;
-    result += ambient;
- 
+    result += refl * reflection * sky_val;
+
+    float shadow = calculateShadow(fragPosLightSpace);
+
+    result = ambient + (1.0-shadow) * result;
+
 
     if (emit) {
-        result =  vec3(diffuse_color);
+        result = vec3(diffuse_color);
     }
     FragColor = vec4(result, 1.0);
-})"},{"standart.vertex",R"(#version 330 core
+}
+)"},{"standart.vertex",R"(#version 330 core
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 aTexCoord;
 layout(location = 2) in vec3 aNormal;
@@ -328,10 +359,12 @@ out vec2 TexCoord;
 out vec3 FragPos;
 out vec3 Normal;
 out mat3 TBN;
+out vec4 fragPosLightSpace;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
@@ -346,6 +379,9 @@ void main()
 
     FragPos = vec3(model * vec4(position, 1.0));
     Normal = modelVector * aNormal;
+
+
+    fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 
     gl_Position = projection * view * vec4(FragPos, 1.0);
 

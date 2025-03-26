@@ -28,7 +28,7 @@
 #include "bezier.h"
 
 
-int load_image(std::string path, GLuint *texture_id) {
+int load_image(std::string path, GLuint *texture_id) { 
 	int width, height, nrChannels;
 
 

@@ -32,6 +32,7 @@ public:
 		);
 		rigidBody = new btRigidBody(rigidbodyci);
 
+		
 
 		dynamicsWorld->addRigidBody(rigidBody);
 	}

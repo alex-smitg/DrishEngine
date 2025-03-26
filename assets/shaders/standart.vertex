@@ -11,10 +11,12 @@ out vec2 TexCoord;
 out vec3 FragPos;
 out vec3 Normal;
 out mat3 TBN;
+out vec4 fragPosLightSpace;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
@@ -29,6 +31,9 @@ void main()
 
     FragPos = vec3(model * vec4(position, 1.0));
     Normal = modelVector * aNormal;
+
+
+    fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 
     gl_Position = projection * view * vec4(FragPos, 1.0);
 

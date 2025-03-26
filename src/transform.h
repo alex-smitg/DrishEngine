@@ -1,3 +1,4 @@
+//__ReadAttributes__
 #pragma once
 
 #include <glm/glm.hpp>
@@ -6,9 +7,9 @@
 
 class Transform {
 public:
-	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f); //__Attribute__ vec3 position
+	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f); //__Attribute__ vec3 rotation
+	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f); //__Attribute__ vec3 scale
 
 
 	glm::mat4 get_matrix() {

@@ -1,5 +1,5 @@
+//__ReadAttributes__
 #pragma once
-
 
 
 
@@ -9,15 +9,16 @@
 
 #include "base_object.h"
 #include "shader.h"
-
+#include "line.h"
 
 #include "light_model.h"
 
 class DirectionalLight : public BaseObject {
 public:
-	glm::vec3 color;
-	GLfloat strength;
+	glm::vec3 color; //__Attribute__ colorEdit color
+	GLfloat strength; //__Attribute__ float strength
 	Shader* shader;
+	Line* line;
 	unsigned int VBO, VAO;
 
 	bool visible = true;
@@ -30,7 +31,7 @@ public:
 		this->color = color;
 		this->shader = shader;
 		this->name = name;
-
+		line = new Line(shader, transform.position, transform.position + glm::vec3(10.0, 0.0, 0.0));
 		//sol::usertype<PointLight> player_type = lua.new_usertype<PointLight>(name,
 		//sol::constructors<PointLight(Shader*, std::string, glm::vec3, GLfloat)>());
 		properties.push_back(Property::TRANSFORM);
@@ -42,8 +43,19 @@ public:
 
 
 	void draw() override {
+
+		
 		shader->Use();
 		shader->setVec3("color", color);
+		
+
+
+		line->model = glm::mat4(1.0);
+
+		line->model = glm::translate(line->model, transform.position);
+		
+		
+		line->draw();
 
 		Transform temp;
 		temp.position.x = parent->transform.position.x + transform.position.x;

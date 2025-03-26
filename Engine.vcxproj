@@ -65,10 +65,13 @@
     <ClCompile Include="include\imgui_docking\imgui_stdlib.cpp" />
     <ClCompile Include="include\imgui_docking\imgui_tables.cpp" />
     <ClCompile Include="include\imgui_docking\imgui_widgets.cpp" />
+    <ClCompile Include="src\base_object.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\model_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\shaders\depth.fragment" />
+    <None Include="assets\shaders\depth.vertex" />
     <None Include="assets\shaders\emission.fragment" />
     <None Include="assets\shaders\emission.vertex" />
     <None Include="assets\shaders\screen.fragment" />
@@ -186,8 +189,8 @@
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>packer.py 
+attributes.py</Command>
     </PreBuildEvent>
     <PreLinkEvent>
       <Command>
@@ -220,8 +223,8 @@
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>packer.py 
+attributes.py</Command>
     </PreBuildEvent>
     <PreLinkEvent>
       <Command>
@@ -251,7 +254,8 @@
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>packer.py</Command>
+      <Command>packer.py 
+attributes.py</Command>
     </PreBuildEvent>
     <PreLinkEvent>
       <Command>
@@ -285,7 +289,8 @@
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>packer.py</Command>
+      <Command>packer.py 
+attributes.py</Command>
     </PreBuildEvent>
     <PreLinkEvent>
       <Command>

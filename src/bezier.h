@@ -10,6 +10,8 @@
 #include "shader.h"
 #include "line.h"
 
+
+
 class Bezier : public BaseObject {
 public:
 	Shader* shader;

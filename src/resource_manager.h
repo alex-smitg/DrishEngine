@@ -17,6 +17,12 @@ public:
 	std::vector<Mesh*> meshes;
 
 
+	bool* draw_depth;
+
+	ResourceManager(bool* draw_depth) {
+		this->draw_depth = draw_depth;
+	}
+
 	void create_texture(std::string path) {
 		Texture* texture = new Texture();
 		GLuint texture_id;
@@ -35,7 +41,7 @@ public:
 	}
 
 
-	void create_mesh(std::string path, Shader* shader) {
+	void create_mesh(std::string path, Shader* shader, Shader* depth_shader) {
 		std::filesystem::path filepath = std::filesystem::path(path);
 
 
@@ -59,7 +65,7 @@ public:
 
 			int n = 0;
 			for (std::vector<GLfloat> vertices : vertexGroups_data) {
-				VertexGroup* vertexGroup = new VertexGroup(vertices, shader);
+				VertexGroup* vertexGroup = new VertexGroup(vertices, shader, depth_shader, draw_depth);
 
 				vertexGroup->material = new Material();
 

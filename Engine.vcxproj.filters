@@ -146,6 +146,9 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\base_object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="include\imgui_docking\.editorconfig" />
@@ -163,6 +166,8 @@
     <None Include="assets\shaders\standart.fragment" />
     <None Include="assets\shaders\standart.vertex" />
     <None Include="assets\shaders\standart_test.fragment" />
+    <None Include="assets\shaders\depth.vertex" />
+    <None Include="assets\shaders\depth.fragment" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="include\imgui_docking\imgui.natvis" />

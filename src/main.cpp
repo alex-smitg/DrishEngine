@@ -67,22 +67,13 @@ float fov = 75;
 
 double offs_cur_x, offs_cur_y = 0;
 
-bool show_lines = true;
-bool show_lights = true;
-
-GLuint icon;
-GLuint icon2;
-GLuint icon3;
-
-
 Material* selectedMaterial;
-Camera* world_camera;
 
+Camera* world_camera;
 
 glm::vec3 ambientCol(0.0f, 0.0f, 0.0f);
 
 float horizontalAngle = 3.14f;
-// vertical angle : 0, look at the horizon
 float verticalAngle = 0.0f;
 
 
@@ -90,10 +81,11 @@ std::vector<BaseObject*> objects;
 
 std::string save_scene_as = "test";
 
-
 std::string script = "";
 
 
+bool show_lines = true;
+bool show_lights = true;
 bool update_physics = false;
 
 std::vector<std::string> sky_faces = {
@@ -108,7 +100,9 @@ std::vector<std::string> sky_faces = {
 Shader* emission_shader_ptr;
 Shader* shader_ptr;
 
-ResourceManager resourceManager;
+bool draw_depth = true;
+
+ResourceManager resourceManager(&draw_depth);
 
 VertexGroup* selected_vertex_group;
 
@@ -274,6 +268,7 @@ int main()
 	style.DockingSeparatorSize = 1.0f;
 	style.WindowBorderSize = 1.0f;
 
+	style.FramePadding = ImVec2(15, 2);
 	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.071f, 0.071f, 0.071f, 1.0f);
 	style.Colors[ImGuiCol_FrameBg] = ImVec4(0.051f, 0.051f, 0.051f, 1.0f);
 	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.071f, 0.071f, 0.071f, 1.0f);
@@ -354,140 +349,45 @@ int main()
 		return -1;
 	}
 
-
-	std::fstream config_file;
-	config_file.open("conf.ini");
-	if (config_file.peek() == std::ifstream::traits_type::eof()) {
-		;
-	}
-
-	else {
-
-
-	}
-
-
-
-	bool should_close = 0;
-	std::filesystem::path project_path;
-	//project_path = "C:/Users/AlexSmith/Desktop/GAME/game.drish";
-
-
-
-
-	while (false) {
-		glClearColor(0.0f, 0.1f, 0.0f, 1.0f); //bg color
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
-	
-		
-
-
-
-		ImGui::Begin("test");
-		if (ImGui::Button("Load Project")) {
-			nfdu8char_t* outPath = NULL;
-			nfdfilteritem_t filterItem[1] = { {"Project", "drish"} };
-			nfdresult_t result = NFD_OpenDialogU8(&outPath, filterItem, 1, NULL);
-
-			if (result == NFD_OKAY) {
-				std::filesystem::path new_path = std::filesystem::u8path(outPath);
-				free(outPath);
-				project_path = new_path;
-				should_close = 0;
-
-			}
-
-		}
-
-		if (ImGui::Button("New Project")) {
-			nfdu8char_t* outPath = NULL;
-			nfdfilteritem_t filterItem[1] = { {"Project", "drish"} };
-			nfdresult_t result = NFD_SaveDialogU8(&outPath, filterItem, 1, "", "");
-
-			if (result == NFD_OKAY) {
-				std::filesystem::path new_path = std::filesystem::u8path(outPath);
-				free(outPath);
-				project_path = new_path;
-				should_close = 0;
-
-				std::ofstream file;
-				file.open(project_path);
-				file << "Test";
-
-			}
-		}
-
-
-		ImGui::End();
-
-
-
-		ImGui::EndFrame();
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-
-		if (should_close == 0) {
-			break;
-		}
-
-
-	}
-
-	if (should_close == 1) {
-		NFD_Quit();
-		glfwTerminate();
-		std::cout << "Bye";
-		return 0;
-	}
-
-	//std::cout << project_path;
-
-
-
-
-
 	Shader shader("standart.vertex", "standart.fragment", true);
 	Shader screen_shader("screen.vertex", "screen.fragment", true);
 	Shader emission_shader("emission.vertex", "emission.fragment", true);
+	Shader depth_shader("depth.vertex", "depth.fragment", true);
 
 	shader_ptr = &shader;
 	emission_shader_ptr = &emission_shader;
-	//Shader space("space.vertex", "space.fragment", true);
-	//Space* space_obj = new Space(&space);
-
 
 	BaseObject *world = new BaseObject();
 	world->name = "root";
 	
 
 	MeshHolder* obj1 = new MeshHolder(&shader, "Cube");
-	//Mesh* obj3 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChild");
-	//Mesh* obj4 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "CubeChildChild");
-	//Mesh* obj5 = new Mesh("C:/Users/AlexSmith/Desktop/GAME/models/sphere_smooth.obj", &shader, "Last");
 	MeshHolder* obj2 = new MeshHolder(&shader, "Phys");
+	DirectionalLight* dl = new DirectionalLight(&emission_shader, "dL", glm::vec3(1.0f, 1.0f, 1.0f), 1.0);
 	MeshHolder* sphere = new MeshHolder(&shader, "Sphere");
 	PointLight* obj6 = new PointLight(&emission_shader, "PointLight");
 	PointLight* obj7 = new PointLight(&emission_shader, "PointLight");
 	obj6->transform.position.x = 2.0;
+	dl->direction = glm::vec3(0.1, -1.5, 1.0);
 
 
 	//WARNING: need to be removed to build;
-	resourceManager.create_mesh("C:\\Users\\Admin\\Desktop\\GAME\\models\\sphere_smooth.obj", &shader);
-	resourceManager.create_texture("C:\\Users\\Admin\\Desktop\\GAME\\images\\diff.tga");
+	resourceManager.create_mesh("C:\\Users\\Admin\\Desktop\\GAME\\models\\sphere_smooth.obj", &shader, &depth_shader);
+	resourceManager.create_mesh("C:\\Users\\Admin\\Desktop\\GAME\\models\\terrain.obj", &shader, &depth_shader);
 
-	for (int x = 0; x < 25; x++) {
-		MeshHolder* obj = new MeshHolder(&shader, "ShpereC");
-		obj->mesh = resourceManager.meshes[0];
-		obj->mesh->vertexGroups[0]->material->diffuse_texture = resourceManager.textures[0];
-		obj->mesh->vertexGroups[0]->material->use_diffuse = true;
+	resourceManager.create_texture("C:\\Users\\Admin\\Desktop\\GAME\\images\\diff.tga");
+	resourceManager.create_texture("C:\\Users\\Admin\\Desktop\\GAME\\images\\grass.png");
+	
+	MeshHolder* obj = new MeshHolder(&shader, "ShpereC");
+	obj->mesh = resourceManager.meshes[0];
+	obj->mesh->vertexGroups[0]->material->diffuse_texture = resourceManager.textures[0];
+	obj->mesh->vertexGroups[0]->material->use_diffuse = true;
+
+
+	
+	/*for (int x = 0; x < 25; x++) {
+		
+		
 		Transform transform;
 		btCollisionShape* collisionShape = new btSphereShape(1);
 		transform.position.y = x*3;
@@ -495,28 +395,25 @@ int main()
 
 		rigidBody->add_child(obj);
 		world->add_child(rigidBody);
-	}
+	}*/
 	
 	
 	
 	obj2->mesh = resourceManager.meshes[0];
-	obj1->mesh = resourceManager.meshes[0];
+	obj1->mesh = resourceManager.meshes[1];
+	obj1->mesh->vertexGroups[0]->material->diffuse_texture = resourceManager.textures[1];
+	obj1->mesh->vertexGroups[0]->material->use_diffuse = true;
+
 	sphere->mesh = resourceManager.meshes[0];
 	
-
-	obj6->strength = 3.0f;
-	obj6->radius = 15.0f;
-
 	selected_p = obj1;
 	selected = true;
 
 
-
-	//obj1->add_child(obj3);
-	//obj3->add_child(obj4);
-	//obj3->add_child(obj5);
 	world->add_child(obj7);
 	world->add_child(obj6);
+	world->add_child(dl);
+
 	btCollisionShape* bCS = new btSphereShape(1);
 	btCollisionShape* bCS2 = new btBoxShape({50, 1, 50});
 	btCollisionShape* bCS3 = new btSphereShape(1);
@@ -530,8 +427,9 @@ int main()
 	RigidBody* rgb = new RigidBody(dynamicsWorld, bCS, tr, 1);
 	RigidBody* rgb2 = new RigidBody(dynamicsWorld, bCS2, tr2, 0);
 	RigidBody* rgb3 = new RigidBody(dynamicsWorld, bCS3, tr3, 5);
-	obj1->transform.scale.x = 100;
-	obj1->transform.scale.z = 100;
+	obj1->transform.scale.x = 10;
+	obj1->transform.scale.z = 10;
+	obj1->transform.scale.y = 10;
 	
 	rgb->name = "rigidbody";
 	rgb->add_child(obj2);
@@ -543,10 +441,7 @@ int main()
 	rgb2->add_child(obj1);
 	obj7->transform.position.y = 2.0;
 
-	
-
-	
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+	dynamicsWorld->setGravity(btVector3(0, -1, 0));
 
 	Camera* camera = new Camera();
 
@@ -622,6 +517,35 @@ int main()
 		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	//shadows 
+
+	unsigned int depthMapFBO;
+	glGenFramebuffers(1, &depthMapFBO);
+
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+	unsigned int depthMap;
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
 
 	
 
@@ -652,6 +576,7 @@ int main()
 	glUniform1i(glGetUniformLocation(shader.ID, "sText"), 1);
 	glUniform1i(glGetUniformLocation(shader.ID, "nText"), 2);
 	glUniform1i(glGetUniformLocation(shader.ID, "skybox"), 3);
+	glUniform1i(glGetUniformLocation(shader.ID, "shadowMap"), 4);
 
 	//cubemap
 	Shader sky_shader("sky.vertex", "sky.fragment", true);
@@ -846,7 +771,7 @@ int main()
 		if (ImGui::Button("Add 3d model (.obj)")) {
 			std::string model_path = open_file_dialog();
 			if (!model_path.empty()) {
-				resourceManager.create_mesh(model_path, &shader);
+				resourceManager.create_mesh(model_path, &shader, &depth_shader);
 			}
 
 		}
@@ -898,6 +823,7 @@ int main()
 
 		ImGui::EndChild();
 
+
 		/*if (ImGui::BeginListBox("##box")) {
 			std::filesystem::path new_path = project_path.parent_path();
 
@@ -921,6 +847,7 @@ int main()
 		jump_into_child(world, &treeObjects);
 		ImGui::End();
 
+		
 		//inspector
 		ImGui::Begin("Inspector", 0);
 		if (selected) {
@@ -951,15 +878,15 @@ int main()
 			ImGui::PushItemWidth(64.0f);
 			ImGui::Text("X");
 			ImGui::SameLine();
-			ImGui::DragFloat("##xd", &(obj->direction.x), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##xd", &(obj->direction.x), 0.1f, -2.0f, 2.0f, "%.2f");
 			ImGui::SameLine();
 			ImGui::Text("Y");
 			ImGui::SameLine();
-			ImGui::DragFloat("##yd", &(obj->direction.y), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##yd", &(obj->direction.y), 0.1f, -2.0, 2.0f, "%.2f");
 			ImGui::SameLine();
 			ImGui::Text("Z");
 			ImGui::SameLine();
-			ImGui::DragFloat("##zd", &(obj->direction.z), 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##zd", &(obj->direction.z), 0.1f, -2.0f, 2.0f, "%.2f");
 
 			float color[3];
 
@@ -1138,8 +1065,9 @@ int main()
 						ImGui::EndGroup();
 					}
 
-					ImGui::SliderFloat("Shine", &(material->shine_value), 0.0, 25.0);
-
+					ImGui::DragFloat("Shine", &(material->shine_value));
+					ImGui::DragFloat("Refract", &(material->refract_value), 0.1f);
+					ImGui::DragFloat("Reflect", &(material->reflection_value), 0.1f);
 
 				}
 				else {
@@ -1147,38 +1075,6 @@ int main()
 				}
 			}
 
-			//
-			//ImGui::Image(obj->mesh->vertexGroups[0]->material->diffuse_texture->id, ImVec2(64, 64));
-
-			//
-
-
-			
-
-			//ImGui::Image(mod->material->specular_texture->id, ImVec2(64, 64));
-			//ImGui::SameLine();
-			//ImGui::BeginGroup();
-			//ImGui::Text("Specular");
-			//ImGui::Checkbox("On##s", &(mod->material->use_specular));
-			//ImGui::SliderFloat("##spect", &(mod->material->specular_value), 0.0, 5.0);
-
-			//ImGui::EndGroup();
-
-			//ImGui::Image(mod->material->normalmap_texture->id, ImVec2(64, 64));
-			//ImGui::SameLine();
-			//ImGui::BeginGroup();
-			//ImGui::Text("Normal");
-			//ImGui::Checkbox("On##n", &(mod->material->use_normalmap));
-			//ImGui::SliderFloat("##normal", &(mod->material->normalmap_value), 0.0, 5.0);
-
-			//ImGui::EndGroup();
-
-			//ImGui::SeparatorText("Material vars");
-			//ImGui::SliderFloat("SkyReflection", &(mod->material->reflection_value), 0.0, 1.0);
-			//ImGui::SliderFloat("RefRatio", &(mod->material->refract_value), 0.0, 1.0);
-			//ImGui::SliderFloat("Shine", &(mod->material->shine_value), 0.01, 64.0);
-			
-		
 			/*static int e = 0;
 			ImGui::RadioButton("Phong", &e, 0); ImGui::SameLine();
 			ImGui::RadioButton("Blinn", &e, 1);*/
@@ -1315,11 +1211,29 @@ int main()
 
 		ImGui::End();
 
+		int distance = 100;
 
-		//btCollisionWorld::ClosestRayResultCallback closestResults(from, to);
-		//dynamicsWorld->rayTest(camera->position, camera->position*100);
+		btVector3 from = btVector3(camera->position.x, camera->position.y, camera->position.z);
+		btVector3 to = btVector3(camera->position.x + rayMouse.x * distance, camera->position.y + rayMouse.y * distance,
+			camera->position.z + rayMouse.z * distance);
 
-		world->children[0]->transform.position = camera->position + rayMouse * 4.0f;
+
+		btCollisionWorld::ClosestRayResultCallback closestResults = btCollisionWorld::ClosestRayResultCallback(from, to);
+		dynamicsWorld->rayTest(from, to, closestResults);
+
+		if (closestResults.hasHit()) {
+			btVector3 hit_vector = closestResults.m_hitPointWorld;
+
+			closestResults.m_collisionObject;
+
+			glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
+			pos.x = hit_vector.getX();
+			pos.y = hit_vector.getY();
+			pos.z = hit_vector.getZ();
+			world->children[0]->transform.position = pos;
+		}
+
+		//world->children[0]->transform.position = camera->position + rayMouse * 4.0f;
 
 
 
@@ -1364,6 +1278,11 @@ int main()
 		if (point_lights.size() > point_lights_max_size) {
 			throw;
 		}
+
+		float near_plane = 1.0f, far_plane = 15.5f;
+		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,
+			near_plane, far_plane);
+		glm::mat4 dirlightView = glm::mat4(1.0);
 		
 		
 		int point_lights_size = 0;
@@ -1386,6 +1305,13 @@ int main()
 			if (obj->type == DIRECTIONAL_LIGHT) {
 				DirectionalLight* light = static_cast<DirectionalLight*>(obj);
 
+
+				dirlightView = glm::lookAt(light->transform.position,
+					light->transform.position + light->direction,
+					glm::vec3(0.0f, -1.0f, 0.0f));
+
+				//dirlightView = glm::translate(dirlightView, light->transform.position);
+
 				shader.setVec3("directionalLights[" + std::to_string(n2) + "].direction", light->direction);
 				shader.setVec3("directionalLights[" + std::to_string(n2) + "].color", light->color);
 				shader.setFloat("directionalLights[" + std::to_string(n2) + "].strength", light->strength);
@@ -1401,9 +1327,6 @@ int main()
 		ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 		if (ImGui::BeginMainMenuBar())
 		{
-			ImGui::Text("Project Name:");
-			std::string filename = project_path.filename().string();
-			ImGui::Text(filename.c_str());
 			ImGui::Text("LN %f", directional_lights_number);
 			ImGui::Text("Light Number %i / %i", point_lights_size, point_lights_max_size);
 
@@ -1442,79 +1365,59 @@ int main()
 		test = 0.5 * (1+sin(glfwGetTime()/5.0));
 
 
-		//obj1->model = glm::mat4(1.0);
-		//obj1->model = glm::translate(obj1->model, glm::vec3(l->GetPoint(test).x, l->GetPoint(test).y, l->GetPoint(test).z)); //rem
-		//obj1->model = glm::scale(obj1->model, glm::vec3(0.1, 0.1, 0.1));
 
 		if (update_physics) {
 			dynamicsWorld->stepSimulation(1.0f / 60.0f);
 		}
 		
-		//btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[0];
-		//btRigidBody * body = btRigidBody::upcast(obj);
-		//btTransform trans;
-		//if (body && body->getMotionState())
-		//{
-			//body->getMotionState()->getWorldTransform(trans);
-		//}
-		//else
-		//{
-			//trans = obj->getWorldTransform();
-		//}
-		//body->applyCentralForce(btVector3(0.1, 0.0, 0.0));
-
-		//obj2->model[3][0] = trans.getOrigin().getX();
-		//obj2->model[3][1] = trans.getOrigin().getY();
-		//obj2->model[3][2] = trans.getOrigin().getZ();
-
-		//obj2->rotation.x = trans.getRotation().getX();
-		//obj2->rotation.y = trans.getRotation().getY();
-		//obj2->rotation.z = trans.getRotation().getZ();
-
-	
-
 		//obj = dynamicsWorld->getCollisionObjectArray()[2];
 		//body = btRigidBody::upcast(obj);
-		//trans;
-		//if (body && body->getMotionState())
-		//{
-	//		body->getMotionState()->getWorldTransform(trans);
-		//}
-		///else
-		//{
-		//	trans = obj->getWorldTransform();
-		//}
-		//body->applyCentralForce(btVector3(0.1, 0.0, 0.0));
 
-		//obj4->model[3][0] = trans.getOrigin().getX();
-		//obj4->model[3][1] = trans.getOrigin().getY();
-		//obj4->model[3][2] = trans.getOrigin().getZ();
-
-
-		
-		//obj4->rotation.x = trans.getRotation().getX();
-		//obj4->rotation.y = trans.getRotation().getY();
-		//obj4->rotation.z = trans.getRotation().getZ();
-
-		
-		
-		
-
+	
 		//simpleDepthShader.Use();
 		//simpleDepthShader.setMat4("projection", projection);
 		//simpleDepthShader.setMat4("view", camera->view);
-		glViewport(0, 0, window_width, window_height);
+
+		glm::mat4 lightSpaceMatrix = lightProjection * dirlightView;
+
+		//lightSpaceMatrix = glm::scale(lightSpaceMatrix, glm::vec3(1.0, -1.0, 1.0));
+
+		
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		
+		draw_depth = true;
+		depth_shader.Use();
+		depth_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+		
+		glCullFace(GL_FRONT);
+		for (BaseObject* obj : treeObjects) {
+				obj->draw();		
+
+		}
+		glCullFace(GL_BACK);
+
+		ImGui::Begin("depth");
+		ImGui::Image(depthMap, ImVec2(400, 400));
+		ImGui::End();
+
+
+		shader.Use();
+		shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
-		glEnable(GL_DEPTH_TEST);
-		//glEnable(GL_FRAMEBUFFER_SRGB);
 
+		
+		glViewport(0, 0, window_width, window_height);
+		
+		
+
+
+		draw_depth = false;
 		for (BaseObject* obj : treeObjects) {
-
-
-
 			if (selected_p == obj && selected == true && show_wireframe_if_selected == true) {
 				obj->draw();
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1529,9 +1432,6 @@ int main()
 			else {
 				obj->draw();
 			}
-
-
-
 			obj->lua["time"] = glfwGetTime();
 			obj->update();
 
@@ -1540,11 +1440,7 @@ int main()
 				obj->lua["time"] = glfwGetTime();
 				obj->update();
 			}
-
-
-
 		}
-		//glDisable(GL_FRAMEBUFFER_SRGB);
 		//glViewport(0, 0, window_width, window_height);
 
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default

@@ -13,6 +13,7 @@
 class VertexGroup {
 public:
 	Shader* shader;
+	Shader* depth_shader;
 	unsigned int VBO, VAO;
 	std::vector<GLfloat> vertices;
 	Transform* transform;
@@ -20,14 +21,17 @@ public:
 
 	Transform temp;
 
+	bool* draw_depth;
 
 	//change it later;
 	int vertex_stride = 14 * sizeof(GLfloat); //vertices = {{x, y, z, u, v, nx, ny, nz, tx, ty, tz, bx, by, bz}, ....} 
 
-	VertexGroup(std::vector<GLfloat> data, Shader* shader) {
+	VertexGroup(std::vector<GLfloat> data, Shader* shader, Shader* depth_shader, bool *draw_depth) {
 		this->vertices = data;
 		//this->vertices = {-1,0,1,0,0,0,1,0, 0,0,0,0,0,0, 1,0,1,0,0,0,1,0, 0,0,0,0,0,0, -1,0,-1,0,0,0,1,0, 0,0,0,0,0,0};
+		this->draw_depth = draw_depth;
 
+		this->depth_shader = depth_shader;
 		this->shader = shader;
 		init();
 	}
@@ -44,10 +48,17 @@ public:
 
 	void draw() {
 
+		if (*draw_depth == true) {
+			depth_shader->Use();
+			depth_shader->setMat4("model", temp.get_matrix());
+		}
+		else {
+			shader->Use();
+			shader->setMat4("model", temp.get_matrix());
+		}
+		
 
-		shader->setMat4("model", temp.get_matrix());
-
-		if (material != nullptr) {
+		if (material != nullptr && *draw_depth == false) {
 			shader->setFloat("normal_bump", material->normalmap_value);
 			shader->setFloat("spec_factor", material->specular_value);
 			shader->setFloat("reflection", material->reflection_value);
@@ -80,11 +91,6 @@ public:
 
 
 		}
-
-		//glActiveTexture(GL_TEXTURE1);
-		//glBindTexture(GL_TEXTURE_2D, material->specular_texture->id);
-		//glActiveTexture(GL_TEXTURE2);
-		//glBindTexture(GL_TEXTURE_2D, material->normalmap_texture->id);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 14);
