@@ -13,6 +13,9 @@
 #include <algorithm>
 #include <filesystem>
 
+#include "property_drawer.h"
+#include "register_properties.h"
+
 #include "transform.h"
 
 #include <nfd.h>
@@ -489,6 +492,36 @@ int main()
 	};
 
 
+	//UI reg
+	PropertyDrawer drawer;
+	drawer.registerDrawer<BaseObject>([](BaseObject& obj) {
+		ImGui::SeparatorText("Position");
+		ImGui::PushItemWidth(64.0f);
+		ImGui::Text("X");
+		ImGui::SameLine();
+		ImGui::DragFloat("##x", &(obj.transform.position.x), 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::SameLine();
+		ImGui::Text("Y");
+		ImGui::SameLine();
+		ImGui::DragFloat("##y", &(obj.transform.position.y), 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::SameLine();
+		ImGui::Text("Z");
+		ImGui::SameLine();
+		ImGui::DragFloat("##z", &(obj.transform.position.z), 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+	});
+
+	drawer.registerDrawer<MeshHolder>([&drawer](BaseObject& obj) {
+		drawer.draw_properties(&typeid(BaseObject), &obj);
+
+		ImGui::Text("Test");
+
+
+
+		ImGui::Text("MeshData");
+	});
+
+
 
 	screen_shader.Use();
 	screen_shader.setInt("screenTexture", 0);
@@ -901,6 +934,8 @@ int main()
 		}
 
 
+
+
 		if (selected && selected_p->type == MESH_HOLDER) {
 			MeshHolder* obj = static_cast<MeshHolder*>(selected_p);
 			static int item_current_id = 0;
@@ -1279,7 +1314,7 @@ int main()
 			throw;
 		}
 
-		float near_plane = 1.0f, far_plane = 15.5f;
+		float near_plane = 1.0f, far_plane = 40.0f;
 		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,
 			near_plane, far_plane);
 		glm::mat4 dirlightView = glm::mat4(1.0);
@@ -1338,7 +1373,17 @@ int main()
 
 		
 		screen_shader.Use();
+
+
+		ImGui::Begin("test2");
+		if (selected) {
+			drawer.draw_properties(selected_p);
+		}
+		ImGui::End();
+
 		ImGui::Begin("test");
+		
+
 		
 
 
@@ -1391,12 +1436,12 @@ int main()
 		depth_shader.Use();
 		depth_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 		
-		glCullFace(GL_FRONT);
+		//glCullFace(GL_FRONT);
 		for (BaseObject* obj : treeObjects) {
 				obj->draw();		
 
 		}
-		glCullFace(GL_BACK);
+		//glCullFace(GL_BACK);
 
 		ImGui::Begin("depth");
 		ImGui::Image(depthMap, ImVec2(400, 400));
@@ -1414,7 +1459,7 @@ int main()
 		glViewport(0, 0, window_width, window_height);
 		
 		
-
+		ImGui::Begin("Inspector2");
 
 		draw_depth = false;
 		for (BaseObject* obj : treeObjects) {
@@ -1435,12 +1480,12 @@ int main()
 			obj->lua["time"] = glfwGetTime();
 			obj->update();
 
-			for (BaseObject* child : obj->children) {
-				obj->draw();
-				obj->lua["time"] = glfwGetTime();
-				obj->update();
+			if (selected_p == obj) {
+				obj->draw_properties();
 			}
 		}
+
+		ImGui::End();
 		//glViewport(0, 0, window_width, window_height);
 
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default

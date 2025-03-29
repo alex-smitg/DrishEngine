@@ -32,6 +32,10 @@ public:
 		vertice_number += vertexGroup->get_vertices_number();
 	}
 
+	void draw_properties() {
+
+	}
+
 	Mesh() {
 
 	}

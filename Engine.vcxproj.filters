@@ -114,6 +114,12 @@
     <ClInclude Include="src\bezier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\property_drawer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\register_properties.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\imgui_docking\imgui.cpp">

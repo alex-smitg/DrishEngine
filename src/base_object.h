@@ -12,7 +12,7 @@
 #include "types.h"
 #include "properties.h"
 
-
+#include "imgui_docking/imgui.h"
 
 
 class BaseObject {
@@ -39,6 +39,7 @@ public:
 	BaseObject();
 	virtual void draw();
 	virtual void update();
+	virtual void draw_properties();
 	void add_child(BaseObject* object);
 	void remove();
 	virtual ~BaseObject();

@@ -2,11 +2,17 @@
 
 #include "base_object.h"
 
+
+
 BaseObject::BaseObject() {
 	lua.open_libraries(sol::lib::base, sol::lib::math);
 };
 
 void BaseObject::draw() {};
+
+void BaseObject::draw_properties() {
+	transform.draw_properties();
+};
 
 void BaseObject::update() {
 
