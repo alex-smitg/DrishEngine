@@ -27,35 +27,6 @@ public:
 	}
 
 
-	void draw_properties() override {
-		BaseObject::draw_properties();
-
-		if (ImGui::TreeNode("Mesh")) {
-			ImGui::Button("empty", { 64, 64 });
-			ImGui::SameLine();
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH"))
-				{
-					IM_ASSERT(payload->DataSize == sizeof(int));
-					int mesh_i = *(const int*)payload->Data;
-
-					//mesh = resourceManager.meshes[mesh_i];
-
-				}
-				ImGui::EndDragDropTarget();
-			}
-
-			ImGui::ShowDemoWindow();
-
-			if (mesh != nullptr) {
-				mesh->draw_properties();
-			}
-
-			ImGui::TreePop();
-		}
-	}
-
 
 
 	void draw() override {

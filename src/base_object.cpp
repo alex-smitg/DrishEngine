@@ -10,10 +10,6 @@ BaseObject::BaseObject() {
 
 void BaseObject::draw() {};
 
-void BaseObject::draw_properties() {
-	transform.draw_properties();
-};
-
 void BaseObject::update() {
 
 	if (!script.empty()) {

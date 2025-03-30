@@ -28,7 +28,6 @@ public:
 
 	VertexGroup(std::vector<GLfloat> data, Shader* shader, Shader* depth_shader, bool *draw_depth) {
 		this->vertices = data;
-		//this->vertices = {-1,0,1,0,0,0,1,0, 0,0,0,0,0,0, 1,0,1,0,0,0,1,0, 0,0,0,0,0,0, -1,0,-1,0,0,0,1,0, 0,0,0,0,0,0};
 		this->draw_depth = draw_depth;
 
 		this->depth_shader = depth_shader;

@@ -223,7 +223,7 @@ void jump_into_child(BaseObject* parent, std::vector<BaseObject*>* vector) {
 				script = selected_p->script;
 				selected = true;
 				//if (selected_p->type == MESH) {
-				//	//mod = static_cast<MeshHolder*>(selected_p)->mesh->models[0];
+				//	//mod = Fselected_p)->mesh->models[0];
 				//}
 
 			}
@@ -494,32 +494,7 @@ int main()
 
 	//UI reg
 	PropertyDrawer drawer;
-	drawer.registerDrawer<BaseObject>([](BaseObject& obj) {
-		ImGui::SeparatorText("Position");
-		ImGui::PushItemWidth(64.0f);
-		ImGui::Text("X");
-		ImGui::SameLine();
-		ImGui::DragFloat("##x", &(obj.transform.position.x), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Y");
-		ImGui::SameLine();
-		ImGui::DragFloat("##y", &(obj.transform.position.y), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Z");
-		ImGui::SameLine();
-		ImGui::DragFloat("##z", &(obj.transform.position.z), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-	});
-
-	drawer.registerDrawer<MeshHolder>([&drawer](BaseObject& obj) {
-		drawer.draw_properties(&typeid(BaseObject), &obj);
-
-		ImGui::Text("Test");
-
-
-
-		ImGui::Text("MeshData");
-	});
+	registerProperties(&drawer);
 
 
 
@@ -1197,6 +1172,10 @@ int main()
 		ImGui::Checkbox("Show lines", &show_lines);
 		ImGui::Checkbox("Show lights", &show_lights);
 		ImGui::Checkbox("Update Physics", &update_physics);
+		static bool debugDraw = false;
+
+		ImGui::Checkbox("Physics Collisions Draw", &debugDraw);
+
 
 		ImGui::Separator();
 
@@ -1225,7 +1204,7 @@ int main()
 		
 
 
-		ImGui::Begin("rays");
+		//ImGui::Begin("rays");
 
 		double xpos = 0;
 		double ypos = 0;
@@ -1241,10 +1220,10 @@ int main()
 			glm::vec4(0, 0, window_width, window_height));
 		glm::vec3 rayMouse = glm::normalize(worldPos - camera->position);
 
-		ImGui::Text("world pos %f", worldPos.x);
-		ImGui::Text("ray_mouse %f,   %f,    %f", rayMouse.x, rayMouse.y, rayMouse.z);
+		//ImGui::Text("world pos %f", worldPos.x);
+		//ImGui::Text("ray_mouse %f,   %f,    %f", rayMouse.x, rayMouse.y, rayMouse.z);
 
-		ImGui::End();
+		//ImGui::End();
 
 		int distance = 100;
 
@@ -1329,7 +1308,7 @@ int main()
 				PointLight* light = static_cast<PointLight*>(obj);
 
 
-				shader.setVec3("pointLights[" + std::to_string(n) + "].position", light->transform.position + light->global_position);
+				shader.setVec3("pointLights[" + std::to_string(n) + "].position", light->transform.position);
 				shader.setVec3("pointLights[" + std::to_string(n) + "].color", light->color);
 				shader.setFloat("pointLights[" + std::to_string(n) + "].strength", light->strength);
 				shader.setFloat("pointLights[" + std::to_string(n) + "].radius", light->radius);
@@ -1377,25 +1356,25 @@ int main()
 
 		ImGui::Begin("test2");
 		if (selected) {
-			drawer.draw_properties(selected_p);
+			drawer.draw(selected_p);
 		}
 		ImGui::End();
 
-		ImGui::Begin("test");
+		//ImGui::Begin("test");
 		
 
 		
 
 
-		ImGui::SliderFloat("size", &size, 0.00f, 0.1f);
-		ImGui::SliderFloat("quality", &quality, 0.0f, 15.0f);
-		ImGui::SliderFloat("directions", &directions, 0.0f, 360.0f);
+		//ImGui::SliderFloat("size", &size, 0.00f, 0.1f);
+		//ImGui::SliderFloat("quality", &quality, 0.0f, 15.0f);
+		//ImGui::SliderFloat("directions", &directions, 0.0f, 360.0f);
 
 		screen_shader.setFloat("Size", size);
 		screen_shader.setFloat("Quality", quality);
 		screen_shader.setFloat("Directions", directions);
 
-		ImGui::End();
+		//ImGui::End();
 
 
 		for (Line* line : lines) {
@@ -1459,7 +1438,7 @@ int main()
 		glViewport(0, 0, window_width, window_height);
 		
 		
-		ImGui::Begin("Inspector2");
+
 
 		draw_depth = false;
 		for (BaseObject* obj : treeObjects) {
@@ -1479,13 +1458,8 @@ int main()
 			}
 			obj->lua["time"] = glfwGetTime();
 			obj->update();
-
-			if (selected_p == obj) {
-				obj->draw_properties();
-			}
 		}
 
-		ImGui::End();
 		//glViewport(0, 0, window_width, window_height);
 
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
@@ -1503,11 +1477,8 @@ int main()
 		emission_shader.setVec3("color", glm::vec3(1.0, 0.0, 0.0));
 		
 
-		static bool debugDraw = false;
-
-		ImGui::Begin("debug draw");
-		ImGui::Checkbox("Physics Collisions Draw", &debugDraw);
-		ImGui::End();
+		
+		
 		if (debugDraw == true) {
 			dynamicsWorld->debugDrawWorld();
 		}

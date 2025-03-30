@@ -1,4 +1,3 @@
-//__ReadAttributes__
 #pragma once
 
 
@@ -17,29 +16,24 @@
 
 class BaseObject {
 public:
-	Transform transform; //__Attribute__ class Transform
+	Transform transform; 
 	
-	Transform global_transform;
-
-	std::string name; //__Attribute__ textEdit name
+	std::string name; 
 	std::string script = ""; 
-
-	glm::vec3 global_position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	std::vector<Property> properties;
 	std::vector<BaseObject*> children;
 
 	Type type = Type::NO;
 
-	BaseObject* parent;
 
+	BaseObject* parent;
 
 	sol::state lua;
 
 	BaseObject();
 	virtual void draw();
 	virtual void update();
-	virtual void draw_properties();
 	void add_child(BaseObject* object);
 	void remove();
 	virtual ~BaseObject();

@@ -19,7 +19,7 @@ public:
 		};
 	}
 
-	void draw_properties(const std::type_info *type_inf, BaseObject* obj) {
+	void draw(const std::type_info *type_inf, BaseObject* obj) {
 		auto it = drawers.find(*type_inf);
 
 		if (it != drawers.end()) {
@@ -30,7 +30,7 @@ public:
 		};
 	}
 
-	void draw_properties(BaseObject *obj) {
+	void draw(BaseObject *obj) {
 		auto it = drawers.find(typeid(*obj));
 
 		if (it != drawers.end()) {

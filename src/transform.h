@@ -30,35 +30,7 @@ public:
 		ImGui::DragFloat("##z", &(position.z), 0.1f, 0.0f, 0.0f, "%.2f");
 		ImGui::PopItemWidth();
 
-		ImGui::SeparatorText("Rotation");
-		ImGui::PushItemWidth(64.0f);
-		ImGui::Text("X");
-		ImGui::SameLine();
-		ImGui::DragFloat("##rx", &(rotation.x), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Y");
-		ImGui::SameLine();
-		ImGui::DragFloat("##ry", &(rotation.y), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Z");
-		ImGui::SameLine();
-		ImGui::DragFloat("##rz", &(rotation.z), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-
-		ImGui::SeparatorText("Scale");
-		ImGui::PushItemWidth(64.0f);
-		ImGui::Text("X");
-		ImGui::SameLine();
-		ImGui::DragFloat("##sx", &(scale.x), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Y");
-		ImGui::SameLine();
-		ImGui::DragFloat("##sy", &(scale.y), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Z");
-		ImGui::SameLine();
-		ImGui::DragFloat("##sz", &(scale.z), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
+		
 	}
 
 	glm::mat4 get_matrix() {
