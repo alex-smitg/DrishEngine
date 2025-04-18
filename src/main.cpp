@@ -40,7 +40,7 @@
 #include "cube.h"
 #include "shader.h"
 
-#include "inspector.h"
+
 #include "santa_claus.h"
 
 #include "bulletDebugDraw.h"
@@ -856,262 +856,7 @@ int main()
 		ImGui::End();
 
 		
-		//inspector
-		ImGui::Begin("Inspector", 0);
-		if (selected) {
-			inspector_draw_attributes(selected_p);
-
-
-			/*if (selected_p->name != "root") {
-				ImGui::SeparatorText("Actions");
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.639f, 0.153f, 0.153f, 1.0f));
-				if (ImGui::Button("Delete")) {
-					selected_p->remove();
-					selected = false;
-				}
-				ImGui::PopStyleColor();
-
-				if (ImGui::Button("Rename")) {
-
-				}
-			}*/
-		}
-
-		//ImGui::ShowDemoWindow();
-
-		if (selected && selected_p->type == DIRECTIONAL_LIGHT) {
-			DirectionalLight* obj = static_cast<DirectionalLight*>(selected_p);
-
-			ImGui::SeparatorText("Direction");
-			ImGui::PushItemWidth(64.0f);
-			ImGui::Text("X");
-			ImGui::SameLine();
-			ImGui::DragFloat("##xd", &(obj->direction.x), 0.1f, -2.0f, 2.0f, "%.2f");
-			ImGui::SameLine();
-			ImGui::Text("Y");
-			ImGui::SameLine();
-			ImGui::DragFloat("##yd", &(obj->direction.y), 0.1f, -2.0, 2.0f, "%.2f");
-			ImGui::SameLine();
-			ImGui::Text("Z");
-			ImGui::SameLine();
-			ImGui::DragFloat("##zd", &(obj->direction.z), 0.1f, -2.0f, 2.0f, "%.2f");
-
-			float color[3];
-
-			color[0] = obj->color.x;
-			color[1] = obj->color.y;
-			color[2] = obj->color.z;
-
-			ImGui::ColorPicker3("Light Color", color);
-
-
-			obj->color = glm::vec3(color[0], color[1], color[2]);
-		}
-
-
-
-
-		if (selected && selected_p->type == MESH_HOLDER) {
-			MeshHolder* obj = static_cast<MeshHolder*>(selected_p);
-			static int item_current_id = 0;
-
-
-			ImGui::SeparatorText("Mesh");
-			std::string text = "";
-
-			if (obj->mesh != nullptr) {
-				text = "Mesh";
-			}
-			else {
-				text = "Empty";
-			}
-
-
-			ImGui::Button(text.c_str(), { 64, 64 });
-			ImGui::SameLine();
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH"))
-				{
-					IM_ASSERT(payload->DataSize == sizeof(int));
-					int mesh_i = *(const int*)payload->Data;
-
-					obj->mesh = resourceManager.meshes[mesh_i];
-
-				}
-				ImGui::EndDragDropTarget();
-			}
-					
-			
-
-			if (obj->mesh != nullptr) {
-				if (ImGui::BeginListBox("##Materials", ImVec2(0, 50))) {
-					for (int n = 0; n < obj->mesh->vertexGroups.size(); n++)
-					{
-						const bool is_selected = (item_current_id == n);
-						if (ImGui::Selectable((obj->mesh->vertexGroups[n]->material->name + "##" + std::to_string(n)).c_str(), is_selected)) {
-							item_current_id = n;
-						}
-						if (is_selected) {
-							ImGui::SetItemDefaultFocus();
-							selected_vertex_group = obj->mesh->vertexGroups[item_current_id];
-						}
-						
-					}
-					ImGui::EndListBox();
-				}
-
-			}
-
-			if (selected_vertex_group != nullptr) {
-				if (selected_vertex_group->material != nullptr) {
-					
-					Material *material = selected_vertex_group->material;
-					VertexGroup *svg = selected_vertex_group;
-					ImGui::SeparatorText(material->name.c_str());
-
-					ImGui::SliderFloat("uv x", &(svg->material->uv_scale.x), 0.0, 25.0);
-					ImGui::SliderFloat("uv y", &(svg->material->uv_scale.y), 0.0, 25.0);
-					//Diffuse
-					{   
-						ImGui::BeginGroup();
-						ImGui::Text("Diffuse");
-						ImGui::Checkbox("Use texture", &(svg->material->use_diffuse)); ImGui::SameLine();
-						ImGui::Checkbox("Emit", &(svg->material->emit)); ImGui::SameLine();
-
-						float col[3] = { svg->material->diffuse_color.r, svg->material->diffuse_color.g, svg->material->diffuse_color.b };
-						ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
-						ImGui::ColorEdit3("Color", col);
-						svg->material->diffuse_color = glm::vec3(col[0], col[1], col[2]);
-
-						ImGui::SliderFloat("##diff", &(svg->material->diffuse_value), 0.0, 1.0);
-
-						if (material->diffuse_texture != nullptr) {
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-							ImGui::ImageButton(("id##diff" + std::to_string(material->diffuse_texture->id)).c_str(), material->diffuse_texture->id,
-								ImVec2(64, 64), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
-
-							ImGui::PopStyleVar();
-						}
-						else {
-							ImGui::Button("Texture", { 64,64 });
-						}
-						if (ImGui::BeginDragDropTarget()) {
-							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
-								IM_ASSERT(payload->DataSize == sizeof(int));
-								int texture_i = *(const int*)payload->Data;
-
-								svg->material->use_diffuse = true;
-
-								svg->material->diffuse_texture = resourceManager.textures[texture_i];
-
-							}
-							ImGui::EndDragDropTarget();
-						}
-						ImGui::EndGroup();
-					}
-					//Specular
-					{
-						ImGui::BeginGroup();
-						ImGui::Text("Specular");
-						ImGui::Checkbox("Use texture##spec", &(svg->material->use_specular)); ImGui::SameLine();
-
-						ImGui::SliderFloat("##spec", &(svg->material->specular_value), 0.0, 1.0);
-
-						if (material->specular_texture != nullptr) {
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-							ImGui::ImageButton(("id##spec" + std::to_string(material->specular_texture->id)).c_str(), material->specular_texture->id,
-								ImVec2(64, 64), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
-
-							ImGui::PopStyleVar();
-						}
-						else {
-							ImGui::Button("Texture##spec", { 64,64 });
-						}
-						if (ImGui::BeginDragDropTarget()) {
-							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
-								IM_ASSERT(payload->DataSize == sizeof(int));
-								int texture_i = *(const int*)payload->Data;
-
-								svg->material->use_specular = true;
-
-								svg->material->specular_texture = resourceManager.textures[texture_i];
-
-							}
-							ImGui::EndDragDropTarget();
-						}
-						ImGui::EndGroup();
-					}
-					//Normal
-					{
-						ImGui::BeginGroup();
-						ImGui::Text("Normal");
-						ImGui::Checkbox("Use texture##normal", &(material->use_normalmap)); 
-						ImGui::SameLine();
-						ImGui::SliderFloat("##normal", &(svg->material->normalmap_value), 0.0, 1.0);
-
-						if (material->normalmap_texture != nullptr) {
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-							ImGui::ImageButton(("id##normal" + std::to_string(material->normalmap_texture->id)).c_str(), material->normalmap_texture->id,
-								ImVec2(64, 64), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0, 0.0, 0.0, 1.0), ImVec4(1.0, 1.0, 1.0, 1.0));
-
-							ImGui::PopStyleVar();
-						}
-						else {
-							ImGui::Button("Texture##normal", { 64,64 });
-						}
-						if (ImGui::BeginDragDropTarget()) {
-							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE")) {
-								IM_ASSERT(payload->DataSize == sizeof(int));
-								int texture_i = *(const int*)payload->Data;
-
-								svg->material->use_normalmap = true;
-
-								svg->material->normalmap_texture = resourceManager.textures[texture_i];
-
-							}
-							ImGui::EndDragDropTarget();
-						}
-						ImGui::EndGroup();
-					}
-
-					ImGui::DragFloat("Shine", &(material->shine_value));
-					ImGui::DragFloat("Refract", &(material->refract_value), 0.1f);
-					ImGui::DragFloat("Reflect", &(material->reflection_value), 0.1f);
-
-				}
-				else {
-					ImGui::Button("Create new material");
-				}
-			}
-
-			/*static int e = 0;
-			ImGui::RadioButton("Phong", &e, 0); ImGui::SameLine();
-			ImGui::RadioButton("Blinn", &e, 1);*/
-
-			//mod->material->use_blinn = e;
-		}
-
-		if (selected && selected_p->type == CURVE) { //3 = curve
-			Bezier* obj = static_cast<Bezier*>(selected_p);
-
-			ImGui::InputFloat("X", &(obj->p1.x), 0.05f);
-			ImGui::InputFloat("Y", &(obj->p1.y), 0.05f);
-			ImGui::InputFloat("Z", &(obj->p1.z), 0.05f);
-			ImGui::Separator();
-			ImGui::InputFloat("X1", &(obj->p2.x), 0.05f);
-			ImGui::InputFloat("Y1", &(obj->p2.y), 0.05f);
-			ImGui::InputFloat("Z1", &(obj->p2.z), 0.05f);
-			ImGui::Separator();
-			ImGui::InputFloat("X2", &(obj->p3.x), 0.05f);
-			ImGui::InputFloat("Y2", &(obj->p3.y), 0.05f);
-			ImGui::InputFloat("Z2", &(obj->p3.z), 0.05f);
-			
-		}
-
 		
-
-		ImGui::End();
 
 		static float sky_val = 1.0;
 		//other 
@@ -1193,7 +938,11 @@ int main()
 		
 		ImGui::End();
 
-		
+		ImGui::Begin("Inspector");
+		if (selected) {
+			drawer.draw(selected_p);
+		}
+		ImGui::End();
 		
 		//proj mat
 		glm::mat4 projection(1.0f);
@@ -1354,11 +1103,7 @@ int main()
 		screen_shader.Use();
 
 
-		ImGui::Begin("test2");
-		if (selected) {
-			drawer.draw(selected_p);
-		}
-		ImGui::End();
+		
 
 		//ImGui::Begin("test");
 		

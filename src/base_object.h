@@ -19,7 +19,13 @@ public:
 	Transform transform; 
 	
 	std::string name; 
-	std::string script = ""; 
+	std::string script = 
+		R"(function start()
+
+end
+function update()
+
+end)";
 
 	std::vector<Property> properties;
 	std::vector<BaseObject*> children;
@@ -32,9 +38,15 @@ public:
 	sol::state lua;
 
 	BaseObject();
+
+	std::string set_script(std::string script);
+
 	virtual void draw();
 	virtual void update();
 	void add_child(BaseObject* object);
 	void remove();
 	virtual ~BaseObject();
+
+	
+
 };

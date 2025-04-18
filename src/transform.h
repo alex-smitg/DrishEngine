@@ -14,25 +14,6 @@ public:
 	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f); //__Attribute__ vec3 scale
 
 
-	void draw_properties() {
-		ImGui::SeparatorText("Position");
-		ImGui::PushItemWidth(64.0f);
-		ImGui::Text("X");
-		ImGui::SameLine();
-		ImGui::DragFloat("##x", &(position.x), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Y");
-		ImGui::SameLine();
-		ImGui::DragFloat("##y", &(position.y), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::SameLine();
-		ImGui::Text("Z");
-		ImGui::SameLine();
-		ImGui::DragFloat("##z", &(position.z), 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-
-		
-	}
-
 	glm::mat4 get_matrix() {
 		glm::mat4 matrix(1.0f);
 		matrix = glm::translate(matrix, position);
