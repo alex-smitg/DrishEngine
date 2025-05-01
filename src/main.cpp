@@ -191,9 +191,6 @@ std::string open_file_dialog() {
 
 
 
-void save_scene(std::vector<BaseObject*>* tree, std::string name, Camera* camera);
-void load_scene(std::string path);
-
 
 void jump_into_child(BaseObject* parent, std::vector<BaseObject*>* vector) {
 	vector->push_back(parent);
@@ -444,8 +441,6 @@ int main()
 	rgb2->add_child(obj1);
 	obj7->transform.position.y = 2.0;
 
-	dynamicsWorld->setGravity(btVector3(0, -1, 0));
-
 	Camera* camera = new Camera();
 
 	world_camera = camera;
@@ -568,16 +563,6 @@ int main()
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-
-
-
-
-
-
-	//icon = load_texture("assets/icons/icon.png");
-	//icon2 = load_texture("assets/icons/icon2.png");
-	//icon3 = load_texture("assets/icons/icon3.png");
 
 	shader.Use();
 	glUniform1i(glGetUniformLocation(shader.ID, "oText"), 0);
@@ -750,9 +735,9 @@ int main()
 			ImVec2 nodePos{ workCenter.x - SCREEN_WIDTH * 0.5f, workCenter.y - SCREEN_HEIGHT * 0.5f };
 			ImGui::DockBuilderSetNodeSize(id, ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT));
 			ImGui::DockBuilderSetNodePos(id, nodePos);
-			ImGuiID dock1 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Left, 0.5f, nullptr, &idd);
+			ImGuiID dock1 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Right, 0.5f, nullptr, &idd);
 			ImGuiID dock2 = ImGui::DockBuilderSplitNode(dock1, ImGuiDir_Down, 0.75f, nullptr, &dock1);
-			ImGuiID dock3 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Right, 0.7f, nullptr, &idd);
+			ImGuiID dock3 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Left, 0.7f, nullptr, &idd);
 			ImGuiID dock4 = ImGui::DockBuilderSplitNode(idd, ImGuiDir_Down, 0.2f, nullptr, &idd);
 			ImGuiID dock5 = ImGui::DockBuilderSplitNode(dock3, ImGuiDir_Down, 0.3f, nullptr, &dock3);
 			ImGui::DockBuilderDockWindow("Tree", dock1);
@@ -859,29 +844,23 @@ int main()
 		
 
 		static float sky_val = 1.0;
-		//other 
 		ImGui::Begin("Other", 0, ImGuiWindowFlags_AlwaysAutoResize);
-
 		ImGui::SeparatorText("Add");
-
 		if (ImGui::Button("Add point light")) {
 			PointLight* ob = new PointLight(&emission_shader, "PointLight");
 			
 			if (selected) {
 				selected_p->add_child(ob);
 			}
-
 		}
 
-		if (ImGui::Button("Add dir light")) {
+		if (ImGui::Button("Add directional light")) {
 			DirectionalLight* ob = new DirectionalLight(&emission_shader, "DirLight");
 
 			if (selected) {
 				selected_p->add_child(ob);
 			}
-
 		}
-
 
 		if (ImGui::Button("Add meshHolder")) {
 			MeshHolder* ob = new MeshHolder(&shader, "MeshHolder");
@@ -894,20 +873,6 @@ int main()
 
 
 		ImGui::SliderFloat("Sky Value", &sky_val, 0.0, 1.0);
-		
-		ImGui::SeparatorText("Scene");
-		ImGui::Text("Drag and drop .scene file to load it");
-		ImGui::Text("Name");
-		ImGui::SameLine();
-		ImGui::PushItemWidth(64.0f);
-		ImGui::InputText("##SceneName", &save_scene_as); 
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		if (ImGui::Button("Save")) {
-			save_scene(&objects, save_scene_as, camera);
-		}
-
-
 
 		ImGui::SeparatorText("Settings");
 		ImGui::Text("Skybox Light");
@@ -922,19 +887,6 @@ int main()
 		ImGui::Checkbox("Physics Collisions Draw", &debugDraw);
 
 
-		ImGui::Separator();
-
-
-
-		if (selected) {
-			ImGui::SeparatorText("Script");
-			ImGui::Text(selected_p->script.c_str());
-			ImGui::InputTextMultiline("##script", &script);
-
-			if (ImGui::Button("Apply")) {
-				selected_p->script = script;
-			}
-		}
 		
 		ImGui::End();
 
@@ -1190,10 +1142,10 @@ int main()
 			if (selected_p == obj && selected == true && show_wireframe_if_selected == true) {
 				obj->draw();
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				shader.setFloat("emission", 0.7f);
-				obj->transform.scale += glm::vec3(0.03f, 0.03f, 0.03f);
+				shader.setFloat("emission", 0.5f);
+				obj->transform.scale += glm::vec3(0.05f, 0.05f, 0.05f);
 				obj->draw();
-				obj->transform.scale -= glm::vec3(0.03f, 0.03f, 0.03f);
+				obj->transform.scale -= glm::vec3(0.05f, 0.05f, 0.05f);
 				//glEnable(GL_DEPTH_TEST);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				shader.setFloat("emission", 0.0);
@@ -1205,37 +1157,15 @@ int main()
 			obj->update();
 		}
 
-		//glViewport(0, 0, window_width, window_height);
-
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-		//glClearColor(1.0f, 1.0f, 0.5f, 1.0f);
-		//glDisable(GL_DEPTH_TEST);
-		//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		//glClear(GL_COLOR_BUFFER_BIT);
-
-
 		emission_shader.Use();
 		emission_shader.setMat4("projection", projection);
 		emission_shader.setMat4("view", camera->view);
-		//emission_shader.setVec3("color", glm::vec3(ambient_color[0], ambient_color[1], ambient_color[2]));
-
 		emission_shader.setVec3("color", glm::vec3(1.0, 0.0, 0.0));
-		
 
-		
 		
 		if (debugDraw == true) {
 			dynamicsWorld->debugDrawWorld();
 		}
-
-	
-		//screen_shader.Use();
-		//glBindVertexArray(quadVAO);
-		//glDisable(GL_DEPTH_TEST);
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-		//glDrawArrays(GL_TRIANGLES, 0, 6);
-
 
 		glBindVertexArray(0);
 		ImGui::EndFrame();
@@ -1261,8 +1191,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
-
-	//glViewport(0, 0, width, height);
 	window_width = width;
 	window_height = height;
 	aspectRatio = (float)width / (float)height;
@@ -1283,110 +1211,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 
-void save_scene(std::vector<BaseObject*>* tree, std::string name, Camera* camera) {
-	std::ofstream file;
-
-
-	if (!name.empty()) {
-		file.open(name + ".scene");
-
-		json j;
-
-		j["fov"] = fov;	
-		j["camera_pos"] = {camera->position.x, camera->position.y, camera->position.z};
-		j["hor_ang"] = horizontalAngle;
-		j["ver_ang"] = verticalAngle;
-
-
-		int n = 0;
-		for (BaseObject* object : (*tree)) {
-			j["objects"][n]["name"] = object->name;
-			j["objects"][n]["type"] = object->type;
-			/*j["objects"][n]["position"] = { object->model[3].x, object->model[3].y, object->model[3].z };*/
-
-			if (object->type == 1) { //light 
-				PointLight* obj = static_cast<PointLight*>(object);
-
-
-				j["objects"][n]["color"] = {obj->color.r, obj->color.g, obj->color.b};
-				j["objects"][n]["radius"] = obj->radius;
-				j["objects"][n]["strength"] = obj->strength;
-			}
-
-			if (object->type == 0) {
-				//Mesh* obj = static_cast<Mesh*>(object);
-				//j["objects"][n]["path"] = obj->rel_path;
-
-				//for (int i = 0; i < obj->models.size(); i++) {
-					//j["objects"][n]["materials"][i]["texture_paths"][0] = obj->models[i]->texturesPath.diffuse_path;
-					//j["objects"][n]["materials"][i]["texture_paths"][1] = obj->models[i]->texturesPath.specular_path;
-					//j["objects"][n]["materials"][i]["texture_paths"][2] = obj->models[i]->texturesPath.normal_path;
-					//j["objects"][n]["materials"][i]["use_texture"]["diffuse"] = obj->models[i]->material.use_diffuse;
-					//j["objects"][n]["materials"][i]["use_texture"]["specular"] = obj->models[i]->material.use_specular;
-					//j["objects"][n]["materials"][i]["use_texture"]["normal"] = obj->models[i]->material.use_normal;
-				//}
-			}
-
-
-			n += 1;
-		}
-
-		file << j << std::endl;
-
-		file.close();
-	}
-	
-
-}
-
-void load_scene(std::string path) {
-	std::ifstream file(path);
-	json data = json::parse(file);
-
-	fov = data["fov"];
-	horizontalAngle = data["hor_ang"];
-	verticalAngle = data["ver_ang"];
-	world_camera->position = glm::vec3(data["camera_pos"][0], data["camera_pos"][1], data["camera_pos"][2]);
-
-	for (auto& elem : data["objects"]) {
-		//std::cout << elem["name"];
-
-		int type = elem["type"];
-		//std::cout << type;
-
-		if (type == 1) {
-			glm::vec3 color(elem["color"][0], elem["color"][1], elem["color"][2]);
-
-	
-			PointLight* ob = new PointLight(emission_shader_ptr, "PointLight", color, elem["strength"]);
-			/*ob->model[3] = glm::vec4(elem["position"][0], elem["position"][1], elem["position"][2], 1.0);*/
-			ob->radius = elem["radius"];
-			objects.push_back(ob);
-		}
-
-		if (type == 0) {
-			//Mesh* obj = new Mesh(elem["path"], shader_ptr, elem["name"]);
-			//objects.push_back(obj);
-			int n = 0;
-			for (auto& elem2 : elem["materials"]) {
-				//obj->models[n]->textures.diffuse = obj->models[n]->load_tex(elem2["texture_paths"][0], 0);
-				//obj->models[n]->textures.specular = obj->models[n]->load_tex(elem2["texture_paths"][1], 1);
-				//obj->models[n]->textures.normal = obj->models[n]->load_tex(elem2["texture_paths"][2], 2);
-
-				//obj->models[n]->material.use_diffuse = elem2["use_texture"]["diffuse"];
-				//obj->models[n]->textures.specular = elem2["use_texture"]["specular"];
-				//obj->models[n]->textures.normal = elem2["use_texture"]["normal"];
-
-				n += 1;
-			}
-		}
-	}
-}
-
-
-
-
-
 void drop_callback(GLFWwindow* window, int count, const char** paths)
 {
 	
@@ -1395,16 +1219,7 @@ void drop_callback(GLFWwindow* window, int count, const char** paths)
 	for (i = 0; i < count; i++) {
 		std::filesystem::path path = paths[i];
 		if (path.extension() == ".scene") {
-			
-			
-
-			for (BaseObject* object : objects) {
-				delete object;
-			}
-			objects.clear();
-			selected = false;
-
-			load_scene(path.generic_string());
+			//load_scene(path.generic_string());
 
 		}
 	}
