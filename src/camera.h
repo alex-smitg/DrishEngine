@@ -9,6 +9,7 @@ class Camera {
 public:
 	glm::mat4 view;
 	glm::vec3 position;
+	float fov = 75;
 
 	Camera() {
 		view = glm::mat4(1.0);

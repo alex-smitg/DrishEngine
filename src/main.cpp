@@ -10,6 +10,11 @@
 #define STBIW_WINDOWS_UTF8
 #include <stb_image.h>
 
+#define AL_LIBTYPE_STATIC
+#include <AL/al.h>
+#include <AL/alc.h>
+
+
 #include <algorithm>
 #include <filesystem>
 
@@ -66,7 +71,6 @@ int window_height = SCREEN_HEIGHT;
 
 float aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
 
-float fov = 75;
 
 double offs_cur_x, offs_cur_y = 0;
 
@@ -441,9 +445,7 @@ int main()
 	rgb2->add_child(obj1);
 	obj7->transform.position.y = 2.0;
 
-	Camera* camera = new Camera();
-
-	world_camera = camera;
+	Camera* world_camera = new Camera();
 
 
 	
@@ -593,7 +595,7 @@ int main()
 	unsigned int cubemapTexture = loadCubemap(sky_faces);
 
 
-	camera->view = glm::translate(camera->view, glm::vec3(0.0f, -0.2f, -3.0f));
+	world_camera->view = glm::translate(world_camera->view, glm::vec3(0.0f, -0.2f, -3.0f));
 
 
 	float speed = 0.3f;
@@ -679,7 +681,7 @@ int main()
 		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
 			horizontalAngle = atan2(np.x, np.z);
 			verticalAngle = atan2(np.x, np.y) - 3.14 / 2;
-			camera->position = glm::vec3(l->GetPoint(test).x, l->GetPoint(test).y, l->GetPoint(test).z);
+			world_camera->position = glm::vec3(l->GetPoint(test).x, l->GetPoint(test).y, l->GetPoint(test).z);
 		}
 
 		glm::vec3 direction(
@@ -697,21 +699,21 @@ int main()
 		glm::vec3 up = glm::cross(right, direction);
 
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera->position += direction * speed;
+			world_camera->position += direction * speed;
 		}
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-			camera->position -= direction * speed;
+			world_camera->position -= direction * speed;
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-			camera->position += right * speed;
+			world_camera->position += right * speed;
 		}
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-			camera->position -= right * speed;
+			world_camera->position -= right * speed;
 		}
 
-		camera->view = glm::lookAt(
-			camera->position,           // Camera is here
-			camera->position + direction, // and looks here : at the same position, plus "direction"
+		world_camera->view = glm::lookAt(
+			world_camera->position,           // Camera is here
+			world_camera->position + direction, // and looks here : at the same position, plus "direction"
 			up                  // Head is up (set to 0,-1,0 to look upside-down)
 		);
 
@@ -877,7 +879,7 @@ int main()
 		ImGui::SeparatorText("Settings");
 		ImGui::Text("Skybox Light");
 		ImGui::Text("FOV");
-		ImGui::SliderFloat("##FOV", &fov, 1.0f, 179.0f);
+		ImGui::SliderFloat("##FOV", &world_camera->fov, 1.0f, 179.0f);
 		ImGui::Checkbox("Show wireframe", &show_wireframe_if_selected);
 		ImGui::Checkbox("Show lines", &show_lines);
 		ImGui::Checkbox("Show lights", &show_lights);
@@ -899,7 +901,7 @@ int main()
 		//proj mat
 		glm::mat4 projection(1.0f);
 
-		projection = glm::perspective(fov / 180.0f * 3.14f, aspectRatio, 0.1f, 1000.0f);
+		projection = glm::perspective(world_camera->fov / 180.0f * 3.14f, aspectRatio, 0.1f, 1000.0f);
 
 
 		
@@ -917,9 +919,9 @@ int main()
 		
 
 		glm::vec3 worldPos = glm::unProject(glm::vec3(xpos, window_height-ypos, 1.0),
-			camera->view, projection,
+			world_camera->view, projection,
 			glm::vec4(0, 0, window_width, window_height));
-		glm::vec3 rayMouse = glm::normalize(worldPos - camera->position);
+		glm::vec3 rayMouse = glm::normalize(worldPos - world_camera->position);
 
 		//ImGui::Text("world pos %f", worldPos.x);
 		//ImGui::Text("ray_mouse %f,   %f,    %f", rayMouse.x, rayMouse.y, rayMouse.z);
@@ -928,13 +930,15 @@ int main()
 
 		int distance = 100;
 
-		btVector3 from = btVector3(camera->position.x, camera->position.y, camera->position.z);
-		btVector3 to = btVector3(camera->position.x + rayMouse.x * distance, camera->position.y + rayMouse.y * distance,
-			camera->position.z + rayMouse.z * distance);
+		btVector3 from = btVector3(world_camera->position.x, world_camera->position.y, world_camera->position.z);
+		btVector3 to = btVector3(world_camera->position.x + rayMouse.x * distance, world_camera->position.y + rayMouse.y * distance,
+			world_camera->position.z + rayMouse.z * distance);
 
 
 		btCollisionWorld::ClosestRayResultCallback closestResults = btCollisionWorld::ClosestRayResultCallback(from, to);
 		dynamicsWorld->rayTest(from, to, closestResults);
+
+		
 
 		if (closestResults.hasHit()) {
 			btVector3 hit_vector = closestResults.m_hitPointWorld;
@@ -953,7 +957,7 @@ int main()
 
 
 	
-		glm::mat4 view2 = glm::mat4(glm::mat3(camera->view));
+		glm::mat4 view2 = glm::mat4(glm::mat3(world_camera->view));
 		glDepthMask(GL_FALSE);
 		sky_shader.Use();
 		sky_shader.setMat4("projection", projection);
@@ -972,7 +976,7 @@ int main()
 		//emission
 		emission_shader.Use();
 		emission_shader.setMat4("projection", projection);
-		emission_shader.setMat4("view", camera->view);
+		emission_shader.setMat4("view", world_camera->view);
 		//emission_shader.setVec3("color", glm::vec3(ambient_color[0], ambient_color[1], ambient_color[2]));
 
 		\
@@ -982,9 +986,9 @@ int main()
 
 		shader.Use();
 		shader.setVec3("lightColor", glm::vec3(ambient_color[0], ambient_color[1], ambient_color[2]));
-		shader.setVec3("viewPos", camera->position);
+		shader.setVec3("viewPos", world_camera->position);
 		shader.setMat4("projection", projection); 
-		shader.setMat4("view", camera->view);
+		shader.setMat4("view", world_camera->view);
 		shader.setFloat("sky_val", sky_val);
 
 		
@@ -1159,7 +1163,7 @@ int main()
 
 		emission_shader.Use();
 		emission_shader.setMat4("projection", projection);
-		emission_shader.setMat4("view", camera->view);
+		emission_shader.setMat4("view", world_camera->view);
 		emission_shader.setVec3("color", glm::vec3(1.0, 0.0, 0.0));
 
 		
