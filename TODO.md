@@ -1,0 +1,11 @@
+### Todo
+- [ ] CMake build system
+- [ ] Add https://github.com/mackron/miniaudio
+- [ ] Fix texture and model drag and drop bug
+- [ ] Add save project feature
+- [ ] Add build/run feature 
+- [ ] Use html instead lua for scripting
+- [ ] Add ogg audio support
+- [ ] Add gltf model support
+- [ ] Remove packer.py
+- [ ] Animation
