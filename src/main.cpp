@@ -1,4 +1,9 @@
 ﻿#pragma once
+
+
+
+
+
 #include <Windows.h>
 #include <iostream>
 #define GLEW_STATIC
@@ -10,9 +15,7 @@
 #define STBIW_WINDOWS_UTF8
 #include <stb_image.h>
 
-#define AL_LIBTYPE_STATIC
-#include <AL/al.h>
-#include <AL/alc.h>
+
 
 
 #include <algorithm>
@@ -124,6 +127,7 @@ void error_callback(int error, const char* description)
 	fprintf(stderr, "ERROR: %s\n", description);
 	system("pause");
 }
+
 
 
 
@@ -1213,7 +1217,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 
 }
-
 
 void drop_callback(GLFWwindow* window, int count, const char** paths)
 {

@@ -246,7 +246,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>nfd.lib;glfw3.lib;glew32s.lib;lua54.lib;$(SolutionDir)lib\Debug\Bullet\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>nfd.lib;glfw3.lib;glew32s.lib;lua54.lib;OpenAL32.lib;$(SolutionDir)lib\Debug\Bullet\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
