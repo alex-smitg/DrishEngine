@@ -1,7 +1,7 @@
 ### Todo
 - [ ] CMake build system
 - [ ] Add https://github.com/mackron/miniaudio
-- [ ] Fix texture and model drag and drop bug
+- [x] Fix texture and model drag and drop bug
 - [ ] Add save project feature
 - [ ] Add build/run feature 
 - [ ] Use html instead lua for scripting
