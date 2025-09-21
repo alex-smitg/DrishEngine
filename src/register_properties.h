@@ -16,6 +16,7 @@
 
 
 
+
 void drawTexture(Texture *texture) {
 
 }
@@ -135,7 +136,7 @@ void registerProperties(PropertyDrawer *drawer) {
 					IM_ASSERT(payload->DataSize == sizeof(int));
 					int mesh_i = *(const int*)payload->Data;
 
-					//obj->mesh = resourceManager.meshes[mesh_i];
+					meshHolder->mesh = drawer->resourceManager->meshes[mesh_i];
 
 				}
 				ImGui::EndDragDropTarget();
@@ -200,7 +201,7 @@ void registerProperties(PropertyDrawer *drawer) {
 
 								svg->material->use_diffuse = true;
 
-								//svg->material->diffuse_texture = resourceManager.textures[texture_i];
+								svg->material->diffuse_texture = drawer->resourceManager->textures[texture_i];
 
 							}
 							ImGui::EndDragDropTarget();
@@ -232,7 +233,7 @@ void registerProperties(PropertyDrawer *drawer) {
 
 								svg->material->use_specular = true;
 
-								//svg->material->specular_texture = resourceManager.textures[texture_i];
+								svg->material->specular_texture = drawer->resourceManager->textures[texture_i];
 
 							}
 							ImGui::EndDragDropTarget();
@@ -264,7 +265,7 @@ void registerProperties(PropertyDrawer *drawer) {
 
 								svg->material->use_normalmap = true;
 
-								//svg->material->normalmap_texture = resourceManager.textures[texture_i];
+								svg->material->normalmap_texture = drawer->resourceManager->textures[texture_i];
 
 							}
 							ImGui::EndDragDropTarget();

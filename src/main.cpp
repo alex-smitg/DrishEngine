@@ -21,8 +21,9 @@
 #include <algorithm>
 #include <filesystem>
 
-#include "property_drawer.h"
-#include "register_properties.h"
+
+
+
 
 #include "transform.h"
 
@@ -53,9 +54,12 @@
 
 #include "bulletDebugDraw.h"
 
-#include "resource_manager.h"
 
 #include "camera.h"
+
+#include "resource_manager.h"
+#include "property_drawer.h"
+#include "register_properties.h"
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -99,12 +103,12 @@ bool show_lights = true;
 bool update_physics = false;
 
 std::vector<std::string> sky_faces = {
-	"assets/textures/negx.jpg",
-	"assets/textures/posx.jpg",
-	"assets/textures/posy.jpg",
-	"assets/textures/negy.jpg",
-	"assets/textures/negz.jpg",
-	"assets/textures/posz.jpg"
+	"assets/textures/skybox/negx.jpg",
+	"assets/textures/skybox/posx.jpg",
+	"assets/textures/skybox/posy.jpg",
+	"assets/textures/skybox/negy.jpg",
+	"assets/textures/skybox/negz.jpg",
+	"assets/textures/skybox/posz.jpg"
 };
 
 Shader* emission_shader_ptr;
@@ -495,6 +499,7 @@ int main()
 
 	//UI reg
 	PropertyDrawer drawer;
+	drawer.resourceManager = &resourceManager;
 	registerProperties(&drawer);
 
 
@@ -944,7 +949,7 @@ int main()
 
 		
 
-		if (closestResults.hasHit()) {
+		if (closestResults.hasHit()) { //breakpoin
 			btVector3 hit_vector = closestResults.m_hitPointWorld;
 
 			closestResults.m_collisionObject;

@@ -10,8 +10,14 @@
 
 #include "imgui_docking/imgui.h"
 
+
+class ResourceManager;
+
 class PropertyDrawer {
 public:
+	ResourceManager* resourceManager;
+
+
 	template<typename T>
 	void registerDrawer(std::function<void(T&)> func) {
 		drawers[typeid(T)] = [func](void* obj) {
