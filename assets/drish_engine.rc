@@ -1,0 +1,4 @@
+#include "../src/engine/resource.h"
+
+IDB_PNG1                RCDATA                     "images\\logo.png"
+DR_FONT                RCDATA                     "fonts\\AdwaitaMonoNerdFont-Regular.ttf"
