@@ -63,7 +63,12 @@ public:
 	}
 
 	Material* getMaterial(long long id) {
-		return materialsMap[id];
+		if (materialsMap.contains(id)) {
+			return materialsMap[id];
+		}
+		else {
+			return nullptr;
+		}
 	}
 };
 
