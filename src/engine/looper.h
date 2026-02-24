@@ -42,6 +42,9 @@ public:
 			material->shader->use();
 			if (currentCamera != nullptr) {
 				material->shader->setMat4("projection", currentCamera->perspective);
+				if (currentCamera->create_view) {
+					currentCamera->view = glm::inverse(currentCamera->transform.getMatrix());
+				} 
 				material->shader->setMat4("view", currentCamera->view);
 			}
 			

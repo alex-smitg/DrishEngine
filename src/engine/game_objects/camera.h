@@ -18,6 +18,8 @@ public:
 
 	bool active = true;
 
+	bool create_view = true;
+
 	Camera() {
 		this->type = Type::CAMERA;
 		addField(Field("Fov", FieldType::Float, 1, &fov));

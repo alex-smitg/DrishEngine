@@ -90,10 +90,11 @@ public:
 		this->nodeRepository = nodeRepository;
 
 		this->assetWindow = new AssetWindow(assetRepository);
+		this->assetWindow->drishPath = &drishPath;
 		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner);
 		this->propertiesWindow = new PropertiesWindow(assetRepository, luaRunner, &selectedNode);
 
-		canvas = new Canvas();
+		this->canvas = new Canvas();
 
 		logWarning("Drish;Engine is not drish enough");
 		
@@ -184,7 +185,6 @@ public:
 
 		j["version"] = DRISH_ENGINE_VERSION;
 		j["scripts"] = {};
-		j["materials"] = {};
 		j["textures"] = {};
 		j["vertices"] = {};
 		j["gameConfig"] = gameConfig;
@@ -342,7 +342,7 @@ public:
 				if (ImGui::BeginMenuBar()) {
 					if (ImGui::Button("Run")) {
 						this->save();
-						drishexecutor::runGame(window, drishPath.parent_path() / "game.exe", drishPath.parent_path());
+						drishexecutor::runGame(window, "game.exe", drishPath.parent_path());
 					}
 					if (ImGui::Button("Build")) {
 
@@ -380,7 +380,7 @@ public:
 		//
 		ImGui::SetCursorPos(ImVec2(0, 0));
 		
-		ImGui::Image(canvas->texture, ImGui::GetWindowSize(), ImVec2(0, 0), ImVec2(1, -1));
+		ImGui::Image(canvas->texture, ImGui::GetWindowSize(), ImVec2(0, 0), ImVec2(1, 1));
 		ImGui::PopStyleVar();
 		ImVec2 mousePos = ImGui::GetMousePos();
 
@@ -435,7 +435,7 @@ public:
 			double mouseSpeed = 2.5 * delta;
 
 			horizontalAngle += delta * dx;
-			verticalAngle += delta * dy;
+			verticalAngle -= delta * dy;
 
 			verticalAngle = glm::clamp(verticalAngle, -glm::half_pi<float>() + 0.05f, glm::half_pi<float>() - 0.05f);
 
@@ -499,9 +499,7 @@ public:
 		}
 		if (selectedNode != nullptr) {
 			if (selectedNode->type == Type::CAMERA) {
-				if (previewCamera) {
-					camera->view = glm::inverse(camera->transform.getMatrix());
-				}
+				ImGui::Text("%i", camera);			
 				if (ImGui::Checkbox("Camera Preview", &previewCamera)) {
 					if (previewCamera) {
 						oldCamera = camera;

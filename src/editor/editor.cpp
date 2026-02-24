@@ -78,6 +78,7 @@ int main() {
 	scripter.setGetKey(&window);
 
 	Camera camera = Camera();
+	camera.create_view = false;
 	Editor editor(&window, &assetRepository, &nodeRepository, &scripter);
 	editor.world = world;
 	editor.graphics = &graphics;
@@ -112,7 +113,7 @@ int main() {
 			editor.canvas->use();
 			world->update(delta);
 			
-			looper.currentCamera = &camera;
+			looper.currentCamera = editor.camera;
 			looper.loop(&nodeRepository, &assetRepository);
 			world->drawInEditor(&lineShader);
 			

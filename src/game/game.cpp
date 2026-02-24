@@ -84,14 +84,11 @@ int main(int argc, char* argv[]) {
 	
 	
 
-	Camera *camera = new Camera();
-	camera->transform.position.z = -8.0f;
 
 	logDebug("[GAME] Width: ", gameConfig.width);
 	logDebug("[GAME] Height: ", gameConfig.height);
 	logDebug("[GAME] Title: ", gameConfig.title);;
 	logDebug("[GAME] Use Fullscreen: ", gameConfig.useFullscreen);;
-	camera->setWindowAspectRatio(gameConfig.width, gameConfig.height);
 	window.resize(gameConfig.width, gameConfig.height);
 	window.renameTitle(gameConfig.title);
 	if (gameConfig.useFullscreen) {
@@ -121,7 +118,6 @@ int main(int argc, char* argv[]) {
 		if (delta >= frameDuration) {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			world->update(delta);
-			looper.currentCamera = camera;
 			looper.loop(&nodeRepository, &assetRepository);
 			glBindVertexArray(0);
 			glfwSwapBuffers(window.getWindow());
