@@ -156,18 +156,20 @@ private:
 			assetRepository->addVertices(vertices);
 		}
 
-		for (const auto& item : json["materials"].items())
-		{
-			Material* material = AssetCreator::createMaterial(item.value()["name"], item.value()["assId"]);
-			material->color.r = item.value()["color"]["r"];
-			material->color.g = item.value()["color"]["g"];
-			material->color.b = item.value()["color"]["b"];
-			material->shader = &assetRepository->defaultShader;
-			if (item.value().contains("textureAssId")) {
-				material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
-			}
+		if (json.contains("materials")) {
+			for (const auto& item : json["materials"].items())
+			{
+				Material* material = AssetCreator::createMaterial(item.value()["name"], item.value()["assId"]);
+				material->color.r = item.value()["color"]["r"];
+				material->color.g = item.value()["color"]["g"];
+				material->color.b = item.value()["color"]["b"];
+				material->shader = &assetRepository->defaultShader;
+				if (item.value().contains("textureAssId")) {
+					material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
+				}
 
-			assetRepository->addMaterial(material);
+				assetRepository->addMaterial(material);
+			}
 		}
 	}
 };
