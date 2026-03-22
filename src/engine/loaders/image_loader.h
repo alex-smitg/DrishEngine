@@ -7,9 +7,9 @@
 #include "stb_image.h"
 
 
-#include "assets/texture.h"
+#include "../assets/texture.h"
 
-#include "logger.h"
+#include "../logger.h"
 
 class ImageLoader { 
 public:

@@ -5,8 +5,8 @@
 #include <fstream>
 #include <filesystem>
 
-#include "logger.h"
-#include "assets/vertices.h"
+#include "../logger.h"
+#include "../assets/vertices.h"
 
 
 

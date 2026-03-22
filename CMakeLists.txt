@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 3.20.21)
 set(PROJECT_NAME drish_engine)
 project(${PROJECT_NAME})
 
+add_subdirectory(lib)
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
+
 set(CMAKE_DISABLE_PRECOMPILE_HEADERS ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
@@ -10,30 +14,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 
 set(INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(LIB_DEBUG_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/lib/Debug")
-
 
 set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 
-set(DRISH_TEST drish_test)
-add_executable(${DRISH_TEST})
-
-target_link_libraries(${DRISH_TEST}
-	PRIVATE
-		${LIB_DEBUG_FOLDER}/glew32s.lib
-		${LIB_DEBUG_FOLDER}/glfw3.lib
-		${LIB_DEBUG_FOLDER}/lua54.lib
-		${LIB_DEBUG_FOLDER}/nfd.lib
-)
-
-target_include_directories(${DRISH_TEST} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_compile_features(${DRISH_TEST} PRIVATE cxx_std_20)
-target_sources(${DRISH_TEST}
- PRIVATE
-	"src/engine/lua_runner.cpp"
-	"src/engine/game_objects/node.cpp"
-	"src/engine/assets/asset.cpp"
-	"src/engine/field.h")
 
 
 set(GAME game)
@@ -46,10 +29,11 @@ set_target_properties(${GAME} PROPERTIES
 
 target_link_libraries(${GAME}
 	PRIVATE
-		${LIB_DEBUG_FOLDER}/glew32s.lib
-		${LIB_DEBUG_FOLDER}/glfw3.lib
-		${LIB_DEBUG_FOLDER}/lua54.lib
-		${LIB_DEBUG_FOLDER}/nfd.lib
+		glew
+		glfw
+		lua
+		nfd
+		opengl32.lib
 )
 target_include_directories(${GAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_features(${GAME} PRIVATE cxx_std_20)
@@ -82,10 +66,11 @@ set_target_properties(${ENGINE} PROPERTIES
     )
 target_link_libraries(${ENGINE}
 	PRIVATE
-		${LIB_DEBUG_FOLDER}/glew32s.lib
-		${LIB_DEBUG_FOLDER}/glfw3.lib
-		${LIB_DEBUG_FOLDER}/lua54.lib
-		${LIB_DEBUG_FOLDER}/nfd.lib
+		glew
+		glfw
+		lua
+		nfd
+		opengl32.lib
 )
 target_include_directories(${ENGINE} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_features(${ENGINE} PRIVATE cxx_std_20)

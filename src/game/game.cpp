@@ -1,5 +1,3 @@
-#pragma once
-
 #define STB_IMAGE_IMPLEMENTATION
 
 #pragma comment(lib, "opengl32.lib")

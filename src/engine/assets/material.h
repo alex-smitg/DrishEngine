@@ -5,7 +5,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "shader.h"
+#include "../shader.h"
 #include "asset.h"
 #include "texture.h"
 #include "../field.h"

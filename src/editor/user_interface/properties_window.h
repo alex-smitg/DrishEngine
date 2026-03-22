@@ -6,10 +6,10 @@
 #include "imgui_docking/imgui_impl_glfw.h"
 #include "imgui_docking/imgui_impl_opengl3.h"
 
-#include "../engine/game_objects/node.h"
-#include "../engine/asset_repository.h"
-#include "../engine/lua_runner.h"
-#include "../engine/game_objects/model.h"
+#include "../../engine/game_objects/node.h"
+#include "../../engine/asset_repository.h"
+#include "../../engine/lua_runner.h"
+#include "../../engine/game_objects/model.h"
 
 class PropertiesWindow {
 private:
