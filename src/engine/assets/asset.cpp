@@ -3,7 +3,7 @@
 Asset::Asset(long long id) {
 	addField(Field("Name", FieldType::String, 1, &name));
 
-	if (id == -1) {
+	if (id == AUTO_INCREMENT_ID) {
 		assId = nextAssetId;
 		nextAssetId++;
 	}

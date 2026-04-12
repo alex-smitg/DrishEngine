@@ -8,67 +8,111 @@
 #include "assets/material.h"
 #include "assets/texture.h"
 #include "assets/vertices.h"
+#include "assets/sound.h"
 
-#include "asset_creator.h"
 
 #include "loaders/image_loader.h"
 #include "loaders/model_loader.h"
 #include "logger.h"
 
-class AssetRepository {
-public:
-	std::map<long long, Script*> scriptsMap;
-	std::map<long long, Material*> materialsMap;
-	std::map<long long, Texture*> texturesMap;
-	std::map<long long, Vertices*> verticesMap;
-	
-	Shader defaultShader;
-	Material* defaultMaterial;
-	
-	AssetRepository() {
-		defaultMaterial = AssetCreator::createMaterial("default", -2);
-		defaultMaterial->shader = &defaultShader;
-	}
-	
 
-	void addMaterial(Material* material) {
+class AssetRepository
+{
+public:
+	std::map<long long, Script *> scriptsMap;
+	std::map<long long, Material *> materialsMap;
+	std::map<long long, Texture *> texturesMap;
+	std::map<long long, Vertices *> verticesMap;
+	std::map<long long, Sound *> soundsMap;
+
+	Shader defaultShader;
+
+
+	AssetRepository() {}
+
+	void addMaterial(Material *material)
+	{
 		materialsMap[material->assId] = material;
 	}
 
-	void addScript(Script* script) {
+	void addScript(Script *script)
+	{
 		scriptsMap[script->assId] = script;
 	}
 
-	void addVertices(Vertices* vertices) {
+	void addVertices(Vertices *vertices)
+	{
 		verticesMap[vertices->assId] = vertices;
 	}
 
-	void addTexture(Texture* texture) {
+	void addTexture(Texture *texture)
+	{
 		texturesMap[texture->assId] = texture;
 	}
 
-
-	Script* getScript(long long id) {
-		return scriptsMap[id];
+	void addSound(Sound *sound)
+	{
+		soundsMap[sound->assId] = sound;
 	}
 
-	Vertices* getVertices(long long id) {
-		
-		return verticesMap[id];
+	Script *getScript(long long id)
+	{
+		if (scriptsMap.contains(id))
+		{
+			return scriptsMap[id];
+		}
+		else
+		{
+			return nullptr;
+		}
 	}
 
-	Texture* getTexture(long long id) {
+	Vertices *getVertices(long long id)
+	{
+		if (verticesMap.contains(id))
+		{
 
-		return texturesMap[id];
+			return verticesMap[id];
+		}
+		else
+		{
+			return nullptr;
+		}
 	}
 
-	Material* getMaterial(long long id) {
-		if (materialsMap.contains(id)) {
+	Texture *getTexture(long long id)
+	{
+		if (texturesMap.contains(id))
+		{
+			return texturesMap[id];
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	Material *getMaterial(long long id)
+	{
+		if (materialsMap.contains(id))
+		{
 			return materialsMap[id];
 		}
-		else {
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	Sound *getSound(long long id)
+	{
+		if (soundsMap.contains(id))
+		{
+			return soundsMap[id];
+		}
+		else
+		{
 			return nullptr;
 		}
 	}
 };
-

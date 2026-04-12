@@ -31,7 +31,6 @@ Node* Node::findChild(std::string name) {
 }
 
 void Node::destroy() {
-	//add node repository removal
 	logInfo("[NODE] Destroy ", name);
 
 	if (parent != nullptr) {

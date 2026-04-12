@@ -36,7 +36,8 @@
 const double targetFPS = 60.0;
 const double frameDuration = 1.0 / targetFPS;
 
-int main() {
+int main()
+{
 	/*ma_result result;
 	ma_engine engine;
 
@@ -53,13 +54,12 @@ int main() {
 		return -1;
 	}
 
-	
+
 
 	ma_sound_set_looping(&sound, true);
-	ma_sound_start(&sound)*/;
-	//ma_sound_init_from_data_source()
-
-
+	ma_sound_start(&sound)*/
+	;
+	// ma_sound_init_from_data_source()
 
 	logInfo("Hello");
 	logInfo("Version: ", DRISH_ENGINE_VERSION);
@@ -70,9 +70,7 @@ int main() {
 
 	AssetRepository assetRepository;
 	NodeRepository nodeRepository;
-	Node* world = NodeCreator::createNode(Type::BASE, "World", &nodeRepository);
-
-	
+	Node *world = NodeCreator::createNode(Type::BASE, "World", &nodeRepository);
 
 	LuaRunner scripter;
 	scripter.setGetKey(&window);
@@ -84,20 +82,20 @@ int main() {
 	editor.graphics = &graphics;
 	editor.camera = &camera;
 
-
 	double lastTime = glfwGetTime();
 
 	Shader lineShader;
-	
-	
+
 	Looper looper;
 	looper.currentCamera = &camera;
 
-	while (!window.shouldClose()) {
+	while (!window.shouldClose())
+	{
 		double currentTime = glfwGetTime();
 		double delta = currentTime - lastTime;
 
-		if (delta >= frameDuration) {
+		if (delta >= frameDuration)
+		{
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
@@ -105,26 +103,24 @@ int main() {
 			lineShader.use();
 			lineShader.setMat4("projection", editor.camera->perspective);
 			lineShader.setMat4("view", editor.camera->view);
-		
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			editor.loop(delta);
-			
+
 			editor.canvas->use();
 			world->update(delta);
-			
+
 			looper.currentCamera = editor.camera;
 			looper.loop(&nodeRepository, &assetRepository);
 			world->drawInEditor(&lineShader);
-			
+
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			ImGui::EndFrame();
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-			glBindVertexArray(0);	
+			glBindVertexArray(0);
 			glfwSwapBuffers(window.getWindow());
-			
 
 			lastTime = glfwGetTime();
 		}
@@ -135,4 +131,3 @@ int main() {
 	logInfo("Bye");
 	return 0;
 }
-

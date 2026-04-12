@@ -56,7 +56,6 @@ public:
 				switch (node->type)
 				{
 				case Type::MODEL:
-					static_cast<Model*>(node)->material = assetRepository->defaultMaterial;
 					break;
 				case Type::POINT_LIGHT:
 				{
@@ -97,7 +96,7 @@ public:
 
 				if (item.value().contains("materialAssId")) {
 					Model* model = static_cast<Model*>(node);
-					model->material = assetRepository->getMaterial(item.value()["materialAssId"]);
+					model->assignMaterial(assetRepository->getMaterial(item.value()["materialAssId"]));
 					logDebug("[DRISH LOADER] Material ASS ID: ", item.value()["materialAssId"]);
 				}
 
@@ -114,6 +113,10 @@ public:
 
 			}
 		}
+		catch (const std::exception& ex) {
+			logError("[DRISH LOADER] Drish file loading failed");
+			logError("[DRISH LOADER] ", ex.what());
+		}
 		catch (...) {
 			logError("[DRISH LOADER] Drish file loading failed");
 		}
@@ -127,7 +130,8 @@ private:
 
 		for (const auto& item : json["textures"].items())
 		{
-			Texture* texture = AssetCreator::createTexture(item.value()["name"], item.value()["assId"]);
+			Texture* texture = new Texture(item.value()["assId"]);
+			texture->name = item.value()["name"];
 			std::string strpath = item.value()["path"];
 			texture->path = std::filesystem::path(strpath);
 			ImageLoader::loadImage(projectPath / texture->path, texture);
@@ -137,14 +141,16 @@ private:
 
 		for (const auto& item : json["scripts"].items())
 		{
-			Script* script = AssetCreator::createScript(item.value()["name"], item.value()["assId"]);
+			Script* script = new Script(item.value()["assId"]);
+			script->name = item.value()["name"];
 			script->source = item.value()["source"];
 
 			assetRepository->addScript(script);
 		}
 		for (const auto& item : json["vertices"].items())
 		{
-			Vertices* vertices = AssetCreator::createVertices(item.value()["name"], item.value()["assId"]);
+			Vertices* vertices = new Vertices(item.value()["assId"]);
+			vertices->name = item.value()["name"];
 			std::string strpath = item.value()["path"];
 			vertices->path = std::filesystem::path(strpath);
 			if (!std::filesystem::exists(projectPath / vertices->path)) {
@@ -159,7 +165,8 @@ private:
 		if (json.contains("materials")) {
 			for (const auto& item : json["materials"].items())
 			{
-				Material* material = AssetCreator::createMaterial(item.value()["name"], item.value()["assId"]);
+				Material* material = new Material(item.value()["assId"]);
+				material->name = item.value()["name"];
 				material->color.r = item.value()["color"]["r"];
 				material->color.g = item.value()["color"]["g"];
 				material->color.b = item.value()["color"]["b"];

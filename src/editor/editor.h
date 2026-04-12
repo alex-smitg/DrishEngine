@@ -544,8 +544,7 @@ public:
 			if (ImGui::Button("Model")) {
 				Node* n = NodeCreator::createNode(Type::MODEL, "model", nodeRepository);
 				selectedTreeNode->appendChild(n);
-				static_cast<Model*>(n)->material = assetRepository->defaultMaterial;
-
+				
 				createPopupPopened = false;
 				ImGui::CloseCurrentPopup();
 			}

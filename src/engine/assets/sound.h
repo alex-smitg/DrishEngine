@@ -5,10 +5,9 @@
 
 #include "asset.h"
 
-
-class Sound : public Asset 
-
+class Sound : public Asset
+{
 	std::filesystem::path path;
 
 	using Asset::Asset;
-}
+};

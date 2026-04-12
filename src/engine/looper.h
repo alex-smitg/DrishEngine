@@ -16,10 +16,6 @@ public:
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-		
-		
-
 		for (int i = nodeRepository->cameras.size(); i > 0; i--) {
 			Camera* camera = nodeRepository->cameras[i - 1];
 			if (currentCamera != nullptr) {
@@ -33,9 +29,6 @@ public:
 				}
 			}
 		}
-
-		
-
 		for (auto const& pair : assetRepository->materialsMap) {
 			Material* material = pair.second;
 			shader = material->shader;
@@ -70,18 +63,21 @@ public:
 
 		for (int i = nodeRepository->models.size(); i > 0; i--) {
 			Model* model = nodeRepository->models[i - 1];
-			if (model->material != nullptr) {
-				model->material->shader->setVec3("color", model->material->color);
-				if (model->material->texture == nullptr) {
-					model->material->shader->setInt("useTexture", 0);
+
+			if (model->hasMaterial()) {
+				Material* modelMaterial = model->getMaterial();
+
+				modelMaterial->shader->setVec3("color", modelMaterial->color);
+				if (modelMaterial->texture == nullptr) {
+					modelMaterial->shader->setInt("useTexture", 0);
 				}
 				else {
-					model->material->shader->setInt("useTexture", 1);
-					glBindTexture(GL_TEXTURE_2D, model->material->texture->glid);
+					modelMaterial->shader->setInt("useTexture", 1);
+					glBindTexture(GL_TEXTURE_2D, modelMaterial->texture->glid);
 				}
-				model->material->shader->setFloat("shine", model->material->shine);
-				model->material->shader->setMat4("model", model->transform.getMatrix());
-				model->material->shader->setInt("useLight", model->material->useLight);
+				modelMaterial->shader->setFloat("shine", modelMaterial->shine);
+				modelMaterial->shader->setMat4("model", model->transform.getMatrix());
+				modelMaterial->shader->setInt("useLight", modelMaterial->useLight);
 				if (model->vertices != nullptr) {
 					model->vertices->draw();
 				}

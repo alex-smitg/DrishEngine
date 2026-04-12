@@ -8,6 +8,9 @@
 
 inline int nextAssetId = 0;
 
+const int AUTO_INCREMENT_ID = -1;
+
+
 class Asset: public HasFields {
 public:
 	std::string name;

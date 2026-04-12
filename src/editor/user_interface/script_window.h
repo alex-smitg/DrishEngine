@@ -9,7 +9,6 @@
 #include "../../engine/lua_runner.h"
 #include "../../engine/asset_repository.h"
 #include "../../engine/assets/script.h"
-#include "../../engine/asset_creator.h"
 
 class ScriptWindow {
 private:
@@ -34,7 +33,9 @@ public:
 
 			if (ImGui::Button("+")) {
 				logDebug("[EDITOR] script name: ", scriptName);
-				AssetCreator::createScript(scriptName);
+				Script* script = new Script(AUTO_INCREMENT_ID);
+				script->name = scriptName;
+				assetRepository->addScript(script);
 			}
 			if (ImGui::BeginTabBar("tabbar")) {
 				for (auto const& pair : assetRepository->scriptsMap) {
