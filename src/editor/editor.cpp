@@ -73,8 +73,8 @@ int main()
 	Node *world = NodeCreator::createNode(Type::BASE, "World", &nodeRepository);
 
 	LuaRunner scripter;
-	scripter.addCreateNodeFunction(&nodeRepository);
-	scripter.addGetVerticesFunction(&assetRepository);
+	scripter.addCreateNodesFunctions(&nodeRepository);
+	scripter.addAssetRepositoryFunctions(&assetRepository);
 	scripter.setGetKey(&window);
 
 

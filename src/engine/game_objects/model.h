@@ -10,17 +10,13 @@
 #include "../assets/material.h"
 
 class Model: public Node {
-private:
-	//editor/user_interface/properties_window.h still can edit this field. I don't know how to fix this.
-	Material* material_ = nullptr;
-
 public:
 	Vertices* vertices = nullptr;
-
+	Material* material = nullptr;
 
 	
 	Material* getMaterial() const {
-		return material_;
+		return material;
 	}
 
 	
@@ -28,20 +24,20 @@ public:
 		if (material == nullptr) {
 			material = nullptr;
 		}
-		else if (material != this->material_) {
-			this->material_ = material;
+		else if (material != this->material) {
+			this->material = material;
 		}
 	}
 
 	bool hasMaterial() const {
-		return (this->material_ != nullptr);
+		return (this->material != nullptr);
 	}
 
 
 	Model() {
 		this->type = Type::MODEL; 
 
-		addField(Field("Material", FieldType::MaterialClass, 1, &material_));
+		addField(Field("Material", FieldType::MaterialClass, 1, &material));
 		addField(Field("Vertices", FieldType::VerticesClass, 1, &vertices));
 	}
 private:

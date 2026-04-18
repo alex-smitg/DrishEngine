@@ -37,6 +37,13 @@ LuaRunner::LuaRunner() {
 
 	
 
+	lua.new_usertype<Model>("Model",
+		sol::base_classes, sol::bases<Node>(),
+		"vertices", &Model::vertices,
+		"material", &Model::material);
+
+	
+
 
 	lua.set_function("print", [this](sol::variadic_args va) {
 		std::string st;
@@ -63,6 +70,15 @@ void LuaRunner::updateNodesScriptEnvironment(Node* node) {
 	node->env.set_function("destroy", [node]() {
 		node->destroy();
 	});
+
+	node->env.set_function("appendChild", [node](Node* n) {
+		node->appendChild(n);
+	});
+
+	
+
+
+	node->env["name"] = &node->name;
 	node->env["position"] = &node->transform.position;
 	node->env["rotation"] = &node->transform.rotation;
 	node->env["scale"] = &node->transform.scale;
@@ -78,17 +94,32 @@ void LuaRunner::updateNodesScriptEnvironment(Node* node) {
 		});
 }
 
-void LuaRunner::addGetVerticesFunction(AssetRepository* assetRepository) {
-	lua.set_function("getVerticesById", [assetRepository](long long id) {
+void LuaRunner::addAssetRepositoryFunctions(AssetRepository* assetRepository) {
+	lua["AssetRepository"] = lua.create_table();
+
+	lua.set_function("getVertices", [assetRepository](long long id) {
 		return assetRepository->getVertices(id);
 		}
 	);
+	lua.set_function("getTexture", [assetRepository](long long id) {
+		return assetRepository->getTexture(id);
+		}
+	);
+	lua.set_function("getMaterial", [assetRepository](long long id) {
+		return assetRepository->getMaterial(id);
+		}
+	);
+
 }
 
-void LuaRunner::addCreateNodeFunction(NodeRepository* nodeRepository) {
-	lua.set_function("createNode", [nodeRepository](Type type) {
-		return NodeCreator::createNode(type, "new_node", nodeRepository);
+void LuaRunner::addCreateNodesFunctions(NodeRepository* nodeRepository) {
+	lua.set_function("createEmpty", [nodeRepository]() {
+			return NodeCreator::createNode(Type::BASE, "Empty", nodeRepository);
 		}
+	);
+	lua.set_function("createModel", [nodeRepository]() {
+		return static_cast<Model*>(NodeCreator::createNode(Type::MODEL, "Model", nodeRepository));
+	}
 	);
 }
 

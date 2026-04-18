@@ -17,7 +17,7 @@ public:
 
 	LuaRunner();
 	void setGetKey(drishengine::Window* window);
-	void addCreateNodeFunction(NodeRepository* nodeRepository);
-	void addGetVerticesFunction(AssetRepository* assetRepository);
+	void addCreateNodesFunctions(NodeRepository* nodeRepository);
+	void addAssetRepositoryFunctions(AssetRepository* assetRepository);
 	void updateNodesScriptEnvironment(Node* node);
 };  
