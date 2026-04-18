@@ -35,10 +35,8 @@ LuaRunner::LuaRunner() {
 		"destroy", &Node::destroy,
 		"getChildren", &Node::getChildren);
 
-	/*lua.set_function("createNode", [](Type type) {
-		return NodeCreator::createNode(type, "new_node", -1);
-		}
-	);*/
+	
+
 
 	lua.set_function("print", [this](sol::variadic_args va) {
 		std::string st;
@@ -78,6 +76,20 @@ void LuaRunner::updateNodesScriptEnvironment(Node* node) {
 			// ... they need to return the protected_function_result
 			return pfr;
 		});
+}
+
+void LuaRunner::addGetVerticesFunction(AssetRepository* assetRepository) {
+	lua.set_function("getVerticesById", [assetRepository](long long id) {
+		return assetRepository->getVertices(id);
+		}
+	);
+}
+
+void LuaRunner::addCreateNodeFunction(NodeRepository* nodeRepository) {
+	lua.set_function("createNode", [nodeRepository](Type type) {
+		return NodeCreator::createNode(type, "new_node", nodeRepository);
+		}
+	);
 }
 
 void LuaRunner::setGetKey(drishengine::Window* window) {

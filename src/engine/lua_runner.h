@@ -5,7 +5,10 @@
 
 #include "window.h"
 
+#include "asset_repository.h"
+
 class Node;
+class NodeRepository;
 
 class LuaRunner {
 public:
@@ -14,5 +17,7 @@ public:
 
 	LuaRunner();
 	void setGetKey(drishengine::Window* window);
+	void addCreateNodeFunction(NodeRepository* nodeRepository);
+	void addGetVerticesFunction(AssetRepository* assetRepository);
 	void updateNodesScriptEnvironment(Node* node);
 };  
