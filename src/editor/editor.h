@@ -189,7 +189,7 @@ public:
 		j["vertices"] = {};
 		j["gameConfig"] = gameConfig;
 
-		for (auto const& pair : assetRepository->scriptsMap) {
+		/*for (auto const& pair : assetRepository->scriptsMap) {
 			j["scripts"].push_back(*pair.second);
 		}
 		for (auto const& pair : assetRepository->texturesMap) {
@@ -198,10 +198,16 @@ public:
 		for (auto const& pair : assetRepository->verticesMap) {
 			j["vertices"].push_back(*pair.second);
 		}
-		for (auto const& pair : assetRepository->materialsMap) {
-			if (pair.second->name != "default") {
-				j["materials"].push_back(*pair.second);
+		*/
+
+		for (AssetSlot<Material>* assSlot: assetRepository->materials.slots) {
+			if (assSlot->is_valid) {
+				j["materials"].push_back(*assSlot->asset);
 			}
+			else {
+				j["materials"].push_back({});
+			}
+			
 		}
 
 		j["nextNodeId"] = nextNodeId;

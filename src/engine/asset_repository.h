@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+#include "assets/asset_handle.h"
+
 #include "assets/script.h"
 #include "assets/material.h"
 #include "assets/texture.h"
@@ -15,104 +17,75 @@
 #include "loaders/model_loader.h"
 #include "logger.h"
 
+template <typename T>
+class AssetSlot {
+public:
+	T* asset = nullptr;
+	int index = -1;
+	bool is_valid = false;
+};
+
+
+template <typename T>
+class AssetsContainer {
+public:
+	std::vector<AssetSlot<T>*> slots;
+
+	void remove(int index) {
+		slots[index]->asset = nullptr;
+		slots[index]->is_valid = false;
+	}
+
+	int size() {
+		return slots.size();
+	}
+
+	void add(T* asset){
+		AssetSlot<T>* freeCon = nullptr;
+
+		for (AssetSlot<T>* assCon : slots) {
+			if (assCon->is_valid == false) {
+				freeCon = assCon;
+
+				break;
+			}
+		}
+		if (!freeCon) {
+			freeCon = new AssetSlot<T>();
+			freeCon->index = slots.size();
+			slots.push_back(freeCon);
+		}
+
+		freeCon->asset = asset;
+		freeCon->is_valid = true;
+	}
+
+	std::optional<T*> get(AssetHandle* assHolder) {
+		if (assHolder->index == INVALID_INDEX) {
+			return {};
+		}
+		AssetSlot<T>* container = slots[assHolder->index];
+
+
+		if (container->is_valid) {
+			return container->asset;
+		}
+		else {
+			return {};
+		}
+	}
+};
+
+
 
 class AssetRepository
 {
 public:
-	std::map<long long, Script *> scriptsMap;
-	std::map<long long, Material *> materialsMap;
-	std::map<long long, Texture *> texturesMap;
-	std::map<long long, Vertices *> verticesMap;
-	std::map<long long, Sound *> soundsMap;
+	AssetsContainer<Script> scripts;
+	AssetsContainer<Material> materials;
+	AssetsContainer<Texture> textures;
+	AssetsContainer<Vertices> vertices;
+	AssetsContainer<Sound> sounds;
 
 	Shader defaultShader;
-
-
-	AssetRepository() {}
-
-	void addMaterial(Material *material)
-	{
-		materialsMap[material->assId] = material;
-	}
-
-	void addScript(Script *script)
-	{
-		scriptsMap[script->assId] = script;
-	}
-
-	void addVertices(Vertices *vertices)
-	{
-		verticesMap[vertices->assId] = vertices;
-	}
-
-	void addTexture(Texture *texture)
-	{
-		texturesMap[texture->assId] = texture;
-	}
-
-	void addSound(Sound *sound)
-	{
-		soundsMap[sound->assId] = sound;
-	}
-
-	Script *getScript(long long id)
-	{
-		if (scriptsMap.contains(id))
-		{
-			return scriptsMap[id];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	Vertices *getVertices(long long id)
-	{
-		if (verticesMap.contains(id))
-		{
-
-			return verticesMap[id];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	Texture *getTexture(long long id)
-	{
-		if (texturesMap.contains(id))
-		{
-			return texturesMap[id];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	Material *getMaterial(long long id)
-	{
-		if (materialsMap.contains(id))
-		{
-			return materialsMap[id];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	Sound *getSound(long long id)
-	{
-		if (soundsMap.contains(id))
-		{
-			return soundsMap[id];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
 };

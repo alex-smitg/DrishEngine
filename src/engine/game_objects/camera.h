@@ -22,10 +22,10 @@ public:
 
 	Camera() {
 		this->type = Type::CAMERA;
-		addField(Field("Fov", FieldType::Float, 1, &fov));
-		addField(Field("Near", FieldType::Float, 1, &f_near));
-		addField(Field("Far", FieldType::Float, 1, &f_far));
-		addField(Field("Active", FieldType::Boolean, 1, &active));
+		addField(Field("Fov", FieldType::Float, &fov));
+		addField(Field("Near", FieldType::Float, &f_near));
+		addField(Field("Far", FieldType::Float, &f_far));
+		addField(Field("Active", FieldType::Boolean, &active));
 	}
 
 	void setWindowAspectRatio(float windowAspectRatio) {

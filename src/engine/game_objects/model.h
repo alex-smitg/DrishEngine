@@ -9,47 +9,22 @@
 #include "../assets/vertices.h"
 #include "../assets/material.h"
 
+
 class Model: public Node {
 public:
-	Vertices* vertices = nullptr;
-	Material* material = nullptr;
-
-	
-	Material* getMaterial() const {
-		return material;
-	}
-
-	
-	void assignMaterial(Material* material) {
-		if (material == nullptr) {
-			material = nullptr;
-		}
-		else if (material != this->material) {
-			this->material = material;
-		}
-	}
-
-	bool hasMaterial() const {
-		return (this->material != nullptr);
-	}
-
+	AssetHandle verticesHandle;
+	AssetHandle materialHandle;
 
 	Model() {
 		this->type = Type::MODEL; 
 
-		addField(Field("Material", FieldType::MaterialClass, 1, &material));
-		addField(Field("Vertices", FieldType::VerticesClass, 1, &vertices));
+		addField(Field("Material", FieldType::MaterialHandle, &materialHandle));
+		addField(Field("Vertices", FieldType::VerticesHandle, &verticesHandle));
 	}
-private:
-
 };
 
 inline void to_json(nlohmann::json& j, const Model& model) {
 	nlohmann::to_json(j, static_cast<Node>(model));
-	if (model.hasMaterial()) {
-		j["materialAssId"] = model.getMaterial()->assId;
-	}
-	if (model.vertices != nullptr) {
-		j["verticesAssId"] = model.vertices->assId;
-	}
+	j["materialAssId"] = model.materialHandle.index;
+	j["verticesAssId"] = model.verticesHandle.index;
 }

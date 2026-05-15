@@ -1,7 +1,7 @@
 #include "asset.h"
 
 Asset::Asset(long long id) {
-	addField(Field("Name", FieldType::String, 1, &name));
+	addField(Field("Name", FieldType::String, &name));
 
 	if (id == AUTO_INCREMENT_ID) {
 		assId = nextAssetId;

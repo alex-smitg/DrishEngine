@@ -25,10 +25,10 @@ public:
 
 	Material(long long id) : Asset(id)
 	{
-		addField(Field("Color", FieldType::Color3, 1, &color));
-		addField(Field("Texture", FieldType::TextureClass, 1, &texture));
-		addField(Field("Use Light", FieldType::Boolean, 1, &useLight));
-		addField(Field("Shine", FieldType::Float, 1, &shine));
+		addField(Field("Color", FieldType::Color3, &color));
+		addField(Field("Texture", FieldType::TextureHandle, &texture));
+		addField(Field("Use Light", FieldType::Boolean, &useLight));
+		addField(Field("Shine", FieldType::Float, &shine));
 	}
 };
 

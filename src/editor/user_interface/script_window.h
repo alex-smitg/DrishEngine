@@ -35,11 +35,11 @@ public:
 				logDebug("[EDITOR] script name: ", scriptName);
 				Script* script = new Script(AUTO_INCREMENT_ID);
 				script->name = scriptName;
-				assetRepository->addScript(script);
+				//assetRepository->addScript(script);
 			}
 			if (ImGui::BeginTabBar("tabbar")) {
-				for (auto const& pair : assetRepository->scriptsMap) {
-					Script* script = pair.second;
+				/*for (auto const& pair : assetRepository->scriptsMap) {
+					std::shared_ptr<Script> script = pair.second;
 					if (ImGui::BeginTabItem((script->name + "##" + std::to_string(script->assId)).c_str())) {
 						if (ImGui::BeginDragDropSource()) {
 							ImGui::SetDragDropPayload("SCRIPT", &script->assId, sizeof(script->assId));
@@ -49,7 +49,7 @@ public:
 						ImGui::InputTextMultiline("##script", &script->source, ImVec2(-FLT_MIN,-FLT_MIN), ImGuiInputTextFlags_AllowTabInput);
 						ImGui::EndTabItem();
 					}
-				}
+				}*/
 				ImGui::EndTabBar();
 			}
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -28,33 +28,37 @@ public:
 	}
 
 	template <typename T>
-	void Selector(Field* field, std::function<T*(long long)> assetGetter,
+	void Selector(Field* field, std::function<std::optional<T*>(AssetHandle*)> assetGetter,
 		std::string payload_name,
 		std::string ass_name) {
-		T* asset = *static_cast<T**>(field->ptr);
+
+		AssetHandle* assHolder = static_cast<AssetHandle*>(field->ptr);
 		ImGui::BeginGroup();
 		ImGui::Button("..");
 		if (ImGui::BeginDragDropTarget()) {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(payload_name.c_str())) {
-				long long payload_assid = *(long long*)payload->Data;
-				*static_cast<T**>(field->ptr) = assetGetter(payload_assid);
+				long long payload_index = *(long long*)payload->Data;
+				assHolder->index = payload_index;
 			}
 			ImGui::EndDragDropTarget();
 		}
+
 		ImGui::SameLine();
-		if (asset != nullptr) {
-			ImGui::Text(asset->name.c_str());
+
+		std::optional<T*> asset = assetGetter(assHolder);
+		if (asset.has_value()) {
+			ImGui::Text(asset.value()->name.c_str());
 			ImGui::SameLine();
 			if (ImGui::Button("-")) {
-				*static_cast<T**>(field->ptr) = nullptr;
+				assHolder->index = INVALID_INDEX;
 			}
 		}
 		else {
 			ImGui::Text("_");
 		}
 		ImGui::EndGroup();
-		if (asset != nullptr) {
-			drawFields(asset->getFields(), ass_name);
+		if (asset.has_value()) {
+			drawFields(asset.value()->getFields(), ass_name);
 		}
 	}
 
@@ -85,7 +89,7 @@ public:
 			{
 			case FieldType::Float:
 			{
-				ImGui::DragScalarN("", ImGuiDataType_Float, field.ptr, field.count, 0.1);
+				ImGui::DragScalarN("", ImGuiDataType_Float, field.ptr, 1, 0.1);
 				break;
 			}
 			case FieldType::FloatVec3:
@@ -111,27 +115,27 @@ public:
 				color->b = col[2];
 				break;
 			}
-			case FieldType::MaterialClass:
+			case FieldType::MaterialHandle:
 			{
-				auto f = std::bind(&AssetRepository::getMaterial, assetRepository, std::placeholders::_1);
+				auto f = std::bind(&AssetsContainer<Material>::get, assetRepository->materials, std::placeholders::_1);
 				Selector<Material>(&field, f, "MATERIAL", "Material");
 				break;
 			}
-			case FieldType::TextureClass:
+			case FieldType::TextureHandle:
 			{
-				auto f = std::bind(&AssetRepository::getTexture, assetRepository, std::placeholders::_1);
+				auto f = std::bind(&AssetsContainer<Texture>::get, assetRepository->textures, std::placeholders::_1);
 				Selector<Texture>(&field, f, "TEXTURE", "Texture");
 				break;
 			}
-			case FieldType::VerticesClass:
+			case FieldType::VerticesHandle:
 			{
-				auto f = std::bind(&AssetRepository::getVertices, assetRepository, std::placeholders::_1);
+				auto f = std::bind(&AssetsContainer<Vertices>::get, assetRepository->vertices, std::placeholders::_1);
 				Selector<Vertices>(&field, f, "VERTICES", "Vertices");
 				break;
 			}
-			case FieldType::ScriptClass:
+			case FieldType::ScriptHandle:
 			{
-				auto f = std::bind(&AssetRepository::getScript, assetRepository, std::placeholders::_1);
+				auto f = std::bind(&AssetsContainer<Script>::get, assetRepository->scripts, std::placeholders::_1);
 				Selector<Script>(&field, f, "SCRIPT", "Script");
 				break;
 			}

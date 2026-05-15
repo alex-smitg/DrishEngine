@@ -11,6 +11,7 @@
 #include "../assets/script.h"
 #include "../transform.h"
 #include "../has_fields.h"
+#include "../assets/asset_handle.h"
 
 class AssetRepository;
 class Shader;
@@ -27,16 +28,16 @@ public:
 	std::vector<Node*> children;
 	Node* parent = nullptr;
 
-	Script* script = nullptr;
+	AssetHandle scriptHandle;
 	
 	sol::environment env;
 	
 	Node() {
-		addField(Field("Name", FieldType::String, 1, &name));
-		addField(Field("Position", FieldType::FloatVec3, 1, &transform.position));
-		addField(Field("Rotation", FieldType::FloatVec3, 1, &transform.rotation));
-		addField(Field("Scale", FieldType::FloatVec3, 1, &transform.scale));
-		addField(Field("Script", FieldType::ScriptClass, 1, &script));
+		addField(Field("Name", FieldType::String, &name));
+		addField(Field("Position", FieldType::FloatVec3, &transform.position));
+		addField(Field("Rotation", FieldType::FloatVec3, &transform.rotation));
+		addField(Field("Scale", FieldType::FloatVec3, &transform.scale));
+		addField(Field("Script", FieldType::ScriptHandle, &scriptHandle));
 	}
 	
 
@@ -78,8 +79,8 @@ inline void to_json(nlohmann::json& j, const Node& node) {
 	j["parent"] = node.parent->id;
 	j["id"] = node.id;
 	
-	if (node.script != nullptr) {
-		j["script_assId"] = node.script->assId;
+	if (node.scriptHandle.isValid()) {
+		j["script_assId"] = node.scriptHandle.index;
 	}
 
 

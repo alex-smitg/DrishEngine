@@ -10,11 +10,21 @@ inline int nextAssetId = 0;
 
 const int AUTO_INCREMENT_ID = -1;
 
+typedef long AssetID;
+
+enum AssetType {
+	TEXTURE,
+	MATERIAL,
+	SCRIPT,
+	SOUND,
+	VERTICES
+};
+
 
 class Asset: public HasFields {
 public:
 	std::string name;
-	long long assId;
+	AssetID assId;
 
 	Asset(long long id);
 

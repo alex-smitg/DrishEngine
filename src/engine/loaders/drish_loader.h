@@ -89,14 +89,14 @@ public:
 				long long id = item.value()["id"];
 				Node* node = nodes[id];
 				nodes[item.value()["parent"]]->appendChild(node);
-				if (item.value().contains("script_assId")) {
+				/*if (item.value().contains("script_assId")) {
 					node->script = assetRepository->getScript(item.value()["script_assId"]);
 					logDebug("[DRISH LOADER] Script ASS ID: ", item.value()["script_assId"]);
 				}
 
 				if (item.value().contains("materialAssId")) {
 					Model* model = static_cast<Model*>(node);
-					model->assignMaterial(assetRepository->getMaterial(item.value()["materialAssId"]));
+					model->material = assetRepository->getMaterial(item.value()["materialAssId"]);
 					logDebug("[DRISH LOADER] Material ASS ID: ", item.value()["materialAssId"]);
 				}
 
@@ -109,7 +109,7 @@ public:
 						model->vertices = assetRepository->getVertices(item.value()["verticesAssId"]);
 						logDebug("[DRISH LOADER] Vertices ASS ID: ", item.value()["verticesAssId"]);
 					}
-				}
+				}*/
 
 			}
 		}
@@ -136,7 +136,7 @@ private:
 			texture->path = std::filesystem::path(strpath);
 			ImageLoader::loadImage(projectPath / texture->path, texture);
 
-			assetRepository->addTexture(texture);
+			//assetRepository->addTexture(texture);
 		}
 
 		for (const auto& item : json["scripts"].items())
@@ -145,7 +145,7 @@ private:
 			script->name = item.value()["name"];
 			script->source = item.value()["source"];
 
-			assetRepository->addScript(script);
+			//assetRepository->addScript(script);
 		}
 		for (const auto& item : json["vertices"].items())
 		{
@@ -159,23 +159,37 @@ private:
 			drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
 			vertices->createBuffers();
 
-			assetRepository->addVertices(vertices);
+			//assetRepository->addVertices(vertices);
 		}
 
 		if (json.contains("materials")) {
 			for (const auto& item : json["materials"].items())
 			{
-				Material* material = new Material(item.value()["assId"]);
-				material->name = item.value()["name"];
-				material->color.r = item.value()["color"]["r"];
-				material->color.g = item.value()["color"]["g"];
-				material->color.b = item.value()["color"]["b"];
-				material->shader = &assetRepository->defaultShader;
-				if (item.value().contains("textureAssId")) {
-					material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
+				if (item.value().empty()) {
+					AssetSlot<Material>* con = new AssetSlot<Material>();
+					con->index = assetRepository->materials.size();
+					assetRepository->materials.slots.push_back(con);
 				}
+				else {
+					Material* material = new Material(item.value()["assId"]);
+					material->name = item.value()["name"];
+					material->color.r = item.value()["color"]["r"];
+					material->color.g = item.value()["color"]["g"];
+					material->color.b = item.value()["color"]["b"];
+					material->shader = &assetRepository->defaultShader;
 
-				assetRepository->addMaterial(material);
+					AssetSlot<Material>* con = new AssetSlot<Material>();
+					con->index = assetRepository->materials.size();
+					assetRepository->materials.slots.push_back(con);
+					con->asset = material;
+					con->is_valid = true;
+					
+				}
+				//if (item.value().contains("textureAssId")) {
+					//material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
+				//}
+
+				//assetRepository->addMaterial(material);
 			}
 		}
 	}

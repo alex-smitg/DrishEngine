@@ -37,10 +37,10 @@ LuaRunner::LuaRunner() {
 
 	
 
-	lua.new_usertype<Model>("Model",
+	/*lua.new_usertype<Model>("Model",
 		sol::base_classes, sol::bases<Node>(),
 		"vertices", &Model::vertices,
-		"material", &Model::material);
+		"material", &Model::material);*/
 
 	
 
@@ -63,41 +63,42 @@ void LuaRunner::updateNodesScriptEnvironment(Node* node) {
 		updateNodesScriptEnvironment(n);
 	}
 
-	if (node->script == nullptr) { return; }
+	//if (auto script = node->script.lock()) {
 
-	node->env = sol::environment(lua, sol::create, lua.globals());
+	//	node->env = sol::environment(lua, sol::create, lua.globals());
 
-	node->env.set_function("destroy", [node]() {
-		node->destroy();
-	});
+	//	node->env.set_function("destroy", [node]() {
+	//		node->destroy();
+	//		});
 
-	node->env.set_function("appendChild", [node](Node* n) {
-		node->appendChild(n);
-	});
-
-	
+	//	node->env.set_function("appendChild", [node](Node* n) {
+	//		node->appendChild(n);
+	//		});
 
 
-	node->env["name"] = &node->name;
-	node->env["position"] = &node->transform.position;
-	node->env["rotation"] = &node->transform.rotation;
-	node->env["scale"] = &node->transform.scale;
-	lua.safe_script(node->script->source, node->env,
-		[this](lua_State*, sol::protected_function_result pfr) {
-			// pfr will contain things that went wrong, for either loading or executing the script
-			// the user can do whatever they like here, including throw. Otherwise...
-			sol::error err = pfr;
-			this->lastError = err.what();
-			logError(err.what());
-			// ... they need to return the protected_function_result
-			return pfr;
-		});
+
+
+	//	node->env["name"] = &node->name;
+	//	node->env["position"] = &node->transform.position;
+	//	node->env["rotation"] = &node->transform.rotation;
+	//	node->env["scale"] = &node->transform.scale;
+	//	lua.safe_script(script->source, node->env,
+	//		[this](lua_State*, sol::protected_function_result pfr) {
+	//			// pfr will contain things that went wrong, for either loading or executing the script
+	//			// the user can do whatever they like here, including throw. Otherwise...
+	//			sol::error err = pfr;
+	//			this->lastError = err.what();
+	//			logError(err.what());
+	//			// ... they need to return the protected_function_result
+	//			return pfr;
+	//		});
+	//}
 }
 
 void LuaRunner::addAssetRepositoryFunctions(AssetRepository* assetRepository) {
 	lua["AssetRepository"] = lua.create_table();
 
-	lua.set_function("getVertices", [assetRepository](long long id) {
+	/*lua.set_function("getVertices", [assetRepository](long long id) {
 		return assetRepository->getVertices(id);
 		}
 	);
@@ -108,7 +109,7 @@ void LuaRunner::addAssetRepositoryFunctions(AssetRepository* assetRepository) {
 	lua.set_function("getMaterial", [assetRepository](long long id) {
 		return assetRepository->getMaterial(id);
 		}
-	);
+	);*/
 
 }
 

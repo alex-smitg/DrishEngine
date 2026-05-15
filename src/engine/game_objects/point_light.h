@@ -13,9 +13,9 @@ public:
 	PointLight() {
 		this->type = Type::POINT_LIGHT;
 
-		addField(Field("Color", FieldType::Color3, 1, &color));
-		addField(Field("Strength", FieldType::Float, 1, &strength));
-		addField(Field("Radius", FieldType::Float, 1, &radius));
+		addField(Field("Color", FieldType::Color3, &color));
+		addField(Field("Strength", FieldType::Float, &strength));
+		addField(Field("Radius", FieldType::Float, &radius));
 	}
 
 	void update(double delta) override {

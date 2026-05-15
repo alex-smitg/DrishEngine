@@ -10,22 +10,21 @@ enum FieldType {
 	Color3,
 	Boolean,
 	TextureID,
-	ScriptClass,
-	TextureClass,
-	MaterialClass, 
-	VerticesClass,};
+	ScriptHandle,
+	TextureHandle,
+	MaterialHandle,
+	VerticesHandle,
+};
 
 class Field {
 public:
 	std::string name = "";
 	FieldType type;
-	int count = 1;
 	void* ptr;
 
-	Field(std::string name, FieldType type, int count, void* ptr) {
+	Field(std::string name, FieldType type, void* ptr) {
 		this->name = name;
 		this->type = type;
-		this->count = count;
 		this->ptr = ptr;
 	}
 };
