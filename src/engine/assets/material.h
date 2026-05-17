@@ -16,17 +16,15 @@ public:
 	Shader *shader = nullptr;
 
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-	Texture *texture = nullptr;
+	AssetHandle textureHandle;
 
 	float shine = 32.0;
 	bool useLight = true;
 
-	bool isDeleted = false;
-
-	Material(long long id) : Asset(id)
+	Material()
 	{
 		addField(Field("Color", FieldType::Color3, &color));
-		addField(Field("Texture", FieldType::TextureHandle, &texture));
+		addField(Field("Texture", FieldType::TextureHandle, &textureHandle));
 		addField(Field("Use Light", FieldType::Boolean, &useLight));
 		addField(Field("Shine", FieldType::Float, &shine));
 	}
@@ -41,8 +39,8 @@ inline void to_json(nlohmann::json &j, const Material &material)
 	j["color"]["b"] = material.color.b;
 	j["useLight"] = material.useLight;
 	j["shine"] = material.shine;
-	if (material.texture != nullptr)
-	{
-		j["textureAssId"] = material.texture->assId;
-	}
+	//if (material.texture != nullptr)
+	//{
+	//	//j["textureAssId"] = material.texture->assId;
+	//}
 }

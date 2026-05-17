@@ -33,7 +33,7 @@ public:
 
 			if (ImGui::Button("+")) {
 				logDebug("[EDITOR] script name: ", scriptName);
-				Script* script = new Script(AUTO_INCREMENT_ID);
+				Script* script = new Script();
 				script->name = scriptName;
 				//assetRepository->addScript(script);
 			}

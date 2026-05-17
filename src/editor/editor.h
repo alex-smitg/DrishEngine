@@ -109,7 +109,7 @@ public:
 		unsigned char* bytes = new unsigned char[dwSize];
 		memcpy(bytes, lpAddress, dwSize);
 
-		Texture* texture = new Texture(-1);
+		Texture* texture = new Texture();
 		icoTexture = texture;
 		ImageLoader::loadImage(bytes, (int) dwSize, texture);
 
@@ -211,7 +211,6 @@ public:
 		}
 
 		j["nextNodeId"] = nextNodeId;
-		j["nextAssetId"] = nextAssetId;
 
 		logDebug("Next node id: ", nextNodeId);
 		

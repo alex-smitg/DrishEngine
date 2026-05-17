@@ -3,16 +3,11 @@
 #include <string>
 
 #include "json.hpp"
-
 #include "../has_fields.h"
 
-inline int nextAssetId = 0;
-
-const int AUTO_INCREMENT_ID = -1;
-
-typedef long AssetID;
 
 enum AssetType {
+	NONE,
 	TEXTURE,
 	MATERIAL,
 	SCRIPT,
@@ -24,10 +19,9 @@ enum AssetType {
 class Asset: public HasFields {
 public:
 	std::string name;
-	AssetID assId;
+	AssetType type = AssetType::NONE;
 
-	Asset(long long id);
-
+	Asset();
 };
 
 void to_json(nlohmann::json& j, const Asset& asset);

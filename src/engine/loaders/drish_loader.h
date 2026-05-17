@@ -125,9 +125,6 @@ public:
 
 private:
 	static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
-		nextAssetId = json["nextAssetId"];
-		logDebug("[DRISH LOADER] ", "nextAssetId ", nextAssetId);
-
 		for (const auto& item : json["textures"].items())
 		{
 			Texture* texture = new Texture(item.value()["assId"]);
