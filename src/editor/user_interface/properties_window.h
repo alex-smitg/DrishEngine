@@ -37,7 +37,7 @@ public:
 		ImGui::Button("..");
 		if (ImGui::BeginDragDropTarget()) {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(payload_name.c_str())) {
-				long long payload_index = *(long long*)payload->Data;
+				int payload_index = *(int*)payload->Data;
 				assHolder->index = payload_index;
 			}
 			ImGui::EndDragDropTarget();
@@ -121,16 +121,16 @@ public:
 				Selector<Material>(&field, f, "MATERIAL", "Material");
 				break;
 			}
-			case FieldType::TextureHandle:
-			{
-				auto f = std::bind(&AssetsContainer<Texture>::get, assetRepository->textures, std::placeholders::_1);
-				Selector<Texture>(&field, f, "TEXTURE", "Texture");
-				break;
-			}
 			case FieldType::VerticesHandle:
 			{
 				auto f = std::bind(&AssetsContainer<Vertices>::get, assetRepository->vertices, std::placeholders::_1);
 				Selector<Vertices>(&field, f, "VERTICES", "Vertices");
+				break;
+			}
+			case FieldType::TextureHandle:
+			{
+				auto f = std::bind(&AssetsContainer<Texture>::get, assetRepository->textures, std::placeholders::_1);
+				Selector<Texture>(&field, f, "TEXTURE", "Texture");
 				break;
 			}
 			case FieldType::ScriptHandle:
