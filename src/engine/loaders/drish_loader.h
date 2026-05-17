@@ -1,5 +1,6 @@
 #pragma once
 
+#define JSON_DIAGNOSTICS 1
 
 #include <filesystem>
 
@@ -125,69 +126,69 @@ public:
 
 private:
 	static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
-		for (const auto& item : json["textures"].items())
-		{
-			Texture* texture = new Texture(item.value()["assId"]);
-			texture->name = item.value()["name"];
-			std::string strpath = item.value()["path"];
-			texture->path = std::filesystem::path(strpath);
-			ImageLoader::loadImage(projectPath / texture->path, texture);
+		//for (const auto& item : json["textures"].items())
+		//{
+		//	Texture* texture = new Texture(item.value()["assId"]);
+		//	texture->name = item.value()["name"];
+		//	std::string strpath = item.value()["path"];
+		//	texture->path = std::filesystem::path(strpath);
+		//	ImageLoader::loadImage(projectPath / texture->path, texture);
 
-			//assetRepository->addTexture(texture);
-		}
+		//	//assetRepository->addTexture(texture);
+		//}
 
-		for (const auto& item : json["scripts"].items())
-		{
-			Script* script = new Script(item.value()["assId"]);
-			script->name = item.value()["name"];
-			script->source = item.value()["source"];
+		//for (const auto& item : json["scripts"].items())
+		//{
+		//	Script* script = new Script(item.value()["assId"]);
+		//	script->name = item.value()["name"];
+		//	script->source = item.value()["source"];
 
-			//assetRepository->addScript(script);
-		}
-		for (const auto& item : json["vertices"].items())
-		{
-			Vertices* vertices = new Vertices(item.value()["assId"]);
-			vertices->name = item.value()["name"];
-			std::string strpath = item.value()["path"];
-			vertices->path = std::filesystem::path(strpath);
-			if (!std::filesystem::exists(projectPath / vertices->path)) {
-				logError("[DRISH LOADER] ", vertices->path, " path does not exist");
-			}
-			drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
-			vertices->createBuffers();
+		//	//assetRepository->addScript(script);
+		//}
+		//for (const auto& item : json["vertices"].items())
+		//{
+		//	Vertices* vertices = new Vertices(item.value()["assId"]);
+		//	vertices->name = item.value()["name"];
+		//	std::string strpath = item.value()["path"];
+		//	vertices->path = std::filesystem::path(strpath);
+		//	if (!std::filesystem::exists(projectPath / vertices->path)) {
+		//		logError("[DRISH LOADER] ", vertices->path, " path does not exist");
+		//	}
+		//	drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
+		//	vertices->createBuffers();
 
-			//assetRepository->addVertices(vertices);
-		}
+		//	//assetRepository->addVertices(vertices);
+		//}
 
-		if (json.contains("materials")) {
-			for (const auto& item : json["materials"].items())
-			{
-				if (item.value().empty()) {
-					AssetSlot<Material>* con = new AssetSlot<Material>();
-					con->index = assetRepository->materials.size();
-					assetRepository->materials.slots.push_back(con);
-				}
-				else {
-					Material* material = new Material(item.value()["assId"]);
-					material->name = item.value()["name"];
-					material->color.r = item.value()["color"]["r"];
-					material->color.g = item.value()["color"]["g"];
-					material->color.b = item.value()["color"]["b"];
-					material->shader = &assetRepository->defaultShader;
+		//if (json.contains("materials")) {
+		//	for (const auto& item : json["materials"].items())
+		//	{
+		//		if (item.value().empty()) {
+		//			AssetSlot<Material>* con = new AssetSlot<Material>();
+		//			con->index = assetRepository->materials.size();
+		//			assetRepository->materials.slots.push_back(con);
+		//		}
+		//		else {
+		//			Material* material = new Material(item.value()["assId"]);
+		//			material->name = item.value()["name"];
+		//			material->color.r = item.value()["color"]["r"];
+		//			material->color.g = item.value()["color"]["g"];
+		//			material->color.b = item.value()["color"]["b"];
+		//			material->shader = &assetRepository->defaultShader;
 
-					AssetSlot<Material>* con = new AssetSlot<Material>();
-					con->index = assetRepository->materials.size();
-					assetRepository->materials.slots.push_back(con);
-					con->asset = material;
-					con->is_valid = true;
-					
-				}
-				//if (item.value().contains("textureAssId")) {
-					//material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
-				//}
+		//			AssetSlot<Material>* con = new AssetSlot<Material>();
+		//			con->index = assetRepository->materials.size();
+		//			assetRepository->materials.slots.push_back(con);
+		//			con->asset = material;
+		//			con->is_valid = true;
+		//			
+		//		}
+		//		//if (item.value().contains("textureAssId")) {
+		//			//material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
+		//		//}
 
-				//assetRepository->addMaterial(material);
-			}
-		}
+		//		//assetRepository->addMaterial(material);
+		//	}
+		//}
 	}
 };
