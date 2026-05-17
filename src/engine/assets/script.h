@@ -8,7 +8,9 @@ class Script : public Asset {
 public:
 	std::string source;
 
-	using Asset::Asset;
+	Script() {
+		type = AssetType::SCRIPT;
+	}
 };
 
 inline void to_json(nlohmann::json& j, const Script& script) {

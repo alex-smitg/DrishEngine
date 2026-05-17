@@ -14,7 +14,6 @@ class Material : public Asset
 {
 public:
 	Shader *shader = nullptr;
-
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 	AssetHandle textureHandle;
 
@@ -23,6 +22,7 @@ public:
 
 	Material()
 	{
+		type = AssetType::MATERIAL;
 		addField(Field("Color", FieldType::Color3, &color));
 		addField(Field("Texture", FieldType::TextureHandle, &textureHandle));
 		addField(Field("Use Light", FieldType::Boolean, &useLight));

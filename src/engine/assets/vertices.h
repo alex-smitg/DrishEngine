@@ -17,7 +17,9 @@ public:
 
 	std::filesystem::path path;
 
-	using Asset::Asset;
+	Vertices() {
+		type = AssetType::VERTICES;
+	}
 
 	~Vertices() {
 		glDeleteBuffers(1, &VBO);

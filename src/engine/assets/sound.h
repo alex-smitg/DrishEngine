@@ -9,5 +9,7 @@ class Sound : public Asset
 {
 	std::filesystem::path path;
 
-	using Asset::Asset;
+	Sound() {
+		type = AssetType::SOUND;
+	}
 };

@@ -17,6 +17,7 @@ public:
 	std::filesystem::path path;
 
 	Texture() {
+		type = AssetType::TEXTURE;
 		addField(Field("Image", FieldType::TextureID, &glid));
 	}
 };
