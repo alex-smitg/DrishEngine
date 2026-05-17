@@ -29,58 +29,65 @@ public:
 				}
 			}
 		}
-		//for (auto const& pair : assetRepository->materialsMap) {
-		//	std::shared_ptr<Material> material = pair.second;
-		//	shader = material->shader;
-		//	material->shader->use();
-		//	if (currentCamera != nullptr) {
-		//		material->shader->setMat4("projection", currentCamera->perspective);
-		//		if (currentCamera->create_view) {
-		//			currentCamera->view = glm::inverse(currentCamera->transform.getMatrix());
-		//		} 
-		//		material->shader->setMat4("view", currentCamera->view);
-		//	}
-		//	
-		//}
-		//if (shader != nullptr) {
-		//	int n = 0;
-		//	shader->use();
-		//	if (currentCamera != nullptr) {
-		//		shader->setVec3("viewPos", currentCamera->transform.position);
-		//	}
-		//	
-		//	shader->setInt("pointLightsCount", nodeRepository->pointLights.size());
-		//	for (int i = nodeRepository->pointLights.size(); i > 0; i--) {
-		//		PointLight* pointLight = nodeRepository->pointLights[i - 1];
-		//		shader->setFloat("pointLights[" + std::to_string(n) + "].radius", pointLight->radius);
-		//		shader->setVec3("pointLights[" + std::to_string(n) + "].position", pointLight->transform.position);
-		//		shader->setVec3("pointLights[" + std::to_string(n) + "].color", pointLight->color);
-		//		shader->setFloat("pointLights[" + std::to_string(n) + "].strength", pointLight->strength);
-		//		//shader.setFloat("pointLights[" + std::to_string(n) + "].radius", light->radius);
-		//		n++;
-		//	}
-		//}
 
-		//for (int i = nodeRepository->models.size(); i > 0; i--) {
-		//	Model* model = nodeRepository->models[i - 1];
+		for (AssetSlot<Material>* slot: assetRepository->materials.slots) {
+			if (slot->is_valid) {
+				Material* material = slot->asset;
+				shader = material->shader;
+				material->shader->use();
+				if (currentCamera != nullptr) {
+					material->shader->setMat4("projection", currentCamera->perspective);
+					if (currentCamera->create_view) {
+						currentCamera->view = glm::inverse(currentCamera->transform.getMatrix());
+					} 
+					material->shader->setMat4("view", currentCamera->view);
+				}
+			}
+			
+		}
+		if (shader != nullptr) {
+			int n = 0;
+			shader->use();
+			if (currentCamera != nullptr) {
+				shader->setVec3("viewPos", currentCamera->transform.position);
+			}
+			
+			shader->setInt("pointLightsCount", nodeRepository->pointLights.size());
+			for (int i = nodeRepository->pointLights.size(); i > 0; i--) {
+				PointLight* pointLight = nodeRepository->pointLights[i - 1];
+				shader->setFloat("pointLights[" + std::to_string(n) + "].radius", pointLight->radius);
+				shader->setVec3("pointLights[" + std::to_string(n) + "].position", pointLight->transform.position);
+				shader->setVec3("pointLights[" + std::to_string(n) + "].color", pointLight->color);
+				shader->setFloat("pointLights[" + std::to_string(n) + "].strength", pointLight->strength);
+				//shader.setFloat("pointLights[" + std::to_string(n) + "].radius", light->radius);
+				n++;
+			}
+		}
 
-		//	if (auto material = model->material.lock()) {
-		//		material->shader->setVec3("color", material->color);
-		//		if (material->texture == nullptr) {
-		//			material->shader->setInt("useTexture", 0);
-		//		}
-		//		else {
-		//			material->shader->setInt("useTexture", 1);
-		//			glBindTexture(GL_TEXTURE_2D, material->texture->glid);
-		//		}
-		//		material->shader->setFloat("shine", material->shine);
-		//		material->shader->setMat4("model", model->transform.getMatrix());
-		//		material->shader->setInt("useLight", material->useLight);
-		//		
-		//		if (auto vertices = model->vertices.lock()) {
-		//			vertices->draw();
-		//		}
-		//	}
-		//}
+		for (int i = nodeRepository->models.size(); i > 0; i--) {
+			Model* model = nodeRepository->models[i - 1];
+
+			std::optional<Material*> mat = assetRepository->materials.get(&model->materialHandle);
+			if (mat.has_value()) {
+				Material* material = mat.value();
+				material->shader->setVec3("color", material->color);
+				std::optional<Texture*> tex = assetRepository->textures.get(&material->textureHandle);
+				if (!tex.has_value()) {
+					material->shader->setInt("useTexture", 0);
+				}
+				else {
+					material->shader->setInt("useTexture", 1);
+					glBindTexture(GL_TEXTURE_2D, tex.value()->glid);
+				}
+				material->shader->setFloat("shine", material->shine);
+				material->shader->setMat4("model", model->transform.getMatrix());
+				material->shader->setInt("useLight", material->useLight);
+				
+				std::optional<Vertices*> ver = assetRepository->vertices.get(&model->verticesHandle);
+				if (ver.has_value()) {
+					ver.value()->draw();
+				}
+			}
+		}
 	}
 };
