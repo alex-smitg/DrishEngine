@@ -500,7 +500,7 @@ public:
 
 		ImGui::Begin("Info");
 		if (ImGui::Button("Test all script nodes")) {
-			luaRunner->updateNodesScriptEnvironment(world);
+			luaRunner->updateNodesScriptEnvironment(world, assetRepository);
 		}
 		if (selectedNode != nullptr) {
 			if (selectedNode->type == Type::CAMERA) {

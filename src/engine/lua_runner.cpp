@@ -56,43 +56,43 @@ LuaRunner::LuaRunner() {
 }
 
 
-void LuaRunner::updateNodesScriptEnvironment(Node* node) {
+void LuaRunner::updateNodesScriptEnvironment(Node* node, AssetRepository* assetRepository) {
 	this->lastError = "";
 
 	for (Node* n : node->children) {
-		updateNodesScriptEnvironment(n);
+		updateNodesScriptEnvironment(n, assetRepository);
 	}
 
-	//if (auto script = node->script.lock()) {
+	std::optional<Script*> scr = assetRepository->scripts.get(&node->scriptHandle);
 
-	//	node->env = sol::environment(lua, sol::create, lua.globals());
+	if (scr.has_value()) {
+		Script* script = scr.value();
 
-	//	node->env.set_function("destroy", [node]() {
-	//		node->destroy();
-	//		});
+		node->env = sol::environment(lua, sol::create, lua.globals());
 
-	//	node->env.set_function("appendChild", [node](Node* n) {
-	//		node->appendChild(n);
-	//		});
+		node->env.set_function("destroy", [node]() {
+			node->destroy();
+			});
 
+		node->env.set_function("appendChild", [node](Node* n) {
+			node->appendChild(n);
+			});
 
-
-
-	//	node->env["name"] = &node->name;
-	//	node->env["position"] = &node->transform.position;
-	//	node->env["rotation"] = &node->transform.rotation;
-	//	node->env["scale"] = &node->transform.scale;
-	//	lua.safe_script(script->source, node->env,
-	//		[this](lua_State*, sol::protected_function_result pfr) {
-	//			// pfr will contain things that went wrong, for either loading or executing the script
-	//			// the user can do whatever they like here, including throw. Otherwise...
-	//			sol::error err = pfr;
-	//			this->lastError = err.what();
-	//			logError(err.what());
-	//			// ... they need to return the protected_function_result
-	//			return pfr;
-	//		});
-	//}
+		node->env["name"] = &node->name;
+		node->env["position"] = &node->transform.position;
+		node->env["rotation"] = &node->transform.rotation;
+		node->env["scale"] = &node->transform.scale;
+		lua.safe_script(script->source, node->env,
+			[this](lua_State*, sol::protected_function_result pfr) {
+				// pfr will contain things that went wrong, for either loading or executing the script
+				// the user can do whatever they like here, including throw. Otherwise...
+				sol::error err = pfr;
+				this->lastError = err.what();
+				logError(err.what());
+				// ... they need to return the protected_function_result
+				return pfr;
+			});
+	}
 }
 
 void LuaRunner::addAssetRepositoryFunctions(AssetRepository* assetRepository) {

@@ -19,5 +19,5 @@ public:
 	void setGetKey(drishengine::Window* window);
 	void addCreateNodesFunctions(NodeRepository* nodeRepository);
 	void addAssetRepositoryFunctions(AssetRepository* assetRepository);
-	void updateNodesScriptEnvironment(Node* node);
+	void updateNodesScriptEnvironment(Node* node, AssetRepository* assetRepository);
 };  
