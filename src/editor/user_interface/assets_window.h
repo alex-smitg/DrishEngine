@@ -11,6 +11,8 @@
 #include "../../engine/asset_repository.h"
 #include "../../engine/loaders/image_loader.h"
 
+#include "../../engine/logger.h"
+
 class AssetWindow
 {
 private:
@@ -29,38 +31,62 @@ public:
 	template <typename T>
 	void drawList(std::string name, std::string payloadName, std::vector<AssetSlot<T>*> slots,
 		std::function<void(int)> deleteFunction, std::function<void()> createFunction) {
+
+
 		if (ImGui::TreeNodeEx(name.c_str()))
 		{
-			if (ImGui::Button("+"))
-			{
-				createFunction();
-			}
-			for (const AssetSlot<T>* assetSlot : slots)
-			{
-				ImGui::PushID(assetSlot->index);
-				if (assetSlot->is_valid && ImGui::TreeNodeEx(assetSlot->asset->name.c_str(), ImGuiTreeNodeFlags_Leaf)) {
-					T* asset = assetSlot->asset;
-
-					if (ImGui::BeginPopupContextItem())
-					{
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 0.0, 0.0, 1.0));
-						if (ImGui::MenuItem("Delete")) {
-							deleteFunction(assetSlot->index);
-						}
-						ImGui::PopStyleColor();
-						ImGui::EndPopup();
-					}
-
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload(payloadName.c_str(), &assetSlot->index, sizeof(assetSlot->index));
-						ImGui::Text(asset->name.c_str());
-						ImGui::EndDragDropSource();
-					}
-
-					ImGui::TreePop();
+			if (true) {
+			
+			//commented code is crashing if asset_window is moved outside main window
+			//if (ImGui::BeginChild("##child", ImVec2(-FLT_MIN, ImGui::GetTextLineHeightWithSpacing() * 8), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY)) {
+				if (ImGui::Button("+"))
+				{
+					createFunction();
 				}
-				ImGui::PopID();
+				if (ImGui::BeginTable(name.c_str(),
+					2,
+					 ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg, ImVec2(0, 32*6))) {
+
+					ImGui::TableSetupColumn("##image", ImGuiTableColumnFlags_WidthFixed, 32.0f);
+					ImGui::TableSetupColumn("##text", 0.0f);
+
+					for (const AssetSlot<T>* assetSlot : slots)
+					{
+						ImGui::PushID(assetSlot->index);
+						if (assetSlot->is_valid) {
+							T* asset = assetSlot->asset;
+
+							ImGui::TableNextRow();
+							ImGui::TableSetColumnIndex(0);
+							if (typeid(T) == typeid(Texture)) {
+								Asset* ass = static_cast<Asset*>(asset);
+								Texture* tex = static_cast<Texture*>(ass);
+								ImGui::Image(tex->glid, ImVec2(32, 32));
+							}
+							ImGui::TableSetColumnIndex(1);
+							ImGui::Selectable(asset->name.c_str(), false, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap, ImVec2(0, 32));
+							if (ImGui::BeginPopupContextItem())
+							{
+								ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 0.0, 0.0, 1.0));
+								if (ImGui::MenuItem("Delete")) {
+									deleteFunction(assetSlot->index);
+								}
+								ImGui::PopStyleColor();
+								ImGui::EndPopup();
+							}
+
+							if (ImGui::BeginDragDropSource())
+							{
+								ImGui::SetDragDropPayload(payloadName.c_str(), &assetSlot->index, sizeof(assetSlot->index));
+								ImGui::Text(asset->name.c_str());
+								ImGui::EndDragDropSource();
+							}
+						}
+						ImGui::PopID();
+					}
+					ImGui::EndTable();
+				}
+				//ImGui::EndChild();	
 			}
 			ImGui::TreePop();
 		}
@@ -71,42 +97,31 @@ public:
 		if (open)
 		{
 			ImGui::Begin("Assets", &open);
-			//if (ImGui::TreeNodeEx("Textures"))
-			//{
-			//	for (auto const &pair : assetRepository->texturesMap)
-			//	{
-			//		std::shared_ptr<Texture> texture = pair.second;
-			//		ImGui::Text("assID: %d", texture->assId);
-			//		ImGui::SameLine();
-			//		ImGui::Spacing();
-			//		ImGui::SameLine();
-			//		ImGui::Text(texture->name.c_str());
-			//		ImGui::PushID(texture->assId);
 			//		ImGui::ImageButton("Texture", texture->glid, ImVec2(64, 64));
-			//		if (ImGui::BeginDragDropSource())
-			//		{
-			//			ImGui::SetDragDropPayload("TEXTURE", &texture->assId, sizeof(texture->assId));
-			//			ImGui::Text(texture->name.c_str());
-			//			ImGui::EndDragDropSource();
-			//		}
-			//		ImGui::PopID();
-			//	}
+		
+			drawList<Texture>(
+				"Textures",
+				"TEXTURE",
+				assetRepository->textures.slots,
+				[this](int index) {
+					assetRepository->textures.remove(index);
+				},
+				[this]() {
+					{
+						std::filesystem::path texturePath = drishengine::openImageOpenFileDialog();
+						if (!texturePath.empty())
+						{
+							std::filesystem::path filename = texturePath.filename();
+							Texture* texture = new Texture();
+							texture->name = filename.string();
+							ImageLoader::loadImage(texturePath, texture);
+							assetRepository->textures.add(texture);
+						}
+					}
+				}
+			);
 
-			//	if (ImGui::Button("+", ImVec2(64, 64)))
-			//	{
-			//		/*std::filesystem::path texturePath = drishengine::openImageOpenFileDialog();
-			//		if (!texturePath.empty())
-			//		{
-			//			std::filesystem::path filename = texturePath.filename();
-			//			Texture* texture = new Texture(-1);
-			//			texture->name = filename.string();
-			//			ImageLoader::loadImage(texturePath, texture);
-			//			assetRepository->addTexture(texture);
-			//		}*/
-			//	}
 
-			//	ImGui::TreePop();
-			//}
 			drawList<Vertices>(
 				"Vertices",
 				"VERTICES",
