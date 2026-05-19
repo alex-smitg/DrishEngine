@@ -93,14 +93,18 @@ public:
 				/*if (item.value().contains("script_assId")) {
 					node->script = assetRepository->getScript(item.value()["script_assId"]);
 					logDebug("[DRISH LOADER] Script ASS ID: ", item.value()["script_assId"]);
-				}
+				}*/
+				
 
-				if (item.value().contains("materialAssId")) {
+				//will cause problems in future if other nodes will use material_index
+				if (item.value().contains("material_index")) {
 					Model* model = static_cast<Model*>(node);
-					model->material = assetRepository->getMaterial(item.value()["materialAssId"]);
-					logDebug("[DRISH LOADER] Material ASS ID: ", item.value()["materialAssId"]);
+					if (!item.value()["material_index"].is_null()) {
+						model->materialHandle.index = item.value()["material_index"];
+					}
+					
 				}
-
+				/*
 				if (item.value().contains("verticesAssId")) {
 					Model* model = static_cast<Model*>(node);
 					if (!assetRepository->verticesMap.contains(item.value()["verticesAssId"])) {
@@ -160,35 +164,35 @@ private:
 		//	//assetRepository->addVertices(vertices);
 		//}
 
-		//if (json.contains("materials")) {
-		//	for (const auto& item : json["materials"].items())
-		//	{
-		//		if (item.value().empty()) {
-		//			AssetSlot<Material>* con = new AssetSlot<Material>();
-		//			con->index = assetRepository->materials.size();
-		//			assetRepository->materials.slots.push_back(con);
-		//		}
-		//		else {
-		//			Material* material = new Material(item.value()["assId"]);
-		//			material->name = item.value()["name"];
-		//			material->color.r = item.value()["color"]["r"];
-		//			material->color.g = item.value()["color"]["g"];
-		//			material->color.b = item.value()["color"]["b"];
-		//			material->shader = &assetRepository->defaultShader;
+		if (json.contains("materials")) {
+			for (const auto& item : json["materials"].items())
+			{
+				if (item.value().empty()) {
+					AssetSlot<Material>* con = new AssetSlot<Material>();
+					con->index = assetRepository->materials.size();
+					assetRepository->materials.slots.push_back(con);
+				}
+				else {
+					Material* material = new Material();
+					material->name = item.value()["name"];
+					material->color.r = item.value()["color"]["r"];
+					material->color.g = item.value()["color"]["g"];
+					material->color.b = item.value()["color"]["b"];
+					material->shader = &assetRepository->defaultShader;
 
-		//			AssetSlot<Material>* con = new AssetSlot<Material>();
-		//			con->index = assetRepository->materials.size();
-		//			assetRepository->materials.slots.push_back(con);
-		//			con->asset = material;
-		//			con->is_valid = true;
-		//			
-		//		}
-		//		//if (item.value().contains("textureAssId")) {
-		//			//material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
-		//		//}
+					AssetSlot<Material>* con = new AssetSlot<Material>();
+					con->index = assetRepository->materials.size();
+					assetRepository->materials.slots.push_back(con);
+					con->asset = material;
+					con->is_valid = true;
+					
+				}
+				//if (item.value().contains("textureAssId")) {
+					//material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
+				//}
 
-		//		//assetRepository->addMaterial(material);
-		//	}
-		//}
+				//assetRepository->addMaterial(material);
+			}
+		}
 	}
 };

@@ -25,6 +25,4 @@ public:
 
 inline void to_json(nlohmann::json& j, const Model& model) {
 	nlohmann::to_json(j, static_cast<Node>(model));
-	j["materialAssId"] = model.materialHandle.index;
-	j["verticesAssId"] = model.verticesHandle.index;
 }

@@ -162,14 +162,42 @@ public:
 
 
 		nlohmann::json j;
+
+		std::unordered_map<int, int> materialIndexes;
+
+		int i = 0;
+		for (AssetSlot<Material>* assSlot : assetRepository->materials.slots) {
+			if (assSlot->is_valid) {
+				nlohmann::json ja = *assSlot->asset;
+				j["materials"].push_back(ja);
+				materialIndexes[assSlot->index] = i;
+				i++;
+			}
+		}
+
+
 		std::vector<Node*> nodes;
 		world->getAllChildNodes(world, &nodes);
 		for (Node* n : nodes) {
 			switch (n->type)
 			{
 			case Type::MODEL:
-				j["nodes"].push_back(*static_cast<Model*>(n));
+				{	
+				Model* model = static_cast<Model*>(n);
+				nlohmann::json jsonModel = *model;
+				std::optional<Material*> mat = assetRepository->materials.get(&model->materialHandle);
+
+				if (mat.has_value()) {
+					jsonModel["material_index"] = materialIndexes[model->materialHandle.index];
+				}
+				else {
+					jsonModel["material_index"] = nullptr;
+				}
+
+				
+				j["nodes"].push_back(jsonModel);
 				break;
+				}
 			case Type::CAMERA:
 				j["nodes"].push_back(*static_cast<Camera*>(n));
 				break;
@@ -198,17 +226,7 @@ public:
 		for (auto const& pair : assetRepository->verticesMap) {
 			j["vertices"].push_back(*pair.second);
 		}
-		*/
-
-		for (AssetSlot<Material>* assSlot: assetRepository->materials.slots) {
-			if (assSlot->is_valid) {
-				j["materials"].push_back(*assSlot->asset);
-			}
-			else {
-				j["materials"].push_back({});
-			}
-			
-		}
+		*/	
 
 		j["nextNodeId"] = nextNodeId;
 
