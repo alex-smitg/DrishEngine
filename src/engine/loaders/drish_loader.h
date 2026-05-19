@@ -35,8 +35,13 @@ public:
 			loadAssets(json, drishPath.parent_path(), assetRepository);
 
 			logDebug("[LOADER] ", ".drish version: ", json["version"]);
-			if (json["version"] != DRISH_ENGINE_VERSION) {
-				logWarning("[LOADER] Versions: ", json["version"], " != ", DRISH_ENGINE_VERSION);
+			if (json["ver_b"] != DRISH_ENGINE_VERSION_BIG || json["ver_s"] != DRISH_ENGINE_VERSION_SMALL
+				|| json["ver_nbns"] != DRISH_ENGINE_VERSION_NOTBIGNOTSMALL) {
+				logWarning("[LOADER] Versions are different. Drish file version is ",
+					json["ver_b"], ".", json["ver_nbns"], ".", json["ver_s"], " and engine version is ",
+					DRISH_ENGINE_VERSION_BIG, ".", DRISH_ENGINE_VERSION_NOTBIGNOTSMALL, ".",
+					DRISH_ENGINE_VERSION_SMALL);
+
 			}
 
 			gameConfig->width = json["gameConfig"]["width"];

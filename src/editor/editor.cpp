@@ -62,7 +62,9 @@ int main()
 	// ma_sound_init_from_data_source()
 
 	logInfo("Hello");
-	logInfo("Version: ", DRISH_ENGINE_VERSION);
+	logInfo("Version: ", DRISH_ENGINE_VERSION_BIG, ".",
+		DRISH_ENGINE_VERSION_NOTBIGNOTSMALL, ".",
+		DRISH_ENGINE_VERSION_SMALL, "+", DRISH_ENGINE_VERSION_ST);
 
 	drishengine::Window window = drishengine::Window(800, 600);
 	Graphics graphics = Graphics();

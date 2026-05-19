@@ -158,7 +158,7 @@ public:
 		timeSinceLastSave = 0;
 
 		logInfo("Save");
-		logDebug("Version: ", DRISH_ENGINE_VERSION);
+
 
 
 		nlohmann::json j;
@@ -211,7 +211,9 @@ public:
 			
 		}
 
-		j["version"] = DRISH_ENGINE_VERSION;
+		j["ver_b"] = DRISH_ENGINE_VERSION_BIG;
+		j["ver_nbns"] = DRISH_ENGINE_VERSION_NOTBIGNOTSMALL;
+		j["ver_s"] = DRISH_ENGINE_VERSION_SMALL;
 		j["scripts"] = {};
 		j["textures"] = {};
 		j["vertices"] = {};
@@ -248,7 +250,9 @@ public:
 			ImGui::Image(icoTexture->glid, ImVec2(256, 256));
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
-			ImGui::Text(DRISH_ENGINE_VERSION);
+			ImGui::Text("%d.%d.%d+%s", DRISH_ENGINE_VERSION_BIG,
+				DRISH_ENGINE_VERSION_NOTBIGNOTSMALL,
+				DRISH_ENGINE_VERSION_SMALL, DRISH_ENGINE_VERSION_ST);
 			ImGui::PopStyleColor();
 
 			if (ImGui::Button("Load .drish project", ImVec2(-1.0f, 0.0f))) {
