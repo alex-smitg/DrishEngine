@@ -172,31 +172,19 @@ private:
 		if (json.contains("materials")) {
 			for (const auto& item : json["materials"].items())
 			{
-				if (item.value().empty()) {
-					AssetSlot<Material>* con = new AssetSlot<Material>();
-					con->index = assetRepository->materials.size();
-					assetRepository->materials.slots.push_back(con);
-				}
-				else {
-					Material* material = new Material();
-					material->name = item.value()["name"];
-					material->color.r = item.value()["color"]["r"];
-					material->color.g = item.value()["color"]["g"];
-					material->color.b = item.value()["color"]["b"];
-					material->shader = &assetRepository->defaultShader;
+				Material* material = new Material();
+				material->name = item.value()["name"];
+				material->color.r = item.value()["color"]["r"];
+				material->color.g = item.value()["color"]["g"];
+				material->color.b = item.value()["color"]["b"];
+				material->shader = &assetRepository->defaultShader;
 
-					AssetSlot<Material>* con = new AssetSlot<Material>();
-					con->index = assetRepository->materials.size();
-					assetRepository->materials.slots.push_back(con);
-					con->asset = material;
-					con->is_valid = true;
+				assetRepository->materials.appendNewSlot(material);
 					
-				}
+				
 				//if (item.value().contains("textureAssId")) {
 					//material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
 				//}
-
-				//assetRepository->addMaterial(material);
 			}
 		}
 	}

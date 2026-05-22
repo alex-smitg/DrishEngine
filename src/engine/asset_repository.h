@@ -40,24 +40,31 @@ public:
 		return slots.size();
 	}
 
-	void add(T* asset){
-		AssetSlot<T>* freeCon = nullptr;
+	void appendNewSlot(T* asset) {
+		AssetSlot<T>* slot = new AssetSlot<T>();
+		slot->index = slots.size();
+		slots.push_back(slot);
+		slot->asset = asset;
+		slot->is_valid = true;
+	}
 
-		for (AssetSlot<T>* assCon : slots) {
-			if (assCon->is_valid == false) {
-				freeCon = assCon;
+	void add(T* asset){
+		AssetSlot<T>* freeSlot = nullptr;
+
+		for (AssetSlot<T>* assetSlot : slots) {
+			if (!assetSlot->is_valid) {
+				freeSlot = assetSlot;
 
 				break;
 			}
 		}
-		if (!freeCon) {
-			freeCon = new AssetSlot<T>();
-			freeCon->index = slots.size();
-			slots.push_back(freeCon);
+		if (freeSlot) {
+			freeSlot->asset = asset;
+			freeSlot->is_valid = true;
 		}
-
-		freeCon->asset = asset;
-		freeCon->is_valid = true;
+		else {
+			appendNewSlot(asset);
+		}
 	}
 
 	std::optional<T*> get(AssetHandle* assHolder) {
