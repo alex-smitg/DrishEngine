@@ -163,15 +163,28 @@ public:
 
 		nlohmann::json j;
 
-		std::unordered_map<int, int> materialIndexes;
 
-		int i = 0;
-		for (AssetSlot<Material>* assSlot : assetRepository->materials.slots) {
-			if (assSlot->is_valid) {
-				nlohmann::json ja = *assSlot->asset;
-				j["materials"].push_back(ja);
-				materialIndexes[assSlot->index] = i;
-				i++;
+
+		std::unordered_map<int, int> texturesIndex = assetRepository->textures.save(j["textures"]);
+		std::unordered_map<int, int> materialsIndex = assetRepository->materials.save(j["materials"]);
+		std::unordered_map<int, int> verticesIndex = assetRepository->vertices.save(j["vertices"]);
+		std::unordered_map<int, int> soundsIndex = assetRepository->sounds.save(j["sounds"]);
+		std::unordered_map<int, int> scriptsIndex = assetRepository->scripts.save(j["scripts"]);
+
+		std::vector<Material*> materials = assetRepository->materials.getAssets();
+
+
+		for (int i = 0; i < materials.size(); i++) 
+		{
+			Material* material = materials[i];
+
+			std::optional<Material*> tex = assetRepository->materials.get(&material->textureHandle);
+
+			if (tex.has_value()) {
+				j["materials"][i]["texture_index"] = texturesIndex[material->textureHandle.index];
+			}
+			else {
+				j["materials"][i]["texture_index"] = nullptr;
 			}
 		}
 
@@ -188,11 +201,22 @@ public:
 				std::optional<Material*> mat = assetRepository->materials.get(&model->materialHandle);
 
 				if (mat.has_value()) {
-					jsonModel["material_index"] = materialIndexes[model->materialHandle.index];
+					jsonModel["material_index"] = materialsIndex[model->materialHandle.index];
 				}
 				else {
 					jsonModel["material_index"] = nullptr;
 				}
+
+
+				std::optional<Vertices*> ver = assetRepository->vertices.get(&model->verticesHandle);
+
+				if (ver.has_value()) {
+					jsonModel["vertices_index"] = verticesIndex[model->verticesHandle.index];
+				}
+				else {
+					jsonModel["vertices_index"] = nullptr;
+				}
+
 
 				
 				j["nodes"].push_back(jsonModel);
@@ -205,7 +229,18 @@ public:
 				j["nodes"].push_back(*static_cast<PointLight*>(n));
 				break;
 			default:
-				j["nodes"].push_back(*n);
+				nlohmann::json jsonNode = *n;
+				std::optional<Script*> scr = assetRepository->scripts.get(&n->scriptHandle);
+
+				if (scr.has_value()) {
+					jsonNode["script_index"] = scriptsIndex[n->scriptHandle.index];
+				}
+				else {
+					jsonNode["script_index"] = nullptr;
+				}
+
+
+				j["nodes"].push_back(jsonNode);
 				break;
 			}
 			
@@ -214,22 +249,7 @@ public:
 		j["ver_b"] = DRISH_ENGINE_VERSION_BIG;
 		j["ver_nbns"] = DRISH_ENGINE_VERSION_NOTBIGNOTSMALL;
 		j["ver_s"] = DRISH_ENGINE_VERSION_SMALL;
-		j["scripts"] = {};
-		j["textures"] = {};
-		j["vertices"] = {};
 		j["gameConfig"] = gameConfig;
-
-		/*for (auto const& pair : assetRepository->scriptsMap) {
-			j["scripts"].push_back(*pair.second);
-		}
-		for (auto const& pair : assetRepository->texturesMap) {
-			j["textures"].push_back(*pair.second);
-		}
-		for (auto const& pair : assetRepository->verticesMap) {
-			j["vertices"].push_back(*pair.second);
-		}
-		*/	
-
 		j["nextNodeId"] = nextNodeId;
 
 		logDebug("Next node id: ", nextNodeId);

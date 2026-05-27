@@ -39,8 +39,4 @@ inline void to_json(nlohmann::json &j, const Material &material)
 	j["color"]["b"] = material.color.b;
 	j["useLight"] = material.useLight;
 	j["shine"] = material.shine;
-	//if (material.texture != nullptr)
-	//{
-	//	//j["textureAssId"] = material.texture->assId;
-	//}
 }

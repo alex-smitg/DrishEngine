@@ -48,6 +48,31 @@ public:
 		slot->is_valid = true;
 	}
 
+	std::vector<T*> getAssets() {
+		std::vector<T*> assets;
+		for (AssetSlot<Material>* assSlot : slots) {
+			if (assSlot->is_valid) {
+				assets.push_back(assSlot->asset);
+			}
+		}
+		return assets;
+	}
+
+	std::unordered_map<int, int> save(nlohmann::json& j) {
+		std::unordered_map<int, int> index;
+
+		int i = 0;
+		for (AssetSlot<T>* assSlot : slots) {
+			if (assSlot->is_valid) {
+				j.push_back(*assSlot->asset);
+				index[assSlot->index] = i;
+				i++;
+			}
+		}
+
+		return index;
+	}
+
 	void add(T* asset){
 		AssetSlot<T>* freeSlot = nullptr;
 

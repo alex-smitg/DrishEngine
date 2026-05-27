@@ -101,26 +101,21 @@ public:
 				}*/
 				
 
-				//will cause problems in future if other nodes will use material_index
-				if (item.value().contains("material_index")) {
+				if (node->type == Type::MODEL) {
 					Model* model = static_cast<Model*>(node);
-					if (!item.value()["material_index"].is_null()) {
-						model->materialHandle.index = item.value()["material_index"];
-					}
-					
-				}
-				/*
-				if (item.value().contains("verticesAssId")) {
-					Model* model = static_cast<Model*>(node);
-					if (!assetRepository->verticesMap.contains(item.value()["verticesAssId"])) {
-						logError("[DRISH LOADER] getVertices: ", item.value()["verticesAssId"], " DO NOT EXISTS");
+					if (item.value().contains("material_index")) {
+						if (!item.value()["material_index"].is_null()) {	
+							model->materialHandle.index = item.value()["material_index"];
+						}
 					}
 					else {
-						model->vertices = assetRepository->getVertices(item.value()["verticesAssId"]);
-						logDebug("[DRISH LOADER] Vertices ASS ID: ", item.value()["verticesAssId"]);
+						logError("[DRISH LOADER] Node type is model but no material_index");
 					}
-				}*/
 
+					if (!item.value()["vertices_index"].is_null()) {
+						model->verticesHandle.index = item.value()["vertices_index"];
+					}
+				}
 			}
 		}
 		catch (const std::exception& ex) {
@@ -135,16 +130,7 @@ public:
 
 private:
 	static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
-		//for (const auto& item : json["textures"].items())
-		//{
-		//	Texture* texture = new Texture(item.value()["assId"]);
-		//	texture->name = item.value()["name"];
-		//	std::string strpath = item.value()["path"];
-		//	texture->path = std::filesystem::path(strpath);
-		//	ImageLoader::loadImage(projectPath / texture->path, texture);
-
-		//	//assetRepository->addTexture(texture);
-		//}
+		
 
 		//for (const auto& item : json["scripts"].items())
 		//{
@@ -154,20 +140,36 @@ private:
 
 		//	//assetRepository->addScript(script);
 		//}
-		//for (const auto& item : json["vertices"].items())
-		//{
-		//	Vertices* vertices = new Vertices(item.value()["assId"]);
-		//	vertices->name = item.value()["name"];
-		//	std::string strpath = item.value()["path"];
-		//	vertices->path = std::filesystem::path(strpath);
-		//	if (!std::filesystem::exists(projectPath / vertices->path)) {
-		//		logError("[DRISH LOADER] ", vertices->path, " path does not exist");
-		//	}
-		//	drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
-		//	vertices->createBuffers();
 
-		//	//assetRepository->addVertices(vertices);
-		//}
+
+		if (json.contains("vertices")) {
+			for (const auto& item : json["vertices"].items())
+			{
+				Vertices* vertices = new Vertices();
+				vertices->name = item.value()["name"];
+				std::string strpath = item.value()["path"];
+				vertices->path = std::filesystem::path(strpath);
+				drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
+				vertices->createBuffers();
+
+				assetRepository->vertices.appendNewSlot(vertices);
+			}
+		}
+
+
+		if (json.contains("textures")) {
+			for (const auto& item : json["textures"].items())
+			{
+				Texture* texture = new Texture();
+				texture->name = item.value()["name"];
+				std::string strpath = item.value()["path"];
+				texture->path = std::filesystem::path(strpath);
+				ImageLoader::loadImage(projectPath / texture->path, texture);
+
+				assetRepository->textures.appendNewSlot(texture);
+			}
+		}
+
 
 		if (json.contains("materials")) {
 			for (const auto& item : json["materials"].items())
@@ -182,9 +184,9 @@ private:
 				assetRepository->materials.appendNewSlot(material);
 					
 				
-				//if (item.value().contains("textureAssId")) {
-					//material->texture = assetRepository->getTexture(item.value()["textureAssId"]);
-				//}
+				if (!item.value()["texture_index"].is_null()) {
+					material->textureHandle.index = item.value()["texture_index"];
+				}
 			}
 		}
 	}

@@ -97,8 +97,7 @@ public:
 		if (open)
 		{
 			ImGui::Begin("Assets", &open);
-			//		ImGui::ImageButton("Texture", texture->glid, ImVec2(64, 64));
-		
+	
 			drawList<Texture>(
 				"Textures",
 				"TEXTURE",
@@ -113,9 +112,29 @@ public:
 						{
 							std::filesystem::path filename = texturePath.filename();
 							Texture* texture = new Texture();
+
 							texture->name = filename.string();
+							texture->path = std::filesystem::path("textures") / filename;
+
 							ImageLoader::loadImage(texturePath, texture);
 							assetRepository->textures.add(texture);
+
+							if (drishPath != nullptr)
+							{
+								if (std::filesystem::exists(drishPath->parent_path() / "textures"))
+								{
+									logDebug("[ASSETS WINDOW] textures");
+								}
+								else
+								{
+									std::filesystem::create_directory(drishPath->parent_path() / "textures");
+								}
+								std::filesystem::copy_file(texturePath, drishPath->parent_path() / "textures" / filename);
+							}
+							else
+							{
+								logError("[ASSETS WINDOW] drishPath is null");
+							}
 						}
 					}
 				}
