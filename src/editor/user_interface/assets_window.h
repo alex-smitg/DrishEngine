@@ -111,29 +111,35 @@ public:
 						if (!texturePath.empty())
 						{
 							std::filesystem::path filename = texturePath.filename();
-							Texture* texture = new Texture();
 
-							texture->name = filename.string();
-							texture->path = std::filesystem::path("textures") / filename;
+							if (std::filesystem::exists(drishPath->parent_path() / "textures" / filename)) {
+								logInfo("[ASSETS WINDOW] file already exists");
+							}
+							else {
+								Texture* texture = new Texture();
 
-							ImageLoader::loadImage(texturePath, texture);
-							assetRepository->textures.add(texture);
+								texture->name = filename.string();
+								texture->path = std::filesystem::path("textures") / filename;
 
-							if (drishPath != nullptr)
-							{
-								if (std::filesystem::exists(drishPath->parent_path() / "textures"))
+								ImageLoader::loadImage(texturePath, texture);
+								assetRepository->textures.add(texture);
+
+								if (drishPath != nullptr)
 								{
-									logDebug("[ASSETS WINDOW] textures");
+									if (std::filesystem::exists(drishPath->parent_path() / "textures"))
+									{
+										logDebug("[ASSETS WINDOW] textures");
+									}
+									else
+									{
+										std::filesystem::create_directory(drishPath->parent_path() / "textures");
+									}
+									std::filesystem::copy_file(texturePath, drishPath->parent_path() / "textures" / filename);
 								}
 								else
 								{
-									std::filesystem::create_directory(drishPath->parent_path() / "textures");
+									logError("[ASSETS WINDOW] drishPath is null");
 								}
-								std::filesystem::copy_file(texturePath, drishPath->parent_path() / "textures" / filename);
-							}
-							else
-							{
-								logError("[ASSETS WINDOW] drishPath is null");
 							}
 						}
 					}
