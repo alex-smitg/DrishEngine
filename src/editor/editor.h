@@ -427,7 +427,7 @@ public:
 		//
 		ImGui::SetCursorPos(ImVec2(0, 0));
 		
-		ImGui::Image(canvas->texture, ImGui::GetWindowSize(), ImVec2(0, 0), ImVec2(1, 1));
+		ImGui::Image(canvas->texture, ImGui::GetWindowSize(), ImVec2(0, 0), ImVec2(1, -1));
 		ImGui::PopStyleVar();
 		ImVec2 mousePos = ImGui::GetMousePos();
 
@@ -481,7 +481,7 @@ public:
 
 			double mouseSpeed = 2.5 * delta;
 
-			horizontalAngle += delta * dx;
+			horizontalAngle -= delta * dx;
 			verticalAngle -= delta * dy;
 
 			verticalAngle = glm::clamp(verticalAngle, -glm::half_pi<float>() + 0.05f, glm::half_pi<float>() - 0.05f);
@@ -499,7 +499,7 @@ public:
 
 			
 
-			glm::vec3 up = glm::cross(right, direction);
+			glm::vec3 up = glm::cross(-right, direction);
 
 
 
@@ -528,10 +528,10 @@ public:
 				camera->transform.position -= direction * speed;
 			}
 			if (glfwGetKey(window->getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
-				camera->transform.position += right * speed;
+				camera->transform.position -= right * speed;
 			}
 			if (glfwGetKey(window->getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
-				camera->transform.position -= right * speed;
+				camera->transform.position += right * speed;
 			}
 		}
 
@@ -550,6 +550,7 @@ public:
 				if (ImGui::Checkbox("Camera Preview", &previewCamera)) {
 					if (previewCamera) {
 						oldCamera = camera;
+
 						camera = static_cast<Camera*>(selectedNode);
 					}
 					else {
