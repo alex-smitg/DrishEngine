@@ -114,7 +114,7 @@ void LuaRunner::addAssetRepositoryFunctions(AssetRepository* assetRepository) {
 }
 
 void LuaRunner::addCreateNodesFunctions(NodeRepository* nodeRepository) {
-	lua.set_function("createEmpty", [nodeRepository]() {
+	lua.set_function("createNode", [nodeRepository]() {
 			return NodeCreator::createNode(Type::BASE, "Empty", nodeRepository);
 		}
 	);
