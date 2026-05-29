@@ -192,6 +192,16 @@ public:
 		std::vector<Node*> nodes;
 		world->getAllChildNodes(world, &nodes);
 		for (Node* n : nodes) {
+			nlohmann::json jsonNode = *n;
+			std::optional<Script*> scr = assetRepository->scripts.get(&n->scriptHandle);
+			if (scr.has_value()) {
+				jsonNode["script_index"] = scriptsIndex[n->scriptHandle.index];
+			}
+			else {
+				jsonNode["script_index"] = nullptr;
+			}
+
+
 			switch (n->type)
 			{
 			case Type::MODEL:
@@ -205,6 +215,13 @@ public:
 				}
 				else {
 					jsonModel["material_index"] = nullptr;
+				}
+
+				if (scr.has_value()) {
+					jsonModel["script_index"] = scriptsIndex[n->scriptHandle.index];
+				}
+				else {
+					jsonModel["script_index"] = nullptr;
 				}
 
 
@@ -223,24 +240,36 @@ public:
 				break;
 				}
 			case Type::CAMERA:
-				j["nodes"].push_back(*static_cast<Camera*>(n));
-				break;
-			case Type::POINT_LIGHT:
-				j["nodes"].push_back(*static_cast<PointLight*>(n));
-				break;
-			default:
-				nlohmann::json jsonNode = *n;
-				std::optional<Script*> scr = assetRepository->scripts.get(&n->scriptHandle);
+			{
+				Camera* camera = static_cast<Camera*>(n);
+				nlohmann::json jsonCamera = *camera;
 
 				if (scr.has_value()) {
-					jsonNode["script_index"] = scriptsIndex[n->scriptHandle.index];
+					jsonCamera["script_index"] = scriptsIndex[n->scriptHandle.index];
 				}
 				else {
-					jsonNode["script_index"] = nullptr;
+					jsonCamera["script_index"] = nullptr;
 				}
 
+				j["nodes"].push_back(jsonCamera);
+				break;
+			}
+			case Type::POINT_LIGHT:
+			{
+				PointLight* pointLight = static_cast<PointLight*>(n);
+				nlohmann::json jsonPointLight = *pointLight;
 
-				j["nodes"].push_back(jsonNode);
+				if (scr.has_value()) {
+					jsonPointLight["script_index"] = scriptsIndex[n->scriptHandle.index];
+				}
+				else {
+					jsonPointLight["script_index"] = nullptr;
+				}
+
+				j["nodes"].push_back(jsonPointLight);
+				break;
+			}
+			default:
 				break;
 			}
 			

@@ -27,7 +27,7 @@ public:
 			ImGui::Begin("Script editor", &open);
 			ImGui::BeginGroup();
 
-			static std::string scriptName = "script";
+			static std::string scriptName = "New script";
 
 
 
@@ -35,21 +35,26 @@ public:
 				logDebug("[EDITOR] script name: ", scriptName);
 				Script* script = new Script();
 				script->name = scriptName;
-				//assetRepository->addScript(script);
+				assetRepository->scripts.add(script);
 			}
 			if (ImGui::BeginTabBar("tabbar")) {
-				/*for (auto const& pair : assetRepository->scriptsMap) {
-					std::shared_ptr<Script> script = pair.second;
-					if (ImGui::BeginTabItem((script->name + "##" + std::to_string(script->assId)).c_str())) {
-						if (ImGui::BeginDragDropSource()) {
-							ImGui::SetDragDropPayload("SCRIPT", &script->assId, sizeof(script->assId));
-							ImGui::EndDragDropSource();
-						}
+				for (const AssetSlot<Script>* assetSlot : assetRepository->scripts.slots)
+				{
+					ImGui::PushID(assetSlot->index);
+					if (assetSlot->is_valid) {
+						Script* script = assetSlot->asset;
+						if (ImGui::BeginTabItem(script->name.c_str())) {
+							if (ImGui::BeginDragDropSource()) {
+								ImGui::SetDragDropPayload("SCRIPT", &assetSlot->index, sizeof(assetSlot->index));
+								ImGui::EndDragDropSource();
+							}
 
-						ImGui::InputTextMultiline("##script", &script->source, ImVec2(-FLT_MIN,-FLT_MIN), ImGuiInputTextFlags_AllowTabInput);
-						ImGui::EndTabItem();
+							ImGui::InputTextMultiline("##script", &script->source, ImVec2(-FLT_MIN, -FLT_MIN), ImGuiInputTextFlags_AllowTabInput);
+							ImGui::EndTabItem();
+						}
 					}
-				}*/
+					ImGui::PopID();
+				}
 				ImGui::EndTabBar();
 			}
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));

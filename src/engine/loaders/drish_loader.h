@@ -73,7 +73,15 @@ public:
 					pointLight->strength = item.value()["strength"];
 					
 					break;
-
+				}
+				case Type::CAMERA:
+				{
+					Camera* camera = static_cast<Camera*>(node);
+					camera->fov = item.value()["fov"];
+					camera->f_near = item.value()["f_near"];
+					camera->f_far = item.value()["f_far"];
+					camera->active = item.value()["active"];
+					break;
 				}
 				default:
 					break;
@@ -95,10 +103,11 @@ public:
 				long long id = item.value()["id"];
 				Node* node = nodes[id];
 				nodes[item.value()["parent"]]->appendChild(node);
-				/*if (item.value().contains("script_assId")) {
-					node->script = assetRepository->getScript(item.value()["script_assId"]);
-					logDebug("[DRISH LOADER] Script ASS ID: ", item.value()["script_assId"]);
-				}*/
+				if (item.value().contains("script_index")) {
+					if (!item.value()["script_index"].is_null()) {
+						node->scriptHandle.index = item.value()["script_index"];
+					}
+				}
 				
 
 				if (node->type == Type::MODEL) {
@@ -132,14 +141,15 @@ private:
 	static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
 		
 
-		//for (const auto& item : json["scripts"].items())
-		//{
-		//	Script* script = new Script(item.value()["assId"]);
-		//	script->name = item.value()["name"];
-		//	script->source = item.value()["source"];
-
-		//	//assetRepository->addScript(script);
-		//}
+		if (json.contains("scripts")) {
+			for (const auto& item : json["scripts"].items())
+			{
+				Script* script = new Script();
+				script->name = item.value()["name"];
+				script->source = item.value()["source"];
+				assetRepository->scripts.appendNewSlot(script);
+			}
+		}
 
 
 		if (json.contains("vertices")) {

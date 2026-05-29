@@ -209,6 +209,20 @@ public:
 				}
 			);
 
+			drawList<Script>(
+				"Scripts",
+				"SCRIPT",
+				assetRepository->scripts.slots,
+				[this](int index) {
+					assetRepository->scripts.remove(index);
+				},
+				[this]() {
+					Script* script = new Script();
+					script->name = "New script";
+					assetRepository->scripts.add(script);
+				}
+				);
+
 	
 			ImGui::End();
 		}
