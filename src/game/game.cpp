@@ -53,8 +53,10 @@ const double frameDuration = 1.0 / targetFPS;
 
 int main(int argc, char* argv[]) {
 	logInfo("Hello");
-	logInfo("Version: ", DRISH_ENGINE_VERSION);
-
+	logInfo("Version: ", DRISH_ENGINE_VERSION_BIG,
+		".", DRISH_ENGINE_VERSION_NOTBIGNOTSMALL,
+		".", DRISH_ENGINE_VERSION_SMALL);
+	
 	std::filesystem::path drishPath = std::filesystem::path("world.drish");
 	if (argc > 1) {
 		drishPath = std::filesystem::path(argv[1]);
@@ -104,7 +106,7 @@ int main(int argc, char* argv[]) {
 
 	glViewport(0, 0, gameConfig.width, gameConfig.height);
 
-	luaRunner.updateNodesScriptEnvironment(world);
+	luaRunner.updateNodesScriptEnvironment(world, &assetRepository);
 
 
 	double lastTime = glfwGetTime();
