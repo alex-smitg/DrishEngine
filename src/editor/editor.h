@@ -433,14 +433,6 @@ public:
 				ImGui::End();
 			}
 
-			if (ImGui::BeginViewportSideBar("#status", viewport, ImGuiDir_Down, 16, window_flags)) {
-				if (ImGui::BeginMenuBar()) {
-					ImGui::Text("Status");
-					ImGui::EndMenuBar();
-				}
-				ImGui::End();
-			}
-
 
 
 
