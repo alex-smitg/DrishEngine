@@ -389,9 +389,6 @@ public:
 				if (ImGui::MenuItem("Save project", ImGui::GetKeyChordName(chord))) {
 					this->save();
 				}
-				if (ImGui::MenuItem("Close", "Alt+F4")) {
-					glfwSetWindowShouldClose(window->getWindow(), true);
-				}
 				ImGui::EndMenu();
 			}
 			//if (ImGui::BeginMenu("Edit"))
@@ -412,6 +409,11 @@ public:
 				if (ImGui::MenuItem("Properties")) { propertiesWindow->open = true; }
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu("Game")) {
+				if (ImGui::MenuItem("Export")) {}
+				ImGui::EndMenu();
+			}
+
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8, 0.5, 0.5, 1.0));
 			ImGui::Text("%i", (int) timeSinceLastSave);
 			ImGui::PopStyleColor();
@@ -421,12 +423,10 @@ public:
 
 			if (ImGui::BeginViewportSideBar("#top", viewport, ImGuiDir_Up, 32, window_flags)) {
 				if (ImGui::BeginMenuBar()) {
+					ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 2.0);
 					if (ImGui::Button("Run")) {
 						this->save();
 						drishexecutor::runGame(window, "game.exe", drishPath.parent_path());
-					}
-					if (ImGui::Button("Build")) {
-
 					}
 					ImGui::EndMenuBar();
 				}
