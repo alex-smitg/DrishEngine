@@ -12,15 +12,23 @@
 
 #include "editor_window_base.h"
 
+#include "ImGuiColorTextEdit/TextEditor.h"
+
 class ScriptWindow: public EditorWindowBase {
 private:
 	AssetRepository* assetRepository;
 	LuaRunner* luaRunner;
 public:
 
+	TextEditor editor;
+	
+
 	ScriptWindow(AssetRepository* assetRepository, LuaRunner* luaRunner) {
 		this->assetRepository = assetRepository;
 		this->luaRunner = luaRunner;
+
+		editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
+		editor.SetPalette(TextEditor::GetDarkPalette());
 	}
 
 	void draw() override {
@@ -38,19 +46,38 @@ public:
 				script->name = scriptName;
 				assetRepository->scripts.add(script);
 			}
+
+			static int lastIndex = -1;
+
+
+
 			if (ImGui::BeginTabBar("tabbar")) {
 				for (const AssetSlot<Script>* assetSlot : assetRepository->scripts.slots)
 				{
 					ImGui::PushID(assetSlot->index);
 					if (assetSlot->is_valid) {
 						Script* script = assetSlot->asset;
+
+						
+
 						if (ImGui::BeginTabItem(script->name.c_str())) {
 							if (ImGui::BeginDragDropSource()) {
 								ImGui::SetDragDropPayload("SCRIPT", &assetSlot->index, sizeof(assetSlot->index));
 								ImGui::EndDragDropSource();
 							}
+							if (lastIndex != assetSlot->index) {
+								editor.SetText(script->source);
+								logDebug("TextSet");
+							}
+							lastIndex = assetSlot->index;
 
-							ImGui::InputTextMultiline("##script", &script->source, ImVec2(-FLT_MIN, -FLT_MIN), ImGuiInputTextFlags_AllowTabInput);
+							if (ImGui::Button("Save")) {
+								script->source = editor.GetText();
+							}
+
+							
+							editor.Render("Script");
+							//ImGui::InputTextMultiline("##script", &script->source, ImVec2(-FLT_MIN, -FLT_MIN), ImGuiInputTextFlags_AllowTabInput);
 							ImGui::EndTabItem();
 						}
 					}

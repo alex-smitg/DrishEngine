@@ -91,5 +91,6 @@ target_sources(${ENGINE}
 	"src/engine/game_objects/node.cpp"
 	"src/engine/assets/asset.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/assets/drish_engine.rc"
-  "src/engine/field.h")
+	"src/engine/field.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/ImGuiColorTextEdit/TextEditor.cpp")
 
