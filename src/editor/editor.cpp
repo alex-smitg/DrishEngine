@@ -82,10 +82,9 @@ int main()
 
 	Camera camera = Camera();
 	camera.create_view = false;
-	Editor editor(&window, &assetRepository, &nodeRepository, &scripter);
+	Editor editor(&window, &assetRepository, &nodeRepository, &scripter, &camera);
 	editor.world = world;
 	editor.graphics = &graphics;
-	editor.camera = &camera;
 
 	double lastTime = glfwGetTime();
 

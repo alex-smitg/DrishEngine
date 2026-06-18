@@ -27,6 +27,7 @@
 #include "user_interface/assets_window.h"
 #include "user_interface/script_window.h"
 #include "user_interface/properties_window.h"
+#include "user_interface/viewport_window.h"
 
 #include "../engine/resource.h"
 
@@ -46,8 +47,7 @@ public:
 	Camera* camera = nullptr;
 	Camera* oldCamera = nullptr;
 
-	float horizontalAngle = 0;
-	float verticalAngle = 0;
+	
 
 
 
@@ -77,28 +77,33 @@ public:
 	AssetWindow* assetWindow = nullptr;
 	ScriptWindow* scriptWindow = nullptr;
 	PropertiesWindow* propertiesWindow = nullptr;
-
+	ViewportWindow* viewportWindow = nullptr;
 
 	Editor(drishengine::Window *window,
 		AssetRepository *assetRepository,
 		NodeRepository *nodeRepository,
-		LuaRunner* luaRunner) {
+		LuaRunner* luaRunner,
+		Camera* camera) {
 		this->window = window;
 		this->luaRunner = luaRunner;
 
 		this->assetRepository = assetRepository;
 		this->nodeRepository = nodeRepository;
 
+		this->canvas = new Canvas();
+		this->camera = camera;
+
 		this->assetWindow = new AssetWindow(assetRepository);
 		this->assetWindow->drishPath = &drishPath;
 		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner);
 		this->propertiesWindow = new PropertiesWindow(assetRepository, luaRunner, &selectedNode);
+		this->viewportWindow = new ViewportWindow(canvas, camera, window);
 
-		this->canvas = new Canvas();
+		
 
 		logWarning("Drish;Engine is not drish enough");
 		
-		//test
+
 
 		HMODULE hModule = GetModuleHandle(NULL); 
 		HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(IDB_PNG1), RT_RCDATA);
@@ -442,132 +447,6 @@ public:
 			ImGui::EndMainMenuBar();
 		}
 		
-		
-
-		
-
-		
-		
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		ImGui::Begin("Viewport");
-		canvas->resize(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
-
-		//
-		ImGui::SetCursorPos(ImVec2(0, 0));
-		
-		ImGui::Image(canvas->texture, ImGui::GetWindowSize(), ImVec2(0, 0), ImVec2(1, -1));
-		ImGui::PopStyleVar();
-		ImVec2 mousePos = ImGui::GetMousePos();
-
-		ImVec2 viewportPos = ImGui::GetItemRectMin();
-		ImVec2 viewportSize = ImGui::GetItemRectSize();
-		ImVec2 viewportCenter = ImVec2(viewportSize.x / 2.0, viewportSize.y / 2.0);
-		ImVec2 absoluteViewportCenter = ImVec2(viewportCenter.x + viewportPos.x,
-			viewportCenter.y + viewportPos.y);
-		double xpos = 0;
-		double ypos = 0;
-
-		static int oldWidth = 0;
-		static int oldHeight = 0;
-		static int newWidth = 0;
-		static int newHeight = 0;
-
-		newWidth = viewportSize.x;
-		newHeight = viewportSize.y;
-
-		if (newWidth != oldWidth || newHeight != oldHeight) {
-			oldWidth = newWidth;
-			oldHeight = newHeight;
-			canvas->resize(newWidth, newHeight);
-		}
-
-		camera->setWindowAspectRatio(canvas->width, canvas->height);
-		static bool captured = false;
-		if (glfwGetMouseButton(window->getWindow(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-			captured = false;
-		}
-		//camera movement
-		if (oldCamera == nullptr && 
-			(ImGui::IsItemHovered() || captured) &&
-			glfwGetMouseButton(window->getWindow(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS ) {
-			if (captured == true) {
-				glfwGetCursorPos(window->getWindow(), &xpos, &ypos);
-			}
-			else {
-				xpos = absoluteViewportCenter.x;
-				ypos = absoluteViewportCenter.y;
-			}
-			captured = true;
-
-			glfwSetCursorPos(window->getWindow(),
-				absoluteViewportCenter.x,
-				absoluteViewportCenter.y);
-
-			
-			double dx = (int)(xpos - absoluteViewportCenter.x);
-			double dy = (int)(ypos - absoluteViewportCenter.y);
-
-			double mouseSpeed = 2.5 * delta;
-
-			horizontalAngle -= delta * dx;
-			verticalAngle -= delta * dy;
-
-			verticalAngle = glm::clamp(verticalAngle, -glm::half_pi<float>() + 0.05f, glm::half_pi<float>() - 0.05f);
-
-			glm::vec3 direction(
-				cos(verticalAngle)* sin(horizontalAngle),
-				sin(verticalAngle),
-				cos(verticalAngle)* cos(horizontalAngle)
-			);
-
-			direction = glm::normalize(direction);
-
-
-			glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0, 1, 0), direction));
-
-			
-
-			glm::vec3 up = glm::cross(-right, direction);
-
-
-
-			glm::vec3 ok = glm::vec3(direction.x, 0, direction.z);
-			ok = glm::normalize(ok);
-
-			float yaw = std::atan2(ok.x, ok.z);
-
-			glm::vec3 forward;
-			forward.x = cos(verticalAngle) * sin(horizontalAngle);
-			forward.y = sin(verticalAngle);
-			forward.z = cos(verticalAngle) * cos(horizontalAngle);
-			forward = glm::normalize(forward);
-			//camera->transform.rotation.y = direction.y;
-			
-			
-			camera->view = glm::lookAt(camera->transform.position,
-				camera->transform.position + direction, up);
-
-			float speed = 5.0 * delta;
-
-			if (glfwGetKey(window->getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
-				camera->transform.position += direction * speed;
-			}
-			if (glfwGetKey(window->getWindow(), GLFW_KEY_S) == GLFW_PRESS) {
-				camera->transform.position -= direction * speed;
-			}
-			if (glfwGetKey(window->getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
-				camera->transform.position -= right * speed;
-			}
-			if (glfwGetKey(window->getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
-				camera->transform.position += right * speed;
-			}
-		}
-
-	
-
-		ImGui::End();
-
 
 		ImGui::Begin("Info");
 		if (ImGui::Button("Test all script nodes")) {
@@ -655,6 +534,7 @@ public:
 		scriptWindow->draw();
 		logWindow.draw();
 		propertiesWindow->draw();
+		viewportWindow->draw();
 
 
 		ImGui::Begin("Game config");
