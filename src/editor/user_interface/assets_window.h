@@ -13,14 +13,14 @@
 
 #include "../../engine/logger.h"
 
-class AssetWindow
+#include "editor_window_base.h"
+
+class AssetWindow: public EditorWindowBase
 {
 private:
 	AssetRepository *assetRepository;
 
 public:
-	bool open = true;
-
 	std::filesystem::path *drishPath = nullptr;
 
 	AssetWindow(AssetRepository *assetRepository)
@@ -92,7 +92,7 @@ public:
 		}
 	}
 
-	void draw()
+	void draw() override
 	{
 		if (open)
 		{

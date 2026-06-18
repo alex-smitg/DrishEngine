@@ -11,14 +11,12 @@
 #include "../../engine/lua_runner.h"
 #include "../../engine/game_objects/model.h"
 
-class PropertiesWindow {
+class PropertiesWindow: public EditorWindowBase {
 private:
 	AssetRepository* assetRepository;
 	LuaRunner* luaRunner;
 	Node** selectedPtr;
 public:
-	bool open = true;
-
 	PropertiesWindow(AssetRepository* assetRepository, LuaRunner* luaRunner,
 		Node** selectedPtr) {
 
@@ -158,7 +156,7 @@ public:
 
 
 
-	void draw() {
+	void draw() override {
 		Node* selectedNode = *selectedPtr;
 
 		if (open) {

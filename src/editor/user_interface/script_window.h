@@ -10,19 +10,20 @@
 #include "../../engine/asset_repository.h"
 #include "../../engine/assets/script.h"
 
-class ScriptWindow {
+#include "editor_window_base.h"
+
+class ScriptWindow: public EditorWindowBase {
 private:
 	AssetRepository* assetRepository;
 	LuaRunner* luaRunner;
 public:
-	bool open = true;
 
 	ScriptWindow(AssetRepository* assetRepository, LuaRunner* luaRunner) {
 		this->assetRepository = assetRepository;
 		this->luaRunner = luaRunner;
 	}
 
-	void draw() {
+	void draw() override {
 		if (open) {
 			ImGui::Begin("Script editor", &open);
 			ImGui::BeginGroup();

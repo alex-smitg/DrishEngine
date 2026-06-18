@@ -8,9 +8,9 @@
 
 #include "../../engine/logger.h"
 
-#include "editor_window.h"
+#include "editor_window_base.h"
 
-class LogWindow: public EditorWindow {
+class LogWindow: public EditorWindowBase {
 public:
 	bool showInfo = true;
 	bool showError = true;

@@ -1,6 +1,6 @@
 #pragma once
 
-class EditorWindow {
+class EditorWindowBase {
 public:
 	bool open = true;
 
