@@ -33,7 +33,7 @@ public:
 
 		this->enableMSAA();
 		this->enableDepthTest();
-		//this->enableVSYNC();
+		this->enableVSYNC();
 
 		
 
