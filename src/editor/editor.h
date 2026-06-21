@@ -631,6 +631,7 @@ public:
 			if (node->name != "World") {
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 0.0, 0.0, 1.0));
 				if (ImGui::MenuItem("Delete")) { 
+					nodeRepository->deleteNode(node);
 					node->destroy(); 
 					selectedNode = nullptr;
 				}
