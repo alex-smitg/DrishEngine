@@ -473,6 +473,17 @@ public:
 		ImGui::Begin("Tree");
 		drawTree(world);
 		ImGui::End();
+
+		ImGui::Begin("Shader", NULL);
+		
+		static bool edited = false;
+		edited |= ImGui::InputTextMultiline("Vertex", &assetRepository->defaultShader.vertexCode);
+		edited |= ImGui::InputTextMultiline("Fragment", &assetRepository->defaultShader.fragmentCode);
+		if (ImGui::Button("Recompile")) {
+			edited = false;
+			assetRepository->defaultShader.recompile();
+		}
+		ImGui::End();
 		
 		if (createPopupPopened) {
 			ImGui::OpenPopup("Create Node");

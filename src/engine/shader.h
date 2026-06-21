@@ -136,6 +136,36 @@ void main() {
 	const char* vCode = vertexCode.c_str();
 	const char* fCode = fragmentCode.c_str();
 
+
+	void recompile() {
+		glDeleteProgram(id_);
+
+		GLuint vertexShader;
+		GLuint fragmentShader;
+
+		const char* vCode = vertexCode.c_str();
+		const char* fCode = fragmentCode.c_str();
+
+		vertexShader = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(vertexShader, 1, &vCode, NULL);
+		glCompileShader(vertexShader);
+		checkCompileErrors(vertexShader, "VERTEX");
+
+		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(fragmentShader, 1, &fCode, NULL);
+		glCompileShader(fragmentShader);
+		checkCompileErrors(fragmentShader, "FRAGMENT");
+
+		id_ = glCreateProgram();
+		glAttachShader(id_, vertexShader);
+		glAttachShader(id_, fragmentShader);
+		glLinkProgram(id_);
+		checkCompileErrors(id_, "PROGRAM");
+
+		glDeleteShader(vertexShader);
+		glDeleteShader(fragmentShader);
+	}
+
 	Shader() {
 		GLuint vertexShader;
 		GLuint fragmentShader;
