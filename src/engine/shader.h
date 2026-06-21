@@ -23,7 +23,7 @@ public:
 		"uv = texc;"
 		"mat3 modelVector = mat3(transpose(inverse(model)));"
 
-		"normal = modelVector * norm;"
+		"normal = normalize(modelVector * norm);"
 		"FragPos = vec3(model * vec4(pos, 1.0));"
 		"gl_Position = projection * view * model * vec4(pos,1.0); \n"
 		"}";
