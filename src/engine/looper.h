@@ -64,6 +64,28 @@ public:
 			}
 		}
 
+
+		for (int i = nodeRepository->allObjects.size(); i > 0; i--) {
+			Node* node = nodeRepository->allObjects[i - 1];
+			
+
+			Node* nodeParent = nullptr;
+
+			glm::vec3 absolutePosition = glm::vec3(0, 0, 0);
+
+			absolutePosition += node->transform.position;
+
+
+			Node* current = node;
+			while (current->parent != nullptr) {
+				nodeParent = current->parent;
+				absolutePosition += nodeParent->transform.position;
+				current = nodeParent;
+			}
+
+			node->transform.absolutePosition = absolutePosition;
+		}
+
 		for (int i = nodeRepository->models.size(); i > 0; i--) {
 			Model* model = nodeRepository->models[i - 1];
 
