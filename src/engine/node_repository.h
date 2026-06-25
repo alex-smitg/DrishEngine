@@ -4,6 +4,7 @@
 
 #include "game_objects/point_light.h"
 #include "game_objects/model.h"
+#include "game_objects/sound_player.h"
 #include "game_objects/camera.h"
 
 class NodeRepository {
@@ -32,6 +33,10 @@ public:
 			break;
 		}
 		allObjects.erase(std::remove(allObjects.begin(), allObjects.end(), node), allObjects.end());
+	}
+
+	void add(SoundPlayer* soundPlayer) {
+		allObjects.push_back(soundPlayer);
 	}
 
 	void add(Camera* camera) {

@@ -137,6 +137,12 @@ public:
 				Selector<Script>(&field, f, "SCRIPT", "Script");
 				break;
 			}
+			case FieldType::SoundHandle:
+			{
+				auto f = std::bind(&AssetsContainer<Sound>::get, assetRepository->sounds, std::placeholders::_1);
+				Selector<Sound>(&field, f, "SOUND", "Sound");
+				break;
+			}
 			case FieldType::TextureID:
 			{
 				unsigned int* id = *(unsigned int**)(field.ptr);

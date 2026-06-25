@@ -5,5 +5,6 @@ enum Type {
 	MODEL,
 	CAMERA,
 	POINT_LIGHT,
-	DIR_LIGHT
+	DIR_LIGHT,
+	SOUND_PLAYER
 };

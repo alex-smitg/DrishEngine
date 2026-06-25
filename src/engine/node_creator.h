@@ -4,6 +4,7 @@
 #include "game_objects/model.h"
 #include "game_objects/camera.h"
 #include "game_objects/point_light.h"
+#include "game_objects/sound_player.h"
 
 #include "game_object_types.h"
 #include "node_repository.h"
@@ -46,6 +47,13 @@ public:
 			PointLight* pointLight = new PointLight();
 			node = pointLight;
 			nodeRepository->add(pointLight);
+			break;
+		}
+		case SOUND_PLAYER:
+		{
+			SoundPlayer* soundPlayer = new SoundPlayer();
+			node = soundPlayer;
+			nodeRepository->add(soundPlayer);
 			break;
 		}
 

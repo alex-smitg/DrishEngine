@@ -527,6 +527,15 @@ public:
 			}
 			ImGui::SetItemTooltip("Light");
 
+			if (ImGui::Button("Sound Player")) {
+				Node* n = NodeCreator::createNode(Type::SOUND_PLAYER, "Sound Player", nodeRepository);
+				selectedTreeNode->appendChild(n);
+
+				createPopupPopened = false;
+				ImGui::CloseCurrentPopup();
+			};
+			ImGui::SetItemTooltip("Sound Player");
+
 			if (ImGui::Button("Close")) {
 				ImGui::CloseCurrentPopup();
 			}

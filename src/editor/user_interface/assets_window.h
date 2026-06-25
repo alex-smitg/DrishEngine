@@ -223,6 +223,20 @@ public:
 				}
 				);
 
+			drawList<Sound>(
+				"Sounds",
+				"SOUND",
+				assetRepository->sounds.slots,
+				[this](int index) {
+					assetRepository->sounds.remove(index);
+				},
+				[this]() {
+					Sound* sound = new Sound();
+					sound->name = "New sound";
+					assetRepository->sounds.add(sound);
+				}
+				);
+
 	
 			ImGui::End();
 		}

@@ -14,6 +14,7 @@ enum FieldType {
 	TextureHandle,
 	MaterialHandle,
 	VerticesHandle,
+	SoundHandle
 };
 
 class Field {
