@@ -410,7 +410,23 @@ public:
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Game")) {
-				if (ImGui::MenuItem("Export")) {}
+				if (ImGui::MenuItem("Export")) {
+					save();
+					std::ofstream archive;
+					archive.open(drishPath.parent_path() / "data.bin", std::ios::out | std::ios::binary);
+					archive.write("DRISH", sizeof(char) * 5);
+					std::ifstream drishjson;
+					drishjson.open(drishPath);
+					char c;
+					std::vector<char> drishFileData;
+					while ((c = drishjson.get()) != EOF) {
+						//char xr = c ^ 'g';
+						drishFileData.push_back(c);
+					}
+					size_t dataSize = drishFileData.size();
+					archive.write((char*)&dataSize, sizeof(size_t));
+					archive.write((char*)&drishFileData[0], dataSize * sizeof(char));
+				}
 				ImGui::EndMenu();
 			}
 
@@ -536,9 +552,6 @@ public:
 			};
 			ImGui::SetItemTooltip("Sound Player");
 
-			if (ImGui::Button("Close")) {
-				ImGui::CloseCurrentPopup();
-			}
 			ImGui::EndPopup();
 		}
 
