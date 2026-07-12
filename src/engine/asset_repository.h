@@ -119,5 +119,8 @@ public:
 	AssetsContainer<Vertices> vertices;
 	AssetsContainer<Sound> sounds;
 
+
+
+
 	Shader defaultShader;
 };

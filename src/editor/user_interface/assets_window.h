@@ -15,6 +15,51 @@
 
 #include "editor_window_base.h"
 
+
+#include <map>
+
+
+class FsItem {
+public:
+	std::string name;
+
+	FsItem* parent = nullptr;
+
+	virtual bool isDirectory() {
+		return false;
+	};
+};
+
+class File : public FsItem
+{
+	bool isDirectory() override {
+		return false;
+	}
+};
+
+class Folder: public FsItem
+{
+public:
+	std::map<std::string, FsItem*> content;
+
+	Folder(std::string name) {
+		this->name = name;
+	}
+
+	bool isDirectory() override {
+		return true;
+	}
+
+	Folder* addFolder(std::string name) {
+		Folder* folder = new Folder(name);
+		folder->parent = this;
+		
+		content[name] = folder;
+		
+		return folder;
+	}
+};
+
 class AssetWindow: public EditorWindowBase
 {
 private:
@@ -23,9 +68,18 @@ private:
 public:
 	std::filesystem::path *drishPath = nullptr;
 
+
+	Folder* selectedFolder = nullptr;
+	
+
+	Folder fs = Folder("project");
+
 	AssetWindow(AssetRepository *assetRepository)
 	{
 		this->assetRepository = assetRepository;
+
+		fs.addFolder("test");
+		fs.addFolder("test2");
 	}
 
 	template <typename T>
@@ -33,7 +87,7 @@ public:
 		std::function<void(int)> deleteFunction, std::function<void()> createFunction) {
 
 
-		if (ImGui::TreeNodeEx(name.c_str()))
+		if (ImGui::TreeNodeEx(name.c_str(), ImGuiTreeNodeFlags_DrawLinesToNodes | ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			if (true) {
 			
@@ -92,151 +146,115 @@ public:
 		}
 	}
 
+	void drawFolderContents(Folder* folder) {
+		ImGuiTreeNodeFlags flags;
+		flags = ImGuiTreeNodeFlags_DrawLinesToNodes | ImGuiTreeNodeFlags_DefaultOpen;
+
+		if (folder->content.empty()) {
+			flags |= ImGuiTreeNodeFlags_Leaf;
+		}
+
+		
+
+		if (selectedFolder == folder) {
+			flags |= ImGuiTreeNodeFlags_Selected;
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0, 1.0, 0.9, 1.0));
+		}
+
+
+		ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+		bool treeOpened = ImGui::TreeNodeEx(folder->name.c_str(), flags);
+
+		if (selectedFolder == folder) {
+			ImGui::PopStyleColor();
+		}
+
+
+		if (ImGui::BeginPopupContextItem())
+		{
+			if (ImGui::MenuItem("New folder")) {
+				Folder* f = folder->addFolder("new folder");
+				selectedFolder = f;
+			}
+			if (ImGui::BeginMenu("Import")) {
+				ImGui::MenuItem("Textures (.png, .jpg...)");
+				ImGui::MenuItem("Sounds (.wav)");
+				ImGui::MenuItem("Materials (.mat)");
+				ImGui::MenuItem("Models (.obj)");
+				ImGui::MenuItem("Scripts");
+				ImGui::EndMenu();
+			}
+			if (ImGui::MenuItem("Rename")) {
+			}
+			if (ImGui::MenuItem("Delete")) {
+				selectedFolder = nullptr;
+			}
+
+
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::IsItemClicked()) {
+			selectedFolder = folder;
+		}
+
+
+		if (treeOpened) {
+
+			for (auto a : folder->content) {
+				FsItem* item = a.second;
+				if (item->isDirectory()) {
+					drawFolderContents((Folder*)item);
+				}
+			}
+			ImGui::TreePop();
+		}
+
+		
+	}
+
 	void draw() override
 	{
 		if (open)
 		{
 			ImGui::Begin("Assets", &open);
 	
-			drawList<Texture>(
-				"Textures",
-				"TEXTURE",
-				assetRepository->textures.slots,
-				[this](int index) {
-					assetRepository->textures.remove(index);
-				},
-				[this]() {
-					{
-						std::filesystem::path texturePath = drishengine::openImageOpenFileDialog();
-						if (!texturePath.empty())
-						{
-							std::filesystem::path filename = texturePath.filename();
 
-							if (std::filesystem::exists(drishPath->parent_path() / "textures" / filename)) {
-								logInfo("[ASSETS WINDOW] file already exists");
-							}
-							else {
-								Texture* texture = new Texture();
+			
 
-								texture->name = filename.string();
-								texture->path = std::filesystem::path("textures") / filename;
+			ImGui::BeginChild("Tree", { 200, 0 }, ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX, ImGuiWindowFlags_HorizontalScrollbar);
+			drawFolderContents(&fs);
+			ImGui::EndChild();
+			ImGui::SameLine();
+			ImGui::BeginChild("Content", { 0, 0 }, ImGuiChildFlags_Borders);
 
-								ImageLoader::loadImage(texturePath, texture);
-								assetRepository->textures.add(texture);
+			//ImVec2 childPos = ImGui::GetWindowPos();
+			int width = ImGui::GetWindowWidth();
+			const int ASSET_SIZE = 32;
+			int r = width / ASSET_SIZE;
 
-								if (drishPath != nullptr)
-								{
-									if (std::filesystem::exists(drishPath->parent_path() / "textures"))
-									{
-										logDebug("[ASSETS WINDOW] textures");
-									}
-									else
-									{
-										std::filesystem::create_directory(drishPath->parent_path() / "textures");
-									}
-									std::filesystem::copy_file(texturePath, drishPath->parent_path() / "textures" / filename);
-								}
-								else
-								{
-									logError("[ASSETS WINDOW] drishPath is null");
-								}
-							}
+			if (r == 0) { r = 1; }
+
+			for (int i = 1; i < 100; i++) {
+				ImGui::PushID(i);
+				ImGui::Button("test", { ASSET_SIZE, ASSET_SIZE });
+				if (i % r != 0) {
+					ImGui::SameLine();
+				}
+				ImGui::PopID();
+			}
+
+			/*if (selectedFolder != nullptr) {
+				for (auto a : selectedFolder->content) {
+					if (a.second->isDirectory() == true) {
+						if (ImGui::Button(a.first.c_str(), { 64, 64 })) {
+							selectedFolder = static_cast<Folder*>(a.second);
 						}
 					}
 				}
-			);
-
-
-			drawList<Vertices>(
-				"Vertices",
-				"VERTICES",
-				assetRepository->vertices.slots,
-				[this](int index) {
-					assetRepository->vertices.remove(index);
-				},
-				[this]() {
-					std::filesystem::path objFilePath = drishengine::openModelOpenFileDialog();
-
-					if (!objFilePath.empty())
-					{
-						std::filesystem::path filename = objFilePath.filename();
-						filename.replace_extension("model");
-
-						Vertices* vertices = new Vertices();
-						vertices->name = objFilePath.stem().string();
-
-						vertices->path = std::filesystem::path("models") / filename;
-						drishengine::loadObj(objFilePath, vertices);
-
-						assetRepository->vertices.add(vertices);
-
-						if (drishPath != nullptr)
-						{
-							if (std::filesystem::exists(drishPath->parent_path() / "models"))
-							{
-								logDebug("[ASSETS WINDOW] models exists");
-							}
-							else
-							{
-								std::filesystem::create_directory(drishPath->parent_path() / "models");
-							}
-
-							drishengine::writeModelData(drishPath->parent_path() / "models" / filename,
-								vertices->data);
-							vertices->createBuffers();
-						}
-						else
-						{
-							logError("[ASSETS WINDOW] drishPath is null");
-						}
-						}
-					}
-				);
-
-
-			drawList<Material>(
-				"Materials",
-				"MATERIAL",
-				assetRepository->materials.slots,
-				[this](int index) {
-					assetRepository->materials.remove(index);
-				},
-				[this]() {
-					Material* mat = new Material();
-					mat->name = "New material";
-					mat->shader = &assetRepository->defaultShader;
-					assetRepository->materials.add(mat);
-				}
-			);
-
-			drawList<Script>(
-				"Scripts",
-				"SCRIPT",
-				assetRepository->scripts.slots,
-				[this](int index) {
-					assetRepository->scripts.remove(index);
-				},
-				[this]() {
-					Script* script = new Script();
-					script->name = "New script";
-					assetRepository->scripts.add(script);
-				}
-				);
-
-			drawList<Sound>(
-				"Sounds",
-				"SOUND",
-				assetRepository->sounds.slots,
-				[this](int index) {
-					assetRepository->sounds.remove(index);
-				},
-				[this]() {
-					Sound* sound = new Sound();
-					sound->name = "New sound";
-					assetRepository->sounds.add(sound);
-				}
-				);
-
+			}*/
+			
+			ImGui::EndChild();
 	
 			ImGui::End();
 		}

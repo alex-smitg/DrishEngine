@@ -359,9 +359,10 @@ public:
 			ImGuiID mainDock;
 			ImGuiID rightDock = ImGui::DockBuilderSplitNode(viewportDockedID, ImGuiDir_Right, 0.3f, nullptr, &mainDock);
 			ImGuiID viewportDock;
-			ImGuiID logDock = ImGui::DockBuilderSplitNode(mainDock, ImGuiDir_Down, 0.4f, nullptr, &viewportDock);
+			ImGuiID assetsDock = ImGui::DockBuilderSplitNode(mainDock, ImGuiDir_Down, 0.4f, nullptr, &viewportDock);
 			ImGuiID configDock;
 			ImGuiID scriptEditorDock = ImGui::DockBuilderSplitNode(rightDock, ImGuiDir_Up, 0.6f, nullptr, &configDock);
+			ImGuiID logDock = ImGui::DockBuilderSplitNode(configDock, ImGuiDir_Down, 0.6f, nullptr, &configDock);
 			
 			ImGui::DockBuilderDockWindow("Tree", treeDock);
 			ImGui::DockBuilderDockWindow("Properties", inspectorDock);
@@ -369,6 +370,7 @@ public:
 			ImGui::DockBuilderDockWindow("Script editor", scriptEditorDock);
 			ImGui::DockBuilderDockWindow("Viewport", viewportDock);
 			ImGui::DockBuilderDockWindow("Game config", configDock);
+			ImGui::DockBuilderDockWindow("Assets", assetsDock);
 			ImGui::DockBuilderFinish(id);
 			docked = true;
 		}
