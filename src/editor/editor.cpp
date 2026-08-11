@@ -36,8 +36,9 @@
 const double targetFPS = 60.0;
 const double frameDuration = 1.0 / targetFPS;
 
-int main()
-{
+int main(int argc, char *argv[])
+{	
+	
 	logInfo("Hello");
 	logInfo("Version: ", DRISH_ENGINE_VERSION_BIG, ".",
 		DRISH_ENGINE_VERSION_NOTBIGNOTSMALL, ".",
@@ -60,6 +61,12 @@ int main()
 	Camera camera = Camera();
 	camera.create_view = false;
 	Editor editor(&window, &assetRepository, &nodeRepository, &scripter, &camera);
+	
+	if (argc >= 2) {
+		logInfo("Project was loaded via console argument");
+		editor.drishPath = std::filesystem::path(argv[1]);
+	}
+	
 	editor.world = world;
 	editor.graphics = &graphics;
 

@@ -381,8 +381,9 @@ public:
 			this->save();
 		}
 
-		
-		showStartPopup();
+		if (drishPath.empty()) {
+			showStartPopup();
+		}
 
 		if (ImGui::BeginMainMenuBar())
 		{
