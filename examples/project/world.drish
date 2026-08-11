@@ -1,0 +1,17 @@
+{
+    "gameConfig": {
+        "height": 500,
+        "title": "Game",
+        "useFullscreen": false,
+        "width": 500
+    },
+    "materials": null,
+    "nextNodeId": 1,
+    "scripts": null,
+    "sounds": null,
+    "textures": null,
+    "ver_b": 0,
+    "ver_nbns": 2,
+    "ver_s": 4,
+    "vertices": null
+}
