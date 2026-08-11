@@ -25,22 +25,34 @@ public:
 
 	FsItem* parent = nullptr;
 
+	unsigned int textureID = -1; // -1 = no texture
+
 	virtual bool isDirectory() {
 		return false;
 	};
+
+
 };
 
 class File : public FsItem
 {
+public:
 	bool isDirectory() override {
 		return false;
 	}
+
+	File(std::string name) {
+		this->name = name;
+	}
 };
+
 
 class Folder: public FsItem
 {
 public:
 	std::map<std::string, FsItem*> content;
+
+	
 
 	Folder(std::string name) {
 		this->name = name;
@@ -48,6 +60,15 @@ public:
 
 	bool isDirectory() override {
 		return true;
+	}
+
+	File* addFile(std::string name) {
+		File* file = new File(name);
+		file->parent = this;
+
+		content[name] = file;
+
+		return file;
 	}
 
 	Folder* addFolder(std::string name) {
@@ -69,10 +90,12 @@ public:
 	std::filesystem::path *drishPath = nullptr;
 
 
-	Folder* selectedFolder = nullptr;
+	
 	
 
 	Folder fs = Folder("project");
+	std::vector<Folder*> currentFolderPath;
+	Folder* selectedFolder = &fs;
 
 	AssetWindow(AssetRepository *assetRepository)
 	{
@@ -174,7 +197,7 @@ public:
 		{
 			if (ImGui::MenuItem("New folder")) {
 				Folder* f = folder->addFolder("new folder");
-				selectedFolder = f;
+				changeCurrentFolder(f);
 			}
 			if (ImGui::BeginMenu("Import")) {
 				ImGui::MenuItem("Textures (.png, .jpg...)");
@@ -187,7 +210,7 @@ public:
 			if (ImGui::MenuItem("Rename")) {
 			}
 			if (ImGui::MenuItem("Delete")) {
-				selectedFolder = nullptr;
+				changeCurrentFolder(&fs);
 			}
 
 
@@ -195,7 +218,7 @@ public:
 		}
 
 		if (ImGui::IsItemClicked()) {
-			selectedFolder = folder;
+			changeCurrentFolder(folder);
 		}
 
 
@@ -213,6 +236,66 @@ public:
 		
 	}
 
+
+	Texture* importTexture() {
+		std::filesystem::path texturePath = drishengine::openImageOpenFileDialog();
+		if (!texturePath.empty())
+		{
+			std::filesystem::path filename = texturePath.filename();
+
+			Texture* texture = new Texture();
+			texture->name = filename.string();
+			texture->path = std::filesystem::path("textures") / filename;
+
+			ImageLoaderError err = ImageLoader::loadImage(texturePath, texture);
+			if (err != ImageLoaderError::OK) {
+				delete texture;
+				return nullptr;
+			}
+			
+			assetRepository->textures.add(texture);
+
+			if (drishPath != nullptr)
+			{
+				if (std::filesystem::exists(drishPath->parent_path() / "textures"))
+				{
+					logDebug("[ASSETS WINDOW] textures");
+				}
+				else
+				{
+					std::filesystem::create_directory(drishPath->parent_path() / "textures");
+				}
+
+
+				if (std::filesystem::exists(drishPath->parent_path() / "textures" / filename)) {
+					logInfo("[ASSETS WINDOW] file already exist, no need to copy");
+				}
+				else {
+					std::filesystem::copy_file(texturePath, drishPath->parent_path() / "textures" / filename);
+				}
+			}	
+			else
+			{
+				logError("[ASSETS WINDOW] drishPath is null");
+			}
+			return texture;
+			
+		}
+		return nullptr;
+	}
+
+	void changeCurrentFolder(Folder* folder) {
+		selectedFolder = folder;
+		currentFolderPath.clear();
+		Folder* f = selectedFolder;
+
+		while (f != nullptr) {
+			currentFolderPath.push_back(f);
+			f = static_cast<Folder*>(f->parent);
+		}
+
+	}
+
 	void draw() override
 	{
 		if (open)
@@ -222,38 +305,215 @@ public:
 
 			
 
-			ImGui::BeginChild("Tree", { 200, 0 }, ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX, ImGuiWindowFlags_HorizontalScrollbar);
+			/*ImGui::BeginChild("Tree", { 200, 0 }, ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX, ImGuiWindowFlags_HorizontalScrollbar);
 			drawFolderContents(&fs);
-			ImGui::EndChild();
+			ImGui::EndChild();*/
 			ImGui::SameLine();
+
+			bool endDisabled = false;
+			if (selectedFolder->parent == nullptr) {
+				ImGui::BeginDisabled();
+				endDisabled = true;
+			}
+
+			if (ImGui::Button("<")) {
+				if (selectedFolder->parent != nullptr) {
+					changeCurrentFolder(static_cast<Folder*>(selectedFolder->parent));
+				}
+			}
+
+			if (endDisabled) {
+				ImGui::EndDisabled();
+			}
+
+			ImGui::SameLine();
+
+			for (int i = currentFolderPath.size() - 1; i > 0; i--) {
+				if (ImGui::TextLink(currentFolderPath[i]->name.c_str())) {
+					changeCurrentFolder(currentFolderPath[i]);
+					break;
+				}
+				ImGui::SameLine();
+				ImGui::Text("/");
+				ImGui::SameLine();
+			}
+			ImGui::Text(selectedFolder->name.c_str());
+			//ImGui::Text(selectedFolderPath.c_str());
 			ImGui::BeginChild("Content", { 0, 0 }, ImGuiChildFlags_Borders);
+
+
+			static bool isHoveringOverIcon = false;
+
+			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				ImGui::OpenPopup("r");
+				isHoveringOverIcon = false;
+			}
+
+			
 
 			//ImVec2 childPos = ImGui::GetWindowPos();
 			int width = ImGui::GetWindowWidth();
-			const int ASSET_SIZE = 32;
+			const int ASSET_SIZE = 48;
 			int r = width / ASSET_SIZE;
 
 			if (r == 0) { r = 1; }
 
-			for (int i = 1; i < 100; i++) {
-				ImGui::PushID(i);
-				ImGui::Button("test", { ASSET_SIZE, ASSET_SIZE });
-				if (i % r != 0) {
-					ImGui::SameLine();
-				}
-				ImGui::PopID();
-			}
 
-			/*if (selectedFolder != nullptr) {
+			ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign,
+				ImVec2(0.0f, 0.0f));
+
+			
+
+			static FsItem* rightClickedItem = nullptr;
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
+			if (selectedFolder != nullptr) {
+				int i = 0;
 				for (auto a : selectedFolder->content) {
 					if (a.second->isDirectory() == true) {
-						if (ImGui::Button(a.first.c_str(), { 64, 64 })) {
-							selectedFolder = static_cast<Folder*>(a.second);
+						ImGui::PushID(i);
+						if (i % r != 0) {
+							ImGui::SameLine();
 						}
+
+						if (ImGui::Button(a.second->name.c_str(), { ASSET_SIZE, ASSET_SIZE })) {
+							changeCurrentFolder(static_cast<Folder*>(a.second));
+						}
+
+
+						if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+							rightClickedItem = a.second;
+						}
+
+
+
+						
+						isHoveringOverIcon |= ImGui::IsItemHovered();
+
+						ImGui::PopID();
+					}
+					else {
+						ImGui::PushID(i);
+						if (i % r != 0) {
+							ImGui::SameLine();
+						}
+
+						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.f, 0.f, 0.f, 0.f));
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
+						if (ImGui::ImageButton(a.second->name.c_str(), a.second->textureID, { ASSET_SIZE, ASSET_SIZE })) {
+
+						}
+						ImGui::PopStyleColor(3);
+
+						if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+						{
+							ImGui::SetTooltip(a.second->name.c_str());
+						}
+
+						if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+							rightClickedItem = a.second;
+						}
+
+						isHoveringOverIcon |= ImGui::IsItemHovered();
+
+						ImGui::PopID();
+					}
+					i++;
+				}
+			}
+			ImGui::PopStyleVar();
+			ImGui::PopStyleVar();
+
+			
+			static bool renamePopupOpened = false;
+
+			if (ImGui::BeginPopup("r"))
+			{
+
+				if (isHoveringOverIcon) {
+					if (ImGui::MenuItem("Rename")) {
+						renamePopupOpened = true;
+					}
+					if (ImGui::MenuItem("Delete")) {
+						changeCurrentFolder(&fs);
+					}
+
+				}
+				else {
+					if (ImGui::BeginMenu("Import")) {
+						if (ImGui::MenuItem("Textures")) {
+							Texture* texture = importTexture();
+							if (texture != nullptr) {
+								File* file = selectedFolder->addFile(texture->name);
+								file->textureID = texture->glid;
+							}
+						}
+						ImGui::MenuItem("Sounds");
+						//ImGui::MenuItem("Materials");
+						ImGui::MenuItem("Models");
+						ImGui::MenuItem("Scripts");
+						ImGui::EndMenu();
+					}
+					if (ImGui::MenuItem("New folder")) {
+						Folder* f = selectedFolder->addFolder("new folder");
 					}
 				}
-			}*/
+
+
+
+				ImGui::EndPopup();
+			}
+
+			static std::string str = "";
+
+			if (renamePopupOpened) {
+				ImGui::OpenPopup("RenamePopup", 0);
+				
+				if (rightClickedItem != nullptr && str.empty()) {
+					str = rightClickedItem->name;
+				}
+			}
 			
+
+			
+
+			if (ImGui::BeginPopupModal("RenamePopup")) {
+				
+				ImGui::InputText("Text", &str);
+				if (ImGui::Button("Ok")) {
+					ImGui::CloseCurrentPopup();
+					renamePopupOpened = false;
+					
+
+					if (rightClickedItem->parent != nullptr) {
+						if (rightClickedItem->parent->isDirectory()) {
+							Folder* folder = static_cast<Folder*>(rightClickedItem->parent);
+							auto nh = folder->content.extract(rightClickedItem->name);
+							nh.key() = str;
+							folder->content.insert(std::move(nh));
+
+							rightClickedItem->name = str;
+
+						}
+					}
+
+
+					str = "";
+
+					
+					
+				};
+				if (ImGui::Button("Cancel")) {
+					ImGui::CloseCurrentPopup();
+					renamePopupOpened = false;
+					str = "";
+				}
+				ImGui::EndPopup();
+			}
+			
+
 			ImGui::EndChild();
 	
 			ImGui::End();

@@ -6,6 +6,10 @@
 #include <fstream>
 #include <chrono>
 
+
+
+#define IMAGE_LOADER "IMAGE LOADER "
+
 enum class LogType { Info, Debug, Warning, Error };
 
 inline std::string logTypeString[] = { "INFO", "DEBUG", "WARNING", "ERROR" };
