@@ -1,5 +1,12 @@
 #pragma once
 
+//TODO: add absolute path to the projectRoot.
+/*
+DrishPath is null at the start of the program, so
+it is better to instantiate editor class after project is loaded and not
+instantly on program start.
+*/
+
 #include <string>
 #include <filesystem>
 #include <typeinfo>
@@ -372,33 +379,33 @@ public:
 
 				}
 				else {
-					if (ImGui::BeginMenu("Import")) {
-						if (ImGui::MenuItem("Textures")) {
-							Texture* texture = importTexture();
-							if (texture != nullptr) {
-								File* file = currentDirectory->addFile(texture->name);
-								file->textureID = texture->glid;
-							}
-						}
-						ImGui::MenuItem("Sounds");
-						//ImGui::MenuItem("Materials");
-						ImGui::MenuItem("Models");
-						ImGui::MenuItem("Scripts");
-						ImGui::EndMenu();
-					}
-					if (ImGui::MenuItem("New folder")) {
-						logInfo("Path ", drishPath->parent_path() / "New folder");
-						try
-						{
-							if (std::filesystem::create_directory(drishPath->parent_path() / "New folder")) {
-								Directory* directory = currentDirectory->addDirectory("new folder");
-							}
-						}
+					if (ImGui::BeginMenu("Add")) {
+						if (ImGui::MenuItem("New folder")) {
+							try
+							{
+								std::filesystem::path pathTo = drishPath->parent_path() / "project" / "New folder";
+								logInfo("Create new folder ", pathTo);
+								if (currentDirectory != &projectRoot) {
+									pathTo = currentDirectory->absolutePath / "New folder";
+								}
 
-						catch (std::filesystem::filesystem_error const& ex)
-						{
-							logError(ex.what());
+								if (std::filesystem::create_directory(pathTo)) {
+									Directory* directory = currentDirectory->addDirectory("new folder");
+								}
+							}
+
+							catch (std::filesystem::filesystem_error const& ex)
+							{
+								logError(ex.what());
+							}
 						}
+						if (ImGui::MenuItem("New material")) {
+
+						}
+						if (ImGui::MenuItem("New script")) {
+
+						}
+						ImGui::EndMenu();
 					}
 				}
 
