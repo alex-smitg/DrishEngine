@@ -26,6 +26,8 @@ public:
 	FsItem* parent = nullptr;
 
 	unsigned int textureID = -1; // -1 = no texture
+	bool useTexture = true;
+	unsigned int color = 0xFF00FF;
 
 	virtual bool isDirectory() {
 		return false;
@@ -271,7 +273,6 @@ public:
 
 
 	void refresh() {
-
 		std::map<std::string, FsItem*> index;
 
 		index[(drishPath->parent_path() / "project").string()] = &fs;
@@ -283,12 +284,23 @@ public:
 			FsItem* parent = index[entry.path().parent_path().string()];
 			if (parent->isDirectory()) {
 				Folder* folder = static_cast<Folder*>(parent);
-				index[entry.path().string()] = folder->addFolder(entry.path().filename().string());
-			}
-		}
 
-		for (auto a : index) {
-			std::cout << a.first << std::endl;
+				if (entry.is_directory()) {
+					index[entry.path().string()] = folder->addFolder(entry.path().filename().string());
+				}
+				else {
+					File* file = folder->addFile(entry.path().filename().string());
+					index[entry.path().string()] = file;
+					file->useTexture = false;
+
+					std::string ext = entry.path().extension().string();
+
+					if (ext == ".txt" || ext == ".TXT") {
+						file->color = 0xFF3A3A3A;
+					}
+					
+				}
+			}
 		}
 	}
 
@@ -404,8 +416,15 @@ public:
 						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
 						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.f, 0.f, 0.f, 0.f));
 						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
-						if (ImGui::ImageButton(a.second->name.c_str(), a.second->textureID, { ASSET_SIZE, ASSET_SIZE })) {
+						if (a.second->useTexture) {
+							if (ImGui::ImageButton(a.second->name.c_str(), a.second->textureID, { ASSET_SIZE, ASSET_SIZE })) {
 
+							}
+						}
+						else {
+							ImGui::PushStyleColor(ImGuiCol_Button, a.second->color);
+							if (ImGui::Button(a.second->name.c_str(), { ASSET_SIZE, ASSET_SIZE }));
+							ImGui::PopStyleColor();
 						}
 						ImGui::PopStyleColor(3);
 
