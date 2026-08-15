@@ -97,12 +97,10 @@ public:
 	std::vector<Folder*> currentFolderPath;
 	Folder* selectedFolder = &fs;
 
-	AssetWindow(AssetRepository *assetRepository)
+	AssetWindow(AssetRepository *assetRepository, std::filesystem::path* drishPath)
 	{
 		this->assetRepository = assetRepository;
-
-		fs.addFolder("test");
-		fs.addFolder("test2");
+		this->drishPath = drishPath;
 	}
 
 	template <typename T>
@@ -192,31 +190,6 @@ public:
 			ImGui::PopStyleColor();
 		}
 
-
-		if (ImGui::BeginPopupContextItem())
-		{
-			if (ImGui::MenuItem("New folder")) {
-				Folder* f = folder->addFolder("new folder");
-				changeCurrentFolder(f);
-			}
-			if (ImGui::BeginMenu("Import")) {
-				ImGui::MenuItem("Textures (.png, .jpg...)");
-				ImGui::MenuItem("Sounds (.wav)");
-				ImGui::MenuItem("Materials (.mat)");
-				ImGui::MenuItem("Models (.obj)");
-				ImGui::MenuItem("Scripts");
-				ImGui::EndMenu();
-			}
-			if (ImGui::MenuItem("Rename")) {
-			}
-			if (ImGui::MenuItem("Delete")) {
-				changeCurrentFolder(&fs);
-			}
-
-
-			ImGui::EndPopup();
-		}
-
 		if (ImGui::IsItemClicked()) {
 			changeCurrentFolder(folder);
 		}
@@ -296,6 +269,29 @@ public:
 
 	}
 
+
+	void refresh() {
+
+		std::map<std::string, FsItem*> index;
+
+		index[(drishPath->parent_path() / "project").string()] = &fs;
+
+		for (const std::filesystem::directory_entry& entry :
+			std::filesystem::recursive_directory_iterator(drishPath->parent_path() / "project")) {
+			std::cout << entry << "\n";
+			
+			FsItem* parent = index[entry.path().parent_path().string()];
+			if (parent->isDirectory()) {
+				Folder* folder = static_cast<Folder*>(parent);
+				index[entry.path().string()] = folder->addFolder(entry.path().filename().string());
+			}
+		}
+
+		for (auto a : index) {
+			std::cout << a.first << std::endl;
+		}
+	}
+
 	void draw() override
 	{
 		if (open)
@@ -310,12 +306,18 @@ public:
 			ImGui::EndChild();*/
 			ImGui::SameLine();
 
+			if (ImGui::Button("Refresh")) {
+				refresh();
+			}
+
+
 			bool endDisabled = false;
 			if (selectedFolder->parent == nullptr) {
 				ImGui::BeginDisabled();
 				endDisabled = true;
 			}
 
+			
 			if (ImGui::Button("<")) {
 				if (selectedFolder->parent != nullptr) {
 					changeCurrentFolder(static_cast<Folder*>(selectedFolder->parent));
@@ -457,7 +459,18 @@ public:
 						ImGui::EndMenu();
 					}
 					if (ImGui::MenuItem("New folder")) {
-						Folder* f = selectedFolder->addFolder("new folder");
+						logInfo("Path ", drishPath->parent_path() / "New folder");
+						try
+						{
+							if (std::filesystem::create_directory(drishPath->parent_path() / "New folder")) {
+								Folder* f = selectedFolder->addFolder("new folder");
+							}
+						}
+
+						catch (std::filesystem::filesystem_error const& ex)
+						{
+							logError(ex.what());
+						}
 					}
 				}
 

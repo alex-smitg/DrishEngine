@@ -93,8 +93,7 @@ public:
 		this->canvas = new Canvas();
 		this->camera = camera;
 
-		this->assetWindow = new AssetWindow(assetRepository);
-		this->assetWindow->drishPath = &drishPath;
+		this->assetWindow = new AssetWindow(assetRepository, &drishPath);
 		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner);
 		this->propertiesWindow = new PropertiesWindow(assetRepository, luaRunner, &selectedNode);
 		this->viewportWindow = new ViewportWindow(canvas, camera, window);
@@ -316,6 +315,8 @@ public:
 				else {
 					DrishLoader::load(drishPath, world, assetRepository, &gameConfig, nodeRepository);
 
+					assetWindow->refresh();
+
 					startPopupPopened = false;
 					ImGui::CloseCurrentPopup();
 				}
@@ -324,10 +325,12 @@ public:
 			if (ImGui::Button("Create new project", ImVec2(-1.0f, 0.0f))) {
 				drishPath = drishengine::openDrishSaveDialog();
 
+				
+
 				if (drishPath.empty()) {}
 				else {
 					this->save();
-					
+					std::filesystem::create_directory(drishPath.parent_path() / "project");
 					startPopupPopened = false;
 					ImGui::CloseCurrentPopup();
 				}

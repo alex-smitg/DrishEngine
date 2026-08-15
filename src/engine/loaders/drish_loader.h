@@ -139,7 +139,7 @@ public:
 
 private:
 	static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
-		
+		logInfo("[DRISH_LOADER] load assets");
 
 		if (json.contains("scripts")) {
 			for (const auto& item : json["scripts"].items())

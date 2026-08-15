@@ -63,8 +63,9 @@ int main(int argc, char *argv[])
 	Editor editor(&window, &assetRepository, &nodeRepository, &scripter, &camera);
 	
 	if (argc >= 2) {
-		logInfo("Project was loaded via console argument");
 		editor.drishPath = std::filesystem::path(argv[1]);
+		DrishLoader::load(editor.drishPath, world, &assetRepository, &editor.gameConfig, &nodeRepository);
+		editor.assetWindow->refresh();
 	}
 	
 	editor.world = world;
