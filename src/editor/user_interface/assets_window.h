@@ -35,7 +35,7 @@ public:
 		return false;
 	};
 
-
+	virtual void free() {};
 };
 
 class File : public FsItem
@@ -43,6 +43,10 @@ class File : public FsItem
 public:
 	bool isDirectory() override {
 		return false;
+	}
+
+	void free() override {
+		
 	}
 
 	File(std::string name) {
@@ -62,6 +66,15 @@ public:
 
 	bool isDirectory() override {
 		return true;
+	}
+
+
+	void free() override {
+		for (auto a : content) {
+			a.second->free();
+			delete a.second;
+		}
+		content.clear();
 	}
 
 	File* addFile(std::string name) {
@@ -94,13 +107,16 @@ public:
 	Directory projectRoot = Directory("project");
 
 	std::vector<Directory*> currentDirectoryPath;
-	Directory* currentDirectory = &projectRoot;
+	Directory* currentDirectory = &projectRoot; 
 
 	AssetWindow(AssetRepository *assetRepository, std::filesystem::path* drishPath)
 	{
 		this->assetRepository = assetRepository;
 		this->drishPath = drishPath;
 	}
+
+
+
 
 
 	Texture* importTexture() {
@@ -137,7 +153,12 @@ public:
 					logInfo("[ASSETS WINDOW] file already exist, no need to copy");
 				}
 				else {
-					std::filesystem::copy_file(texturePath, currentDirectory->absolutePath / filename);
+					if (currentDirectory == &projectRoot) {
+						std::filesystem::copy_file(texturePath, drishPath->parent_path() / "project" / filename);
+					}
+					else {
+						std::filesystem::copy_file(texturePath, currentDirectory->absolutePath / filename);
+					}
 				}
 			}	
 			else
@@ -166,6 +187,10 @@ public:
 
 
 	void refresh() {
+		changeCurrentFolder(&projectRoot);
+		projectRoot.free();
+		
+
 		std::map<std::string, FsItem*> index;
 
 		index[(drishPath->parent_path() / "project").string()] = &projectRoot;
@@ -198,6 +223,10 @@ public:
 				}
 			}
 		}
+
+
+
+		
 	}
 
 	void draw() override
