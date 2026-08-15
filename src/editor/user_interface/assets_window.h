@@ -127,7 +127,6 @@ public:
 
 			Texture* texture = new Texture();
 			texture->name = filename.string();
-			texture->path = std::filesystem::path("textures") / filename;
 
 			ImageLoaderError err = ImageLoader::loadImage(texturePath, texture);
 			if (err != ImageLoaderError::OK) {
@@ -139,25 +138,20 @@ public:
 
 			if (drishPath != nullptr)
 			{
-				if (std::filesystem::exists(drishPath->parent_path() / "textures"))
-				{
-					logDebug("[ASSETS WINDOW] textures");
-				}
-				else
-				{
-					std::filesystem::create_directory(drishPath->parent_path() / "textures");
+				std::filesystem::path copyTo = drishPath->parent_path() / "project" / filename;
+				if (currentDirectory != &projectRoot) {
+					copyTo = currentDirectory->absolutePath / filename;
 				}
 
-
-				if (std::filesystem::exists(drishPath->parent_path() / "textures" / filename)) {
+				if (std::filesystem::exists(copyTo)) {
 					logInfo("[ASSETS WINDOW] file already exist, no need to copy");
 				}
 				else {
 					if (currentDirectory == &projectRoot) {
-						std::filesystem::copy_file(texturePath, drishPath->parent_path() / "project" / filename);
+						std::filesystem::copy_file(texturePath, copyTo);
 					}
 					else {
-						std::filesystem::copy_file(texturePath, currentDirectory->absolutePath / filename);
+						std::filesystem::copy_file(texturePath, copyTo);
 					}
 				}
 			}	
