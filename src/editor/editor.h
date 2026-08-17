@@ -343,7 +343,7 @@ public:
 		this->drishPath = drishFilePath;
 		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
 		this->assetWindow->refresh();
-		this->assetWindow->projectRoot.absolutePath = drishFilePath.parent_path();
+		this->assetWindow->projectRoot.absolutePath = drishFilePath.parent_path() / "project";
 	}
 
 	void loop(double delta) {
