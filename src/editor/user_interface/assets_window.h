@@ -1,12 +1,5 @@
 #pragma once
 
-//TODO: add absolute path to the projectRoot.
-/*
-DrishPath is null at the start of the program, so
-it is better to instantiate editor class after project is loaded and not
-instantly on program start.
-*/
-
 #include <string>
 #include <filesystem>
 #include <typeinfo>
@@ -145,21 +138,13 @@ public:
 
 			if (drishPath != nullptr)
 			{
-				std::filesystem::path copyTo = drishPath->parent_path() / "project" / filename;
-				if (currentDirectory != &projectRoot) {
-					copyTo = currentDirectory->absolutePath / filename;
-				}
-
+				std::filesystem::path copyTo = currentDirectory->absolutePath / filename;
+				
 				if (std::filesystem::exists(copyTo)) {
 					logInfo("[ASSETS WINDOW] file already exist, no need to copy");
 				}
 				else {
-					if (currentDirectory == &projectRoot) {
-						std::filesystem::copy_file(texturePath, copyTo);
-					}
-					else {
-						std::filesystem::copy_file(texturePath, copyTo);
-					}
+					std::filesystem::copy_file(texturePath, copyTo);
 				}
 			}	
 			else
@@ -383,11 +368,8 @@ public:
 						if (ImGui::MenuItem("New folder")) {
 							try
 							{
-								std::filesystem::path pathTo = drishPath->parent_path() / "project" / "New folder";
+								std::filesystem::path pathTo = currentDirectory->absolutePath / "New folder";
 								logInfo("Create new folder ", pathTo);
-								if (currentDirectory != &projectRoot) {
-									pathTo = currentDirectory->absolutePath / "New folder";
-								}
 
 								if (std::filesystem::create_directory(pathTo)) {
 									Directory* directory = currentDirectory->addDirectory("new folder");

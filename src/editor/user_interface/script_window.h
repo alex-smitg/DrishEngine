@@ -27,7 +27,7 @@ public:
 		this->assetRepository = assetRepository;
 		this->luaRunner = luaRunner;
 
-		editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
+		editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());  
 		editor.SetPalette(TextEditor::GetDarkPalette());
 	}
 

@@ -313,9 +313,7 @@ public:
 				
 				if (drishPath.empty()) {} 
 				else {
-					DrishLoader::load(drishPath, world, assetRepository, &gameConfig, nodeRepository);
-
-					assetWindow->refresh();
+					loadProject(drishPath);
 
 					startPopupPopened = false;
 					ImGui::CloseCurrentPopup();
@@ -339,6 +337,13 @@ public:
 			
 			ImGui::EndPopup();
 		}
+	}
+
+	void loadProject(std::filesystem::path drishFilePath) {
+		this->drishPath = drishFilePath;
+		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
+		this->assetWindow->refresh();
+		this->assetWindow->projectRoot.absolutePath = drishFilePath.parent_path();
 	}
 
 	void loop(double delta) {
