@@ -171,6 +171,28 @@ public:
 
 	}
 
+	void processFile(File* file) {
+		std::string ext = file->absolutePath.extension().string();
+
+		if (ext == ".txt" || ext == ".TXT") {
+			file->color = 0xFF3A3A3A;
+		}
+		else if (ext == ".lua" || ext == ".LUA") {
+			file->color = 0xFFFF8A00;
+
+			Script* script = new Script();
+			script->name = file->name;
+
+			assetRepository->scripts.add(script);
+		}
+		else if (ext == ".png" || ext == ".PNG") {
+			file->useTexture = true;
+
+		}
+
+
+	}
+
 
 	void refresh() {
 		changeCurrentFolder(&projectRoot);
@@ -200,12 +222,7 @@ public:
 					childFile->absolutePath = entry.path().string();
 					childFile->useTexture = false;
 
-					std::string ext = entry.path().extension().string();
-
-					if (ext == ".txt" || ext == ".TXT") {
-						childFile->color = 0xFF3A3A3A;
-					}
-					
+					processFile(childFile);
 				}
 			}
 		}
@@ -385,7 +402,15 @@ public:
 
 						}
 						if (ImGui::MenuItem("New script")) {
+							std::filesystem::path pathTo = currentDirectory->absolutePath / "script.lua";
+							
+							std::ofstream stream(pathTo);
+							if (stream.is_open()) {
+								currentDirectory->addFile("script.lua");
+							}
 
+							stream.close();
+							
 						}
 						ImGui::EndMenu();
 					}
