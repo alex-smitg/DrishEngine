@@ -28,7 +28,7 @@ public:
 	std::filesystem::path absolutePath;
 
 	unsigned int textureID = -1; // -1 = no texture
-	bool useTexture = true;
+	bool useTexture = false;
 	unsigned int color = 0xFF00FF;
 
 	virtual bool isDirectory() {
@@ -178,7 +178,7 @@ public:
 			file->color = 0xFF3A3A3A;
 		}
 		else if (ext == ".lua" || ext == ".LUA") {
-			file->color = 0xFFFF8A00;
+			file->color = 0xFF118A00;
 
 			Script* script = new Script();
 			script->name = file->name;
@@ -194,7 +194,7 @@ public:
 	}
 
 
-	void refresh() {
+	void reload() {
 		changeCurrentFolder(&projectRoot);
 		projectRoot.free();
 		
@@ -241,8 +241,8 @@ public:
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Refresh")) {
-				refresh();
+			if (ImGui::Button("Reload all")) {
+				reload();
 			}
 
 
@@ -389,7 +389,7 @@ public:
 								logInfo("Create new folder ", pathTo);
 
 								if (std::filesystem::create_directory(pathTo)) {
-									Directory* directory = currentDirectory->addDirectory("new folder");
+									Directory* directory = currentDirectory->addDirectory("New folder");
 								}
 							}
 
@@ -424,7 +424,7 @@ public:
 			static std::string str = "";
 
 			if (renamePopupOpened) {
-				ImGui::OpenPopup("RenamePopup", 0);
+				ImGui::OpenPopup("Rename Popup", 0);
 				
 				if (rightClickedItem != nullptr && str.empty()) {
 					str = rightClickedItem->name;
@@ -434,10 +434,22 @@ public:
 
 			
 
-			if (ImGui::BeginPopupModal("RenamePopup")) {
-				
-				ImGui::InputText("Text", &str);
-				if (ImGui::Button("Ok")) {
+			if (ImGui::BeginPopupModal("Rename Popup")) {
+
+
+				ImGui::InputText("Text", &str, ImGuiInputTextFlags_ElideLeft, [](ImGuiInputTextCallbackData* data) {
+					return 0; });
+
+
+				if (ImGui::Button("Cancel")) {
+					ImGui::CloseCurrentPopup();
+					renamePopupOpened = false;
+					str = "";
+				}
+				ImGui::SameLine();
+
+				if (ImGui::Button("Rename")) {
+					
 					ImGui::CloseCurrentPopup();
 					renamePopupOpened = false;
 					
@@ -460,11 +472,8 @@ public:
 					
 					
 				};
-				if (ImGui::Button("Cancel")) {
-					ImGui::CloseCurrentPopup();
-					renamePopupOpened = false;
-					str = "";
-				}
+				
+				
 				ImGui::EndPopup();
 			}
 			

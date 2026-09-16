@@ -342,7 +342,7 @@ public:
 	void loadProject(std::filesystem::path drishFilePath) {
 		this->drishPath = drishFilePath;
 		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
-		this->assetWindow->refresh();
+		this->assetWindow->reload();
 		this->assetWindow->projectRoot.absolutePath = drishFilePath.parent_path() / "project";
 	}
 
