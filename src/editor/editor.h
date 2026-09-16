@@ -342,8 +342,17 @@ public:
 	void loadProject(std::filesystem::path drishFilePath) {
 		this->drishPath = drishFilePath;
 		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
-		this->assetWindow->reload();
-		this->assetWindow->projectRoot.absolutePath = drishFilePath.parent_path() / "project";
+
+		const std::string filesFolder = "files";
+
+		this->assetWindow->filesPath = drishFilePath.parent_path() / filesFolder;
+
+		if (std::filesystem::exists(drishFilePath.parent_path() / filesFolder)) {
+
+		}
+		else {
+			std::filesystem::create_directory(drishFilePath.parent_path() / filesFolder);
+		}
 	}
 
 	void loop(double delta) {
