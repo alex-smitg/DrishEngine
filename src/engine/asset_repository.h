@@ -52,21 +52,6 @@ public:
 		return assets;
 	}
 
-	std::unordered_map<int, int> save(nlohmann::json& j) {
-		std::unordered_map<int, int> index;
-
-		int i = 0;
-		for (AssetSlot<T>* assSlot : slots) {
-			if (assSlot->is_valid) {
-				j.push_back(*assSlot->asset);
-				index[assSlot->index] = i;
-				i++;
-			}
-		}
-
-		return index;
-	}
-
 	AssetHandle* appendNewSlot(T* asset) {
 		AssetSlot<T>* slot = new AssetSlot<T>();
 		slot->index = slots.size();

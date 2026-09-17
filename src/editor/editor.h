@@ -169,7 +169,7 @@ public:
 
 
 
-		std::unordered_map<int, int> texturesIndex = assetRepository->textures.save(j["textures"]);
+		/*std::unordered_map<int, int> texturesIndex = assetRepository->textures.save(j["textures"]);
 		std::unordered_map<int, int> materialsIndex = assetRepository->materials.save(j["materials"]);
 		std::unordered_map<int, int> verticesIndex = assetRepository->vertices.save(j["vertices"]);
 		std::unordered_map<int, int> soundsIndex = assetRepository->sounds.save(j["sounds"]);
@@ -274,10 +274,10 @@ public:
 				break;
 			}
 			default:
-				break;
-			}
+				break;*/
+	/*		}
 			
-		}
+		}*/
 
 		j["ver_b"] = DRISH_ENGINE_VERSION_BIG;
 		j["ver_nbns"] = DRISH_ENGINE_VERSION_NOTBIGNOTSMALL;

@@ -157,9 +157,7 @@ private:
 			{
 				Vertices* vertices = new Vertices();
 				vertices->name = item.value()["name"];
-				std::string strpath = item.value()["path"];
-				vertices->path = std::filesystem::path(strpath);
-				drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
+				//drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
 				vertices->createBuffers();
 
 				assetRepository->vertices.appendNewSlot(vertices);
@@ -173,8 +171,7 @@ private:
 				Texture* texture = new Texture();
 				texture->name = item.value()["name"];
 				std::string strpath = item.value()["path"];
-				texture->path = std::filesystem::path(strpath);
-				ImageLoader::loadImage(projectPath / texture->path, texture);
+				//ImageLoader::loadImage(projectPath / texture->path, texture);
 
 				assetRepository->textures.appendNewSlot(texture);
 			}
