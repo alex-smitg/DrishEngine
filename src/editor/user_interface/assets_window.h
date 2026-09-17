@@ -5,8 +5,6 @@
 #include <typeinfo>
 
 #include "imgui_docking/imgui.h"
-#include "imgui_docking/imgui_impl_glfw.h"
-#include "imgui_docking/imgui_impl_opengl3.h"
 
 #include "../../engine/asset_repository.h"
 #include "../../engine/loaders/image_loader.h"
@@ -18,10 +16,24 @@
 
 #include <map>
 
+enum class FileType {
+	NONE,
+	IMAGE,
+	SCRIPT,
+	MATERIAL,
+	MODEL,
+	OTHER
+};
 
 class File {
 public:
 	std::string name = "";
+	AssetHandle* assetHandle = nullptr;
+
+	unsigned int icon = -1; //opengl texture
+
+	FileType type = FileType::NONE;
+
 };
 
 
@@ -44,57 +56,60 @@ public:
 
 	}
 
-	/*Texture* importTexture() {
-		std::filesystem::path texturePath = drishengine::openImageOpenFileDialog();
-		if (!texturePath.empty())
-		{
-			std::filesystem::path filename = texturePath.filename();
-
-			Texture* texture = new Texture();
-			texture->name = filename.string();
-
-			ImageLoaderError err = ImageLoader::loadImage(texturePath, texture);
-			if (err != ImageLoaderError::OK) {
-				delete texture;
-				return nullptr;
-			}
-			
-			assetRepository->textures.add(texture);
-
-			if (drishPath != nullptr)
-			{
-				std::filesystem::path copyTo = currentDirectory->absolutePath / filename;
-				
-				if (std::filesystem::exists(copyTo)) {
-					logInfo("[ASSETS WINDOW] file already exist, no need to copy");
-				}
-				else {
-					std::filesystem::copy_file(texturePath, copyTo);
-				}
-			}	
-			else
-			{
-				logError("[ASSETS WINDOW] drishPath is null");
-			}
-			return texture;
-			
-		}
-		return nullptr;
-	}*/
-
-
 	void reload() {
 		for (const std::filesystem::directory_entry& entry :
 			std::filesystem::directory_iterator(filesPath)) {
-			std::cout << entry << "\n";
+			
 
 
 			if (entry.is_directory()) {
 			}
 			else {
-				File* file = new File();
-				file->name = entry.path().filename().string();
-				projectFiles[file->name] = file;
+				std::string filename = entry.path().filename().string();
+				std::string extension = entry.path().extension().string();
+
+				if (projectFiles.contains(filename)) {
+
+				} else {
+					logInfo("First load: ", entry.path());
+
+					File* file = new File();
+					file->name = filename;
+					projectFiles[filename] = file;
+
+					if (extension == ".mat") {
+						Material* material = new Material();
+						material->name = filename;
+						material->shader = &assetRepository->defaultShader;
+						file->assetHandle = assetRepository->materials.add(material);
+						file->type = FileType::MATERIAL;
+					}
+
+					if (extension == ".lua") {
+						Script* script = new Script();
+						script->name = filename;
+						file->assetHandle = assetRepository->scripts.add(script);
+						file->type = FileType::SCRIPT;
+					}
+					if (extension == ".png" || extension == ".jpg" || extension == "jpeg") {
+						Texture* texture = new Texture();
+						texture->name = filename;
+
+						ImageLoaderError err = ImageLoader::loadImage(entry.path(), texture);
+						if (err != ImageLoaderError::OK) {
+							delete texture;
+							logError("Error loading: ", entry.path().string());
+						}
+						else {
+							file->assetHandle = assetRepository->textures.add(texture);
+							file->type = FileType::IMAGE;
+							file->icon = texture->glid;
+						}
+						
+					}
+				}
+
+				
 				
 			}
 			
@@ -111,11 +126,11 @@ public:
 			if (ImGui::Button("Reload")) {
 				this->reload();
 			}
-
-			if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_Borders)) {
-				ImGui::TableSetupColumn("i");
-				ImGui::TableSetupColumn("Name");
-				ImGui::TableSetupColumn("Props");
+			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(1.0, 1.0));
+			if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+				ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 32.0f);
+				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+				ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
 				ImGui::TableHeadersRow();
 
 
@@ -128,19 +143,59 @@ public:
 
 					
 					
+					ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
 					ImGui::TableNextColumn();
 					static bool selected = false;
 					ImGui::PushID(n);
-					ImGui::Selectable("##row", &selected, ImGuiSelectableFlags_SpanAllColumns);
-					if (ImGui::BeginDragDropSource()) {
+					ImGui::Selectable("##row", &selected, ImGuiSelectableFlags_SpanAllColumns |
+						ImGuiSelectableFlags_AllowOverlap, ImVec2(0, 32));
+					if (pair.second->assetHandle && ImGui::BeginDragDropSource()) {
+						int index = pair.second->assetHandle->index;
+
+						std::string payloadType = "SCRIPT";
+
+						if (pair.second->type == FileType::IMAGE) payloadType = "TEXTURE";
+						if (pair.second->type == FileType::SCRIPT) payloadType = "SCRIPT";
+						if (pair.second->type == FileType::MODEL) payloadType = "VERTICES";
+						if (pair.second->type == FileType::MATERIAL) payloadType = "MATERIAL";
+
+						ImGui::SetDragDropPayload(payloadType.c_str(), &index, sizeof(int));
+
+						ImGui::Text(pair.first.c_str());
+
+						if (pair.second->type == FileType::IMAGE) {
+							
+							ImGui::Image(pair.second->icon, ImVec2(128, 128));
+						}
+						
+
 						ImGui::EndDragDropSource();
 					}
 					ImGui::PopID();
+					ImGui::SameLine(0, 0);
+					ImGui::SetNextItemAllowOverlap();
+					if (pair.second->icon != -1) {
+						
+						ImGui::Image(pair.second->icon, ImVec2(32, 32));
+						if (ImGui::IsItemHovered())
+						{
+							ImGui::BeginTooltip();
+							ImGui::Image(pair.second->icon, ImVec2(256, 256));
+							ImGui::EndTooltip();
+						}
+					}
+
+					ImGui::PopStyleVar();
+
+
 
 					ImGui::TableNextColumn();
 					ImGui::Text(pair.first.c_str());
 					
 					ImGui::TableNextColumn();
+					if (pair.second->assetHandle != nullptr) {
+						ImGui::Text(std::to_string(pair.second->assetHandle->index).c_str());
+					}
 					n++;
 				}
 
@@ -148,7 +203,7 @@ public:
 				ImGui::EndTable();
 			}
 
-
+			ImGui::PopStyleVar();
 
 
 			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
@@ -158,17 +213,17 @@ public:
 
 
 			static bool createPopupOpened = false;
-			static int popupType = 0;
+			static FileType popupType = FileType::NONE;
 
 			if (ImGui::BeginPopup("menu"))
 			{
 				if (ImGui::MenuItem("Create script")) {
 					createPopupOpened = true;
-					popupType = 1;
+					popupType = FileType::SCRIPT;
 				}
 				if (ImGui::MenuItem("Create material")) {
 					createPopupOpened = true;
-					popupType = 2;
+					popupType = FileType::MATERIAL;
 				}
 
 
@@ -184,19 +239,34 @@ public:
 			if (ImGui::BeginPopupModal("Popup")) {
 
 				static bool buttonDisabled = false;
-				ImGui::Text((popupType - 1) ? "Create material" : "Create script");
-				static std::string name;
-				std::string ext = (popupType - 1) ? ".mat" : ".lua";
-				if (ImGui::InputText(ext.c_str(), &name, ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CallbackEdit, [](ImGuiInputTextCallbackData* data) {
-					if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
-						/*char c = data->Buf[0];
-						if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) data->Buf[0] ^= 32;
-						data->BufDirty = true;*/
 
+				std::string ext = "";
+				static std::string name = "";
 
-					}
+				if (popupType == FileType::MATERIAL) {
+					ext = ".mat";
+					ImGui::Text("Create material");
+				}
+				if (popupType == FileType::SCRIPT) {
+					ext = ".lua";
+					ImGui::Text("Create script");
+				}
+
+				if (ImGui::InputText(ext.c_str(), &name, ImGuiInputTextFlags_ElideLeft |
+														ImGuiInputTextFlags_CallbackCharFilter | 
+														ImGuiInputTextFlags_EnterReturnsTrue
+					, [](ImGuiInputTextCallbackData* data) {
+					const ImWchar c = data->EventChar;
+
+					/*if (!(c >= 'A' && c <= 'Z')) {
+						return 1;
+					}*/
 
 					return 0; })) {
+					
+				}
+
+				if (ImGui::IsItemEdited()) {
 					buttonDisabled = false;
 					if (this->projectFiles.contains(name + ext)) {
 						buttonDisabled = true;
@@ -222,15 +292,38 @@ public:
 
 				if (ImGui::Button("Add")) {
 
-					std::string filename = name + ((popupType - 1) ? ".mat" : ".lua");
+					std::string filename = name + ext;
 
 					std::filesystem::path pathTo = filesPath / filename;
 
+
+					AssetHandle* assHandle = nullptr;
+
+
+					
 					std::ofstream stream(pathTo);
 					if (stream.is_open()) {
 						File* file = new File();
 						file->name = name;
+
+						if (popupType == FileType::MATERIAL) {
+							Material* material = new Material();
+							material->shader = &assetRepository->defaultShader;
+							material->name = filename;
+							assHandle = assetRepository->materials.add(material);
+							nlohmann::json j = *material;
+							stream << std::setw(4) << j << std::endl;
+
+						}
+						if (popupType == FileType::SCRIPT) {
+							Script* script = new Script();
+							script->name = filename;
+							assHandle = assetRepository->scripts.add(script);
+						}
+
+						file->assetHandle = assHandle;
 						projectFiles[filename] = file;
+
 					}
 					else {
 						logError("Stream is closed");

@@ -14,15 +14,9 @@ public:
 	int channels = 0;
 	unsigned int glid;
 
-	std::filesystem::path path;
-
 	Texture() {
 		type = AssetType::TEXTURE;
 		addField(Field("Image", FieldType::TextureID, &glid));
 	}
 };
 
-inline void to_json(nlohmann::json& j, const Texture& texture) {
-	nlohmann::to_json(j, static_cast<Asset>(texture));
-	j["path"] = texture.path;
-}

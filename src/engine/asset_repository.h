@@ -40,13 +40,7 @@ public:
 		return slots.size();
 	}
 
-	void appendNewSlot(T* asset) {
-		AssetSlot<T>* slot = new AssetSlot<T>();
-		slot->index = slots.size();
-		slots.push_back(slot);
-		slot->asset = asset;
-		slot->is_valid = true;
-	}
+
 
 	std::vector<T*> getAssets() {
 		std::vector<T*> assets;
@@ -73,7 +67,21 @@ public:
 		return index;
 	}
 
-	void add(T* asset){
+	AssetHandle* appendNewSlot(T* asset) {
+		AssetSlot<T>* slot = new AssetSlot<T>();
+		slot->index = slots.size();
+		slots.push_back(slot);
+		slot->asset = asset;
+		slot->is_valid = true;
+
+
+		AssetHandle* assHandle = new AssetHandle();
+		assHandle->index = slot->index;
+		return assHandle;
+	}
+
+
+	AssetHandle* add(T* asset){
 		AssetSlot<T>* freeSlot = nullptr;
 
 		for (AssetSlot<T>* assetSlot : slots) {
@@ -86,9 +94,12 @@ public:
 		if (freeSlot) {
 			freeSlot->asset = asset;
 			freeSlot->is_valid = true;
+			AssetHandle* assHandle = new AssetHandle();
+			assHandle->index = freeSlot->index;
+			return assHandle;
 		}
 		else {
-			appendNewSlot(asset);
+			return appendNewSlot(asset);
 		}
 	}
 

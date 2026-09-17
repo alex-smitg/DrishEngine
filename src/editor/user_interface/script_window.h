@@ -74,7 +74,11 @@ public:
 							if (ImGui::Button("Save")) {
 								script->source = editor.GetText();
 							}
+							ImGui::SameLine(0.0, 1.0);
 
+							if (ImGui::Button("Reload from disk")) {
+
+							}
 							
 							editor.Render("Script");
 							//ImGui::InputTextMultiline("##script", &script->source, ImVec2(-FLT_MIN, -FLT_MIN), ImGuiInputTextFlags_AllowTabInput);

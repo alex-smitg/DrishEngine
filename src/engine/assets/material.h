@@ -33,7 +33,6 @@ public:
 
 inline void to_json(nlohmann::json &j, const Material &material)
 {
-	nlohmann::to_json(j, static_cast<Asset>(material));
 	j["color"]["r"] = material.color.r;
 	j["color"]["g"] = material.color.g;
 	j["color"]["b"] = material.color.b;

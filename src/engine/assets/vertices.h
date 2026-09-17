@@ -15,7 +15,6 @@ public:
 
 	const int BUFFER_STRIDE = 8;
 
-	std::filesystem::path path;
 
 	Vertices() {
 		type = AssetType::VERTICES;
@@ -55,7 +54,3 @@ public:
 	}
 };
 
-inline void to_json(nlohmann::json& j, const Vertices& vertices) {
-	nlohmann::to_json(j, static_cast<Asset>(vertices));
-	j["path"] = vertices.path;
-}

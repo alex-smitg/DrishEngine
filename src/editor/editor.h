@@ -353,6 +353,8 @@ public:
 		else {
 			std::filesystem::create_directory(drishFilePath.parent_path() / filesFolder);
 		}
+
+		this->assetWindow->reload();
 	}
 
 	void loop(double delta) {
