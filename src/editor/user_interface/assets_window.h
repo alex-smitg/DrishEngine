@@ -8,6 +8,7 @@
 
 #include "../../engine/asset_repository.h"
 #include "../../engine/loaders/image_loader.h"
+#include "../../engine/loaders/model_loader.h"
 
 #include "../../engine/logger.h"
 
@@ -90,6 +91,18 @@ public:
 						script->name = filename;
 						file->assetHandle = assetRepository->scripts.add(script);
 						file->type = FileType::SCRIPT;
+
+						std::ifstream file(filesPath / filename);
+						if (file.is_open()) {
+							std::stringstream buf;
+							buf << file.rdbuf();
+							script->source = buf.str();
+						}
+						else {
+							delete script;
+							logError("Script import stream is closed");
+						}
+
 					}
 					if (extension == ".png" || extension == ".jpg" || extension == "jpeg") {
 						Texture* texture = new Texture();
@@ -105,6 +118,17 @@ public:
 							file->type = FileType::IMAGE;
 							file->icon = texture->glid;
 						}
+						
+					}
+					if (extension == ".obj") {
+						Vertices* vertices = new Vertices();
+						vertices->name = filename;
+
+						drishengine::loadObj(filesPath / filename, vertices);
+						file->assetHandle = assetRepository->vertices.add(vertices);
+						file->type = FileType::MODEL;
+						logInfo("Generating buffers");
+						vertices->createBuffers();
 						
 					}
 				}

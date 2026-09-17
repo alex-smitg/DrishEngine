@@ -21,6 +21,7 @@
 #include "../engine/loaders/model_loader.h"
 #include "../engine/filedialogs.h"
 
+
 #include "executor.h"
 
 #include "user_interface/log_window.h"
@@ -32,6 +33,7 @@
 #include "../engine/resource.h"
 
 #include "../version.h"
+#include "../consts.h"
 
 class Editor {
 public:
@@ -162,8 +164,6 @@ public:
 		timeSinceLastSave = 0;
 
 		logInfo("Save");
-
-
 
 		nlohmann::json j;
 
@@ -343,15 +343,15 @@ public:
 		this->drishPath = drishFilePath;
 		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
 
-		const std::string filesFolder = "files";
 
-		this->assetWindow->filesPath = drishFilePath.parent_path() / filesFolder;
 
-		if (std::filesystem::exists(drishFilePath.parent_path() / filesFolder)) {
+		this->assetWindow->filesPath = drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
+
+		if (std::filesystem::exists(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME)) {
 
 		}
 		else {
-			std::filesystem::create_directory(drishFilePath.parent_path() / filesFolder);
+			std::filesystem::create_directory(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
 		}
 
 		this->assetWindow->reload();

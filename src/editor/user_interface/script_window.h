@@ -3,8 +3,6 @@
 #include <string>
 
 #include "imgui_docking/imgui.h"
-#include "imgui_docking/imgui_impl_glfw.h"
-#include "imgui_docking/imgui_impl_opengl3.h"
 
 #include "../../engine/lua_runner.h"
 #include "../../engine/asset_repository.h"
@@ -36,19 +34,7 @@ public:
 			ImGui::Begin("Script editor", &open);
 			ImGui::BeginGroup();
 
-			static std::string scriptName = "New script";
-
-
-
-			if (ImGui::Button("+")) {
-				logDebug("[EDITOR] script name: ", scriptName);
-				Script* script = new Script();
-				script->name = scriptName;
-				assetRepository->scripts.add(script);
-			}
-
 			static int lastIndex = -1;
-
 
 
 			if (ImGui::BeginTabBar("tabbar")) {

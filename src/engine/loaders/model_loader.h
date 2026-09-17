@@ -16,6 +16,7 @@ namespace drishengine {
 			logError("[MODEL LOADER] ", path, " where?");
 			return 0;
 		}
+		logInfo("[MODEL LOADER] Loading obj");
 
 		std::ifstream file(path);
 
