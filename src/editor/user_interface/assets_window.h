@@ -7,8 +7,8 @@
 #include "imgui_docking/imgui.h"
 
 #include "../../engine/asset_repository.h"
-#include "../../engine/loaders/image_loader.h"
-#include "../../engine/loaders/model_loader.h"
+
+#include "../../engine/file_manager.h"
 
 #include "../../engine/logger.h"
 
@@ -17,127 +17,19 @@
 
 #include <map>
 
-enum class FileType {
-	NONE,
-	IMAGE,
-	SCRIPT,
-	MATERIAL,
-	MODEL,
-	OTHER
-};
-
-class File {
-public:
-	std::string name = "";
-	AssetHandle* assetHandle = nullptr;
-
-	unsigned int icon = -1; //opengl texture
-
-	FileType type = FileType::NONE;
-
-};
-
 
 class AssetWindow: public EditorWindowBase
 {
 private:
-	AssetRepository *assetRepository;
+	AssetRepository *assetRepository = nullptr;
+	FileManager * fileManager = nullptr;
 
 public:
-	std::filesystem::path *drishPath = nullptr;
-
-	std::filesystem::path filesPath;
-
-	std::map<std::string, File*> projectFiles;
-
-	AssetWindow(AssetRepository *assetRepository, std::filesystem::path* drishPath)
+	AssetWindow(AssetRepository *assetRepository, FileManager* fileManager)
 	{
 		this->assetRepository = assetRepository;
-		this->drishPath = drishPath;
+		this->fileManager = fileManager;
 
-	}
-
-	void reload() {
-		for (const std::filesystem::directory_entry& entry :
-			std::filesystem::directory_iterator(filesPath)) {
-			
-
-
-			if (entry.is_directory()) {
-			}
-			else {
-				std::string filename = entry.path().filename().string();
-				std::string extension = entry.path().extension().string();
-
-				if (projectFiles.contains(filename)) {
-
-				} else {
-					logInfo("First load: ", entry.path());
-
-					File* file = new File();
-					file->name = filename;
-					projectFiles[filename] = file;
-
-					if (extension == ".mat") {
-						Material* material = new Material();
-						material->name = filename;
-						material->shader = &assetRepository->defaultShader;
-						file->assetHandle = assetRepository->materials.add(material);
-						file->type = FileType::MATERIAL;
-					}
-
-					if (extension == ".lua") {
-						Script* script = new Script();
-						script->name = filename;
-						file->assetHandle = assetRepository->scripts.add(script);
-						file->type = FileType::SCRIPT;
-
-						std::ifstream file(filesPath / filename);
-						if (file.is_open()) {
-							std::stringstream buf;
-							buf << file.rdbuf();
-							script->source = buf.str();
-						}
-						else {
-							delete script;
-							logError("Script import stream is closed");
-						}
-
-					}
-					if (extension == ".png" || extension == ".jpg" || extension == "jpeg") {
-						Texture* texture = new Texture();
-						texture->name = filename;
-
-						ImageLoaderError err = ImageLoader::loadImage(entry.path(), texture);
-						if (err != ImageLoaderError::OK) {
-							delete texture;
-							logError("Error loading: ", entry.path().string());
-						}
-						else {
-							file->assetHandle = assetRepository->textures.add(texture);
-							file->type = FileType::IMAGE;
-							file->icon = texture->glid;
-						}
-						
-					}
-					if (extension == ".obj") {
-						Vertices* vertices = new Vertices();
-						vertices->name = filename;
-
-						drishengine::loadObj(filesPath / filename, vertices);
-						file->assetHandle = assetRepository->vertices.add(vertices);
-						file->type = FileType::MODEL;
-						logInfo("Generating buffers");
-						vertices->createBuffers();
-						
-					}
-				}
-
-				
-				
-			}
-			
-		}
 	}
 
 	void draw() override
@@ -148,7 +40,7 @@ public:
 
 
 			if (ImGui::Button("Reload")) {
-				this->reload();
+				fileManager->reload();
 			}
 			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(1.0, 1.0));
 			if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
@@ -159,7 +51,7 @@ public:
 
 
 				int n = 0;
-				for (auto const& pair : projectFiles) {
+				for (auto const& pair : fileManager->projectFiles) {
 
 
 
@@ -292,7 +184,7 @@ public:
 
 				if (ImGui::IsItemEdited()) {
 					buttonDisabled = false;
-					if (this->projectFiles.contains(name + ext)) {
+					if (this->fileManager->projectFiles.contains(name + ext)) {
 						buttonDisabled = true;
 					}
 				}
@@ -318,7 +210,7 @@ public:
 
 					std::string filename = name + ext;
 
-					std::filesystem::path pathTo = filesPath / filename;
+					std::filesystem::path pathTo = fileManager->projectFilesPath / filename;
 
 
 					AssetHandle* assHandle = nullptr;
@@ -346,7 +238,7 @@ public:
 						}
 
 						file->assetHandle = assHandle;
-						projectFiles[filename] = file;
+						this->fileManager->projectFiles[filename] = file;
 
 					}
 					else {

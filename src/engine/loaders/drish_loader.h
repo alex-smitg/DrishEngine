@@ -10,6 +10,7 @@
 #include "../node_creator.h"
 #include "../game_object_types.h"
 #include "../../consts.h"
+#include "../file_manager.h"
 
 class Node;
 
@@ -19,7 +20,8 @@ class DrishLoader {
 public:
 	static int load(std::filesystem::path drishPath,
 		Node* world, AssetRepository* assetRepository,
-		GameConfig* gameConfig, NodeRepository* nodeRepository) {
+		GameConfig* gameConfig, NodeRepository* nodeRepository,
+		FileManager* fileManager) {
 		logDebug("[LOADER] ", "Load ", drishPath.string());
 
 		if (!std::filesystem::exists(drishPath)) {
@@ -60,8 +62,12 @@ public:
 				Node* node = NodeCreator::createNode(item.value()["type"], item.value()["name"], nodeRepository, id);
 				switch (node->type)
 				{
-				case Type::MODEL:
+				case Type::MODEL: {
+					Model* model = static_cast<Model*>(node);
+					model->verticesHandle = *(fileManager->projectFiles.at(item.value()["vertices"])->assetHandle);
+					model->materialHandle = *(fileManager->projectFiles.at(item.value()["material"])->assetHandle);
 					break;
+				}
 				case Type::POINT_LIGHT:
 				{
 					PointLight* pointLight = static_cast<PointLight*>(node);

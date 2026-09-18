@@ -31,6 +31,7 @@
 #include "user_interface/viewport_window.h"
 
 #include "../engine/resource.h"
+#include "../engine/file_manager.h"
 
 #include "../version.h"
 #include "../consts.h"
@@ -81,6 +82,8 @@ public:
 	PropertiesWindow* propertiesWindow = nullptr;
 	ViewportWindow* viewportWindow = nullptr;
 
+	FileManager* fileManager = nullptr;
+
 	Editor(drishengine::Window *window,
 		AssetRepository *assetRepository,
 		NodeRepository *nodeRepository,
@@ -95,7 +98,9 @@ public:
 		this->canvas = new Canvas();
 		this->camera = camera;
 
-		this->assetWindow = new AssetWindow(assetRepository, &drishPath);
+		this->fileManager = new FileManager(this->assetRepository);
+
+		this->assetWindow = new AssetWindow(assetRepository, fileManager);
 		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner);
 		this->propertiesWindow = new PropertiesWindow(assetRepository, luaRunner, &selectedNode);
 		this->viewportWindow = new ViewportWindow(canvas, camera, window);
@@ -166,6 +171,26 @@ public:
 		logInfo("Save");
 
 		nlohmann::json j;
+
+		for (auto pair : fileManager->projectFiles) {
+			File* file = pair.second;
+			if (file->type == FileType::MATERIAL) {
+				auto mat = assetRepository->materials.get(file->assetHandle);
+				if (mat.has_value()) {
+					Material* material = mat.value();
+					
+
+					std::ofstream f(fileManager->projectFilesPath / pair.first);
+					if (f.is_open()) {
+						nlohmann::json json = *material;
+						f << std::setw(4) << json << std::endl;
+					}
+					else {
+						logError("Material save stream is closed");
+					}
+				}
+			}
+		}
 
 
 		std::vector<Node*> nodes;
@@ -297,7 +322,7 @@ public:
 		this->drishPath = drishFilePath;
 		
 
-		this->assetWindow->filesPath = drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
+		this->fileManager->projectFilesPath = drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
 
 		if (std::filesystem::exists(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME)) {
 
@@ -306,9 +331,9 @@ public:
 			std::filesystem::create_directory(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
 		}
 
-		this->assetWindow->reload();
+		this->fileManager->reload();
 
-		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
+		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository, fileManager);
 
 	}
 

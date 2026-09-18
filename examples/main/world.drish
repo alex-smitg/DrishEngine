@@ -1,17 +1,93 @@
 {
-    "gameConfig": {
+    "game_config": {
         "height": 500,
         "title": "Game",
         "useFullscreen": false,
         "width": 500
     },
-    "materials": null,
-    "nextNodeId": 1,
-    "scripts": null,
-    "sounds": null,
-    "textures": null,
-    "ver_b": 0,
-    "ver_nbns": 2,
-    "ver_s": 4,
-    "vertices": null
+    "next_node_id": 10,
+    "nodes": [
+        {
+            "active": true,
+            "children": [
+                8
+            ],
+            "f_far": 1000.0,
+            "f_near": 0.10000000149011612,
+            "fov": 45.0,
+            "id": 7,
+            "name": "camera",
+            "parent": 0,
+            "script": null,
+            "transform": {
+                "position": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 2
+        },
+        {
+            "id": 8,
+            "name": "node",
+            "parent": 7,
+            "transform": {
+                "position": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 0
+        },
+        {
+            "id": 9,
+            "material": "test.mat",
+            "name": "model",
+            "parent": 0,
+            "script": null,
+            "transform": {
+                "position": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 1,
+            "vertices": "cube_tex.obj"
+        }
+    ],
+    "version_major": 0,
+    "version_minor": 2
 }
