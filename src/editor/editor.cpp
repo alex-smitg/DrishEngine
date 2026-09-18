@@ -91,8 +91,8 @@ int main(int argc, char *argv[])
 			ImGui::NewFrame();
 
 			lineShader.use();
-			lineShader.setMat4("projection", editor.camera->perspective);
-			lineShader.setMat4("view", editor.camera->view);
+			lineShader.setMat4(lineShader.projectionLocation, editor.camera->perspective);
+			lineShader.setMat4(lineShader.viewLocation, editor.camera->view);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			editor.loop(delta);
