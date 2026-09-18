@@ -79,11 +79,6 @@ inline void to_json(nlohmann::json& j, const Node& node) {
 	j["parent"] = node.parent->id;
 	j["id"] = node.id;
 	
-	if (node.scriptHandle.isValid()) {
-		j["script_assId"] = node.scriptHandle.index;
-	}
-
-
 	for (int i = 0; i < node.children.size(); i++) {
 		j["children"].push_back(node.children[i]->id);
 	}

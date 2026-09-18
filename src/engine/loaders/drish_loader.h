@@ -9,7 +9,7 @@
 #include "../game_config.h"
 #include "../node_creator.h"
 #include "../game_object_types.h"
-
+#include "../../consts.h"
 
 class Node;
 
@@ -32,27 +32,26 @@ public:
 		try {
 			nlohmann::json json = nlohmann::json::parse(js);
 
-			loadAssets(json, drishPath.parent_path(), assetRepository);
 
 			logDebug("[LOADER] ", ".drish version: ", json["version"]);
-			if (json["ver_b"] != DRISH_ENGINE_VERSION_BIG || json["ver_s"] != DRISH_ENGINE_VERSION_SMALL
-				|| json["ver_nbns"] != DRISH_ENGINE_VERSION_NOTBIGNOTSMALL) {
+
+			if (json[JSON_VERSION_MAJOR_KEY_NAME] != DRISH_ENGINE_VERSION_MAJOR ||
+				json[JSON_VERSION_MINOR_KEY_NAME] != DRISH_ENGINE_VERSION_MINOR) {
 				logWarning("[LOADER] Versions are different. Drish file version is ",
-					json["ver_b"], ".", json["ver_nbns"], ".", json["ver_s"], " and engine version is ",
-					DRISH_ENGINE_VERSION_BIG, ".", DRISH_ENGINE_VERSION_NOTBIGNOTSMALL, ".",
-					DRISH_ENGINE_VERSION_SMALL);
+					json[JSON_VERSION_MAJOR_KEY_NAME], ".", json[JSON_VERSION_MINOR_KEY_NAME], " and engine version is ",
+					DRISH_ENGINE_VERSION_MAJOR, ".", DRISH_ENGINE_VERSION_MINOR);
 
 			}
 
-			gameConfig->width = json["gameConfig"]["width"];
-			gameConfig->height = json["gameConfig"]["height"];
-			gameConfig->title = json["gameConfig"]["title"];
-			gameConfig->useFullscreen = json["gameConfig"]["useFullscreen"];
+			gameConfig->width = json[JSON_GAME_CONFIG_KEY_NAME]["width"];
+			gameConfig->height = json[JSON_GAME_CONFIG_KEY_NAME]["height"];
+			gameConfig->title = json[JSON_GAME_CONFIG_KEY_NAME]["title"];
+			gameConfig->useFullscreen = json[JSON_GAME_CONFIG_KEY_NAME]["useFullscreen"];
 
 			std::map<long long, Node*> nodes;
 			nodes[0] = world;
 		
-			nextNodeId = json["nextNodeId"];
+			nextNodeId = json[JSON_NEXT_NODE_ID_KEY_NAME];
 
 
 			for (const auto& item : json["nodes"].items())
@@ -87,7 +86,7 @@ public:
 					break;
 				}
 				node->transform = item.value()["transform"].get<Transform>();
-
+				
 
 				if (nodes.contains(id)) {
 					logError("[LOADER] Same ids");
@@ -97,35 +96,13 @@ public:
 				nodes[id] = node;
 			}
 
-
 			for (const auto& item : json["nodes"].items())
 			{
 				long long id = item.value()["id"];
 				Node* node = nodes[id];
 				nodes[item.value()["parent"]]->appendChild(node);
-				if (item.value().contains("script_index")) {
-					if (!item.value()["script_index"].is_null()) {
-						node->scriptHandle.index = item.value()["script_index"];
-					}
-				}
-				
-
-				if (node->type == Type::MODEL) {
-					Model* model = static_cast<Model*>(node);
-					if (item.value().contains("material_index")) {
-						if (!item.value()["material_index"].is_null()) {	
-							model->materialHandle.index = item.value()["material_index"];
-						}
-					}
-					else {
-						logError("[DRISH LOADER] Node type is model but no material_index");
-					}
-
-					if (!item.value()["vertices_index"].is_null()) {
-						model->verticesHandle.index = item.value()["vertices_index"];
-					}
-				}
 			}
+
 		}
 		catch (const std::exception& ex) {
 			logError("[DRISH LOADER] Drish file loading failed");
@@ -138,63 +115,63 @@ public:
 	}
 
 private:
-	static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
-		logInfo("[DRISH_LOADER] load assets");
+	//static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
+	//	logInfo("[DRISH_LOADER] load assets");
 
-		if (json.contains("scripts")) {
-			for (const auto& item : json["scripts"].items())
-			{
-				Script* script = new Script();
-				script->name = item.value()["name"];
-				script->source = item.value()["source"];
-				assetRepository->scripts.appendNewSlot(script);
-			}
-		}
-
-
-		if (json.contains("vertices")) {
-			for (const auto& item : json["vertices"].items())
-			{
-				Vertices* vertices = new Vertices();
-				vertices->name = item.value()["name"];
-				//drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
-				vertices->createBuffers();
-
-				assetRepository->vertices.appendNewSlot(vertices);
-			}
-		}
+	//	if (json.contains("scripts")) {
+	//		for (const auto& item : json["scripts"].items())
+	//		{
+	//			Script* script = new Script();
+	//			script->name = item.value()["name"];
+	//			script->source = item.value()["source"];
+	//			assetRepository->scripts.appendNewSlot(script);
+	//		}
+	//	}
 
 
-		if (json.contains("textures")) {
-			for (const auto& item : json["textures"].items())
-			{
-				Texture* texture = new Texture();
-				texture->name = item.value()["name"];
-				std::string strpath = item.value()["path"];
-				//ImageLoader::loadImage(projectPath / texture->path, texture);
+	//	if (json.contains("vertices")) {
+	//		for (const auto& item : json["vertices"].items())
+	//		{
+	//			Vertices* vertices = new Vertices();
+	//			vertices->name = item.value()["name"];
+	//			//drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
+	//			vertices->createBuffers();
 
-				assetRepository->textures.appendNewSlot(texture);
-			}
-		}
+	//			assetRepository->vertices.appendNewSlot(vertices);
+	//		}
+	//	}
 
 
-		if (json.contains("materials")) {
-			for (const auto& item : json["materials"].items())
-			{
-				Material* material = new Material();
-				material->name = item.value()["name"];
-				material->color.r = item.value()["color"]["r"];
-				material->color.g = item.value()["color"]["g"];
-				material->color.b = item.value()["color"]["b"];
-				material->shader = &assetRepository->defaultShader;
+	//	if (json.contains("textures")) {
+	//		for (const auto& item : json["textures"].items())
+	//		{
+	//			Texture* texture = new Texture();
+	//			texture->name = item.value()["name"];
+	//			std::string strpath = item.value()["path"];
+	//			//ImageLoader::loadImage(projectPath / texture->path, texture);
 
-				assetRepository->materials.appendNewSlot(material);
-					
-				
-				if (!item.value()["texture_index"].is_null()) {
-					material->textureHandle.index = item.value()["texture_index"];
-				}
-			}
-		}
-	}
+	//			assetRepository->textures.appendNewSlot(texture);
+	//		}
+	//	}
+
+
+	//	if (json.contains("materials")) {
+	//		for (const auto& item : json["materials"].items())
+	//		{
+	//			Material* material = new Material();
+	//			material->name = item.value()["name"];
+	//			material->color.r = item.value()["color"]["r"];
+	//			material->color.g = item.value()["color"]["g"];
+	//			material->color.b = item.value()["color"]["b"];
+	//			material->shader = &assetRepository->defaultShader;
+
+	//			assetRepository->materials.appendNewSlot(material);
+	//				
+	//			
+	//			if (!item.value()["texture_index"].is_null()) {
+	//				material->textureHandle.index = item.value()["texture_index"];
+	//			}
+	//		}
+	//	}
+	//}
 };

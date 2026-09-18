@@ -168,93 +168,57 @@ public:
 		nlohmann::json j;
 
 
-
-		/*std::unordered_map<int, int> texturesIndex = assetRepository->textures.save(j["textures"]);
-		std::unordered_map<int, int> materialsIndex = assetRepository->materials.save(j["materials"]);
-		std::unordered_map<int, int> verticesIndex = assetRepository->vertices.save(j["vertices"]);
-		std::unordered_map<int, int> soundsIndex = assetRepository->sounds.save(j["sounds"]);
-		std::unordered_map<int, int> scriptsIndex = assetRepository->scripts.save(j["scripts"]);
-
-		std::vector<Material*> materials = assetRepository->materials.getAssets();
-
-
-		for (int i = 0; i < materials.size(); i++) 
-		{
-			Material* material = materials[i];
-
-			std::optional<Material*> tex = assetRepository->materials.get(&material->textureHandle);
-
-			if (tex.has_value()) {
-				j["materials"][i]["texture_index"] = texturesIndex[material->textureHandle.index];
-			}
-			else {
-				j["materials"][i]["texture_index"] = nullptr;
-			}
-		}
-
-
 		std::vector<Node*> nodes;
 		world->getAllChildNodes(world, &nodes);
 		for (Node* n : nodes) {
 			nlohmann::json jsonNode = *n;
 			std::optional<Script*> scr = assetRepository->scripts.get(&n->scriptHandle);
 			if (scr.has_value()) {
-				jsonNode["script_index"] = scriptsIndex[n->scriptHandle.index];
+				jsonNode["script"] = scr.value()->name;
 			}
 			else {
-				jsonNode["script_index"] = nullptr;
+				jsonNode["script"] = nullptr;
 			}
 
 
 			switch (n->type)
 			{
+			case Type::BASE:
+			{
+				j["nodes"].push_back(*n);
+			}
+				break;
 			case Type::MODEL:
-				{	
+			{
 				Model* model = static_cast<Model*>(n);
 				nlohmann::json jsonModel = *model;
 				std::optional<Material*> mat = assetRepository->materials.get(&model->materialHandle);
+				jsonModel["script"] = jsonNode["script"];
 
 				if (mat.has_value()) {
-					jsonModel["material_index"] = materialsIndex[model->materialHandle.index];
+					jsonModel["material"] = mat.value()->name;
 				}
 				else {
-					jsonModel["material_index"] = nullptr;
+					jsonModel["material"] = nullptr;
 				}
-
-				if (scr.has_value()) {
-					jsonModel["script_index"] = scriptsIndex[n->scriptHandle.index];
-				}
-				else {
-					jsonModel["script_index"] = nullptr;
-				}
-
 
 				std::optional<Vertices*> ver = assetRepository->vertices.get(&model->verticesHandle);
 
 				if (ver.has_value()) {
-					jsonModel["vertices_index"] = verticesIndex[model->verticesHandle.index];
+					jsonModel["vertices"] = ver.value()->name;
 				}
 				else {
-					jsonModel["vertices_index"] = nullptr;
+					jsonModel["vertices"] = nullptr;
 				}
-
-
-				
 				j["nodes"].push_back(jsonModel);
+
 				break;
-				}
+			}
 			case Type::CAMERA:
 			{
 				Camera* camera = static_cast<Camera*>(n);
 				nlohmann::json jsonCamera = *camera;
-
-				if (scr.has_value()) {
-					jsonCamera["script_index"] = scriptsIndex[n->scriptHandle.index];
-				}
-				else {
-					jsonCamera["script_index"] = nullptr;
-				}
-
+				jsonCamera["script"] = jsonNode["script"];
 				j["nodes"].push_back(jsonCamera);
 				break;
 			}
@@ -262,28 +226,19 @@ public:
 			{
 				PointLight* pointLight = static_cast<PointLight*>(n);
 				nlohmann::json jsonPointLight = *pointLight;
-
-				if (scr.has_value()) {
-					jsonPointLight["script_index"] = scriptsIndex[n->scriptHandle.index];
-				}
-				else {
-					jsonPointLight["script_index"] = nullptr;
-				}
-
+				jsonPointLight["script"] = jsonNode["script"];
 				j["nodes"].push_back(jsonPointLight);
 				break;
 			}
 			default:
-				break;*/
-	/*		}
-			
-		}*/
+				break;
+			}
+		}
 
-		j["ver_b"] = DRISH_ENGINE_VERSION_BIG;
-		j["ver_nbns"] = DRISH_ENGINE_VERSION_NOTBIGNOTSMALL;
-		j["ver_s"] = DRISH_ENGINE_VERSION_SMALL;
-		j["gameConfig"] = gameConfig;
-		j["nextNodeId"] = nextNodeId;
+		j[JSON_VERSION_MAJOR_KEY_NAME] = DRISH_ENGINE_VERSION_MAJOR;
+		j[JSON_VERSION_MINOR_KEY_NAME] = DRISH_ENGINE_VERSION_MINOR;
+		j[JSON_GAME_CONFIG_KEY_NAME] = gameConfig;
+		j[JSON_NEXT_NODE_ID_KEY_NAME] = nextNodeId;
 
 		logDebug("Next node id: ", nextNodeId);
 		
@@ -292,7 +247,7 @@ public:
 			file << std::setw(4) << j << std::endl;
 		}
 
-		logDebug("Save success");
+		logInfo("Save success");
 	}
 
 	void showStartPopup() {
@@ -303,9 +258,8 @@ public:
 			ImGui::Image(icoTexture->glid, ImVec2(256, 256));
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
-			ImGui::Text("%d.%d.%d+%s", DRISH_ENGINE_VERSION_BIG,
-				DRISH_ENGINE_VERSION_NOTBIGNOTSMALL,
-				DRISH_ENGINE_VERSION_SMALL, DRISH_ENGINE_VERSION_ST);
+			ImGui::Text("%d.%d", DRISH_ENGINE_VERSION_MAJOR,
+				DRISH_ENGINE_VERSION_MINOR);
 			ImGui::PopStyleColor();
 
 			if (ImGui::Button("Load .drish project", ImVec2(-1.0f, 0.0f))) {
@@ -341,9 +295,7 @@ public:
 
 	void loadProject(std::filesystem::path drishFilePath) {
 		this->drishPath = drishFilePath;
-		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
-
-
+		
 
 		this->assetWindow->filesPath = drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
 
@@ -355,6 +307,9 @@ public:
 		}
 
 		this->assetWindow->reload();
+
+		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
+
 	}
 
 	void loop(double delta) {
