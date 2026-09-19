@@ -9,6 +9,8 @@
 #include "../../engine/assets/script.h"
 
 #include "editor_window_base.h"
+#include "../../engine/file_manager.h"
+
 
 #include "ImGuiColorTextEdit/TextEditor.h"
 
@@ -16,17 +18,20 @@ class ScriptWindow: public EditorWindowBase {
 private:
 	AssetRepository* assetRepository;
 	LuaRunner* luaRunner;
+	FileManager* fileManager;
 public:
 
 	TextEditor editor;
 	
 
-	ScriptWindow(AssetRepository* assetRepository, LuaRunner* luaRunner) {
+	ScriptWindow(AssetRepository* assetRepository, LuaRunner* luaRunner, FileManager* fileManager) {
 		this->assetRepository = assetRepository;
 		this->luaRunner = luaRunner;
+		this->fileManager = fileManager;
 
 		editor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());  
 		editor.SetPalette(TextEditor::GetDarkPalette());
+		
 	}
 
 	void draw() override {
@@ -35,7 +40,11 @@ public:
 			ImGui::BeginGroup();
 
 			static int lastIndex = -1;
+			static bool modified = false;
 
+			if (editor.IsTextChanged()) {
+				modified = true;
+			}
 
 			if (ImGui::BeginTabBar("tabbar")) {
 				for (const AssetSlot<Script>* assetSlot : assetRepository->scripts.slots)
@@ -45,30 +54,38 @@ public:
 						Script* script = assetSlot->asset;
 
 						
-
+						
 						if (ImGui::BeginTabItem(script->name.c_str())) {
 							if (ImGui::BeginDragDropSource()) {
 								ImGui::SetDragDropPayload("SCRIPT", &assetSlot->index, sizeof(assetSlot->index));
 								ImGui::EndDragDropSource();
 							}
 							if (lastIndex != assetSlot->index) {
+								/*script->source = editor.GetText();
+								fileManager->writeScript(script);
+								logDebug("[SCRIPT WINDOW] Script saved");*/
+
 								editor.SetText(script->source);
-								logDebug("TextSet");
+								logDebug("[SCRIPT WINDOW] Tab changed");
 							}
 							lastIndex = assetSlot->index;
 
 							if (ImGui::Button("Save")) {
 								script->source = editor.GetText();
+								fileManager->writeScript(script);
+								logDebug("[SCRIPT WINDOW] Script saved");
 							}
 							ImGui::SameLine(0.0, 1.0);
-
-							if (ImGui::Button("Reload from disk")) {
-
-							}
+							ImGui::Spacing();
+							
 							
 							editor.Render("Script");
-							//ImGui::InputTextMultiline("##script", &script->source, ImVec2(-FLT_MIN, -FLT_MIN), ImGuiInputTextFlags_AllowTabInput);
+
+							if (ImGui::Button("Reload from disk")) {
+								fileManager->loadScript(script);
+							}
 							ImGui::EndTabItem();
+
 						}
 					}
 					ImGui::PopID();

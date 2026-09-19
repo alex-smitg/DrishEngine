@@ -101,7 +101,7 @@ public:
 		this->fileManager = new FileManager(this->assetRepository);
 
 		this->assetWindow = new AssetWindow(assetRepository, fileManager);
-		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner);
+		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner, fileManager);
 		this->propertiesWindow = new PropertiesWindow(assetRepository, luaRunner, &selectedNode);
 		this->viewportWindow = new ViewportWindow(canvas, camera, window);
 
@@ -201,9 +201,6 @@ public:
 			if (scr.has_value()) {
 				jsonNode["script"] = scr.value()->name;
 			}
-			else {
-				jsonNode["script"] = nullptr;
-			}
 
 
 			switch (n->type)
@@ -223,18 +220,13 @@ public:
 				if (mat.has_value()) {
 					jsonModel["material"] = mat.value()->name;
 				}
-				else {
-					jsonModel["material"] = nullptr;
-				}
 
 				std::optional<Vertices*> ver = assetRepository->vertices.get(&model->verticesHandle);
 
 				if (ver.has_value()) {
 					jsonModel["vertices"] = ver.value()->name;
 				}
-				else {
-					jsonModel["vertices"] = nullptr;
-				}
+
 				j["nodes"].push_back(jsonModel);
 
 				break;

@@ -46,6 +46,25 @@ public:
 	}
 
 
+	void loadScript(Script* script) {
+		std::ifstream file(projectFilesPath / script->name);
+		if (file.is_open()) {
+			std::stringstream buf;
+			buf << file.rdbuf();
+			script->source = buf.str();
+		}
+		else {
+			logError("Script import stream is closed");
+		}
+	}
+
+	void writeScript(Script* script) {
+		std::ofstream f(projectFilesPath / script->name);
+		if (f.is_open()) {
+			f << script->source;
+		}
+	}
+
 	void reload() {
 		for (const std::filesystem::directory_entry& entry :
 			std::filesystem::directory_iterator(projectFilesPath)) {
@@ -101,16 +120,8 @@ public:
 						file->assetHandle = assetRepository->scripts.add(script);
 						file->type = FileType::SCRIPT;
 
-						std::ifstream file(projectFilesPath / filename);
-						if (file.is_open()) {
-							std::stringstream buf;
-							buf << file.rdbuf();
-							script->source = buf.str();
-						}
-						else {
-							delete script;
-							logError("Script import stream is closed");
-						}
+						loadScript(script);
+						
 
 					}
 					if (extension == ".png" || extension == ".jpg" || extension == "jpeg") {

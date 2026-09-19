@@ -60,12 +60,21 @@ public:
 			{
 				long long id = item.value()["id"];
 				Node* node = NodeCreator::createNode(item.value()["type"], item.value()["name"], nodeRepository, id);
+
+				if (item.value().contains("script")) {
+					node->scriptHandle = *(fileManager->projectFiles.at(item.value()["script"])->assetHandle);
+				}
+
 				switch (node->type)
 				{
 				case Type::MODEL: {
 					Model* model = static_cast<Model*>(node);
-					model->verticesHandle = *(fileManager->projectFiles.at(item.value()["vertices"])->assetHandle);
-					model->materialHandle = *(fileManager->projectFiles.at(item.value()["material"])->assetHandle);
+					if (item.value().contains("vertices")) {
+						model->verticesHandle = *(fileManager->projectFiles.at(item.value()["vertices"])->assetHandle);
+					}
+					if (item.value().contains("material")) {
+						model->materialHandle = *(fileManager->projectFiles.at(item.value()["material"])->assetHandle);
+					}
 					break;
 				}
 				case Type::POINT_LIGHT:
