@@ -165,6 +165,73 @@ public:
 		logInfo("Editor started");
 	}
 
+	void build() {
+		this->save();
+		logInfo("Begin export");
+		std::ofstream archive;
+		archive.open(drishPath.parent_path() / "data.bin", std::ios::out | std::ios::binary);
+		archive.write("DRISH", sizeof(char) * 5);
+		std::ifstream drishjson;
+		drishjson.open(drishPath);
+		char c;
+		std::vector<char> drishFileData;
+		while ((c = drishjson.get()) != EOF) {
+			//char xr = c ^ 'g';
+			drishFileData.push_back(c);
+		}
+		uint64_t dataSize = drishFileData.size();
+		archive.write((char*)&dataSize, sizeof(uint64_t));
+		archive.write((char*)&drishFileData[0], dataSize * sizeof(char));
+		logInfo("End export");
+
+		uint64_t filesCount = 0;
+
+		for (const std::filesystem::directory_entry& entry :
+			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
+		
+			if (entry.is_directory()) {
+			}
+			else {
+				filesCount++;
+			}
+		}
+
+		archive.write((char*)&filesCount, sizeof(uint64_t));
+
+		for (const std::filesystem::directory_entry& entry : 
+			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
+
+
+
+
+			if (entry.is_directory()) {
+			}
+			else {
+				std::string filename = entry.path().filename().string();
+
+				std::ifstream file(fileManager->projectFilesPath / filename, std::ios::binary);
+				if (file.is_open()) {
+					std::stringstream buf;
+					buf << file.rdbuf();
+
+					uint64_t filenameSize = filename.size();
+					archive.write((char*)&filenameSize, sizeof(uint64_t));
+					archive.write(filename.c_str(), filename.size());
+					
+					
+					uint64_t dataSize = buf.str().size();
+					archive.write((char*)&dataSize, sizeof(uint64_t));
+					archive << buf.str();
+				}
+				else {
+					logError("Script import stream is closed");
+				}
+			}
+		}
+
+	}
+
+
 	void save() {
 		timeSinceLastSave = 0;
 
@@ -183,6 +250,12 @@ public:
 					std::ofstream f(fileManager->projectFilesPath / pair.first);
 					if (f.is_open()) {
 						nlohmann::json json = *material;
+
+						auto tex = assetRepository->textures.get(&material->textureHandle);
+
+						if (tex.has_value()) {
+							json["texture"] = tex.value()->name;
+						}
 						f << std::setw(4) << json << std::endl;
 					}
 					else {
@@ -215,7 +288,9 @@ public:
 				Model* model = static_cast<Model*>(n);
 				nlohmann::json jsonModel = *model;
 				std::optional<Material*> mat = assetRepository->materials.get(&model->materialHandle);
-				jsonModel["script"] = jsonNode["script"];
+				if (scr.has_value()) {
+					jsonModel["script"] = scr.value()->name;
+				}
 
 				if (mat.has_value()) {
 					jsonModel["material"] = mat.value()->name;
@@ -235,7 +310,9 @@ public:
 			{
 				Camera* camera = static_cast<Camera*>(n);
 				nlohmann::json jsonCamera = *camera;
-				jsonCamera["script"] = jsonNode["script"];
+				if (scr.has_value()) {
+					jsonCamera["script"] = scr.value()->name;
+				}
 				j["nodes"].push_back(jsonCamera);
 				break;
 			}
@@ -243,7 +320,9 @@ public:
 			{
 				PointLight* pointLight = static_cast<PointLight*>(n);
 				nlohmann::json jsonPointLight = *pointLight;
-				jsonPointLight["script"] = jsonNode["script"];
+				if (scr.has_value()) {
+					jsonPointLight["script"] = scr.value()->name;
+				}
 				j["nodes"].push_back(jsonPointLight);
 				break;
 			}
@@ -405,21 +484,7 @@ public:
 			}
 			if (ImGui::BeginMenu("Game")) {
 				if (ImGui::MenuItem("Export")) {
-					save();
-					std::ofstream archive;
-					archive.open(drishPath.parent_path() / "data.bin", std::ios::out | std::ios::binary);
-					archive.write("DRISH", sizeof(char) * 5);
-					std::ifstream drishjson;
-					drishjson.open(drishPath);
-					char c;
-					std::vector<char> drishFileData;
-					while ((c = drishjson.get()) != EOF) {
-						//char xr = c ^ 'g';
-						drishFileData.push_back(c);
-					}
-					size_t dataSize = drishFileData.size();
-					archive.write((char*)&dataSize, sizeof(size_t));
-					archive.write((char*)&drishFileData[0], dataSize * sizeof(char));
+					this->build();
 				}
 				ImGui::EndMenu();
 			}

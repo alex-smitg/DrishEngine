@@ -52,7 +52,7 @@ public:
 				shader->setVec3(shader->viewPosLocation, currentCamera->transform.position);
 			}
 			
-			shader->setInt(shader->viewPosLocation, nodeRepository->pointLights.size());
+			shader->setInt(shader->pointLightsCountLocation, nodeRepository->pointLights.size());
 			for (int i = nodeRepository->pointLights.size(); i > 0; i--) {
 				PointLight* pointLight = nodeRepository->pointLights[i - 1];
 				shader->setFloat(shader->getLocation("pointLights[" + std::to_string(n) + "].radius"), pointLight->radius);

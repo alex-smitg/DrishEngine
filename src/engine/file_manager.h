@@ -66,6 +66,9 @@ public:
 	}
 
 	void reload() {
+		std::map<std::string, Material*> materialsNeedTexture;
+		std::map<std::string, AssetHandle*> textures;
+
 		for (const std::filesystem::directory_entry& entry :
 			std::filesystem::directory_iterator(projectFilesPath)) {
 
@@ -105,6 +108,10 @@ public:
 							material->shine = json["shine"];
 							material->useLight = json["useLight"];
 
+							if (json.contains("texture")) {
+								materialsNeedTexture[json["texture"]] = material;
+							}
+
 							file->assetHandle = assetRepository->materials.add(material);
 						}
 						else {
@@ -128,6 +135,8 @@ public:
 						Texture* texture = new Texture();
 						texture->name = filename;
 
+						
+
 						ImageLoaderError err = ImageLoader::loadImage(entry.path(), texture);
 						if (err != ImageLoaderError::OK) {
 							delete texture;
@@ -135,6 +144,8 @@ public:
 						}
 						else {
 							file->assetHandle = assetRepository->textures.add(texture);
+							textures[texture->name] = file->assetHandle;
+							
 							file->type = FileType::IMAGE;
 							file->icon = texture->glid;
 						}
@@ -158,5 +169,12 @@ public:
 			}
 
 		}
+
+		for (auto pair : textures) {
+			if (materialsNeedTexture.contains(pair.first)) {
+				materialsNeedTexture[pair.first]->textureHandle = *pair.second;
+			}
+		}
+
 	}
 };

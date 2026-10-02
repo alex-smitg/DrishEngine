@@ -23,11 +23,7 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include "sol/sol.hpp"
 
-#include "imgui_docking/imgui.h"
-#include "imgui_docking/imgui_impl_glfw.h"
-#include "imgui_docking/imgui_impl_opengl3.h"
-#include "imgui_docking/imgui_stdlib.h"
-#include "imgui_docking/imgui_internal.h"
+
 
 #include "../engine/asset_repository.h"
 #include "../engine/loaders/image_loader.h"
@@ -47,15 +43,16 @@
 #include "../engine/game_config.h"
 #include "../engine/node_repository.h"
 #include "../engine/looper.h"
+#include "../consts.h"
+#include "../engine/file_manager.h"
 
 const double targetFPS = 60.0;
 const double frameDuration = 1.0 / targetFPS;
 
 int main(int argc, char* argv[]) {
 	logInfo("Hello");
-	logInfo("Version: ", DRISH_ENGINE_VERSION_BIG,
-		".", DRISH_ENGINE_VERSION_NOTBIGNOTSMALL,
-		".", DRISH_ENGINE_VERSION_SMALL);
+	logInfo("Version", DRISH_ENGINE_VERSION_MAJOR,
+		DRISH_ENGINE_VERSION_MINOR);
 	
 	std::filesystem::path drishPath = std::filesystem::path("world.drish");
 	if (argc > 1) {
@@ -72,11 +69,12 @@ int main(int argc, char* argv[]) {
 	AssetRepository assetRepository;
 	NodeRepository nodeRepository;
 	Node* world = NodeCreator::createNode(Type::BASE, "World", &nodeRepository);
-
+	FileManager fileManager = FileManager(&assetRepository);
+	fileManager.projectFilesPath = drishPath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
+	fileManager.reload();
 	
-	//GAME ONLY
 	GameConfig gameConfig;
-	if (DrishLoader::load(drishPath, world, &assetRepository, &gameConfig, &nodeRepository) == 0) {
+	if (DrishLoader::load(drishPath, world, &assetRepository, &gameConfig, &nodeRepository, &fileManager) == 0) {
 		logError("[GAME] Loading failed");
 		MessageBox(NULL, "Where is .drish file?", "Error", MB_ICONERROR | MB_OK);
 		return 0;
