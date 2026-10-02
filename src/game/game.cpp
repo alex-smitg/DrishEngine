@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 	logInfo("Hello");
 	logInfo("Version", DRISH_ENGINE_VERSION_MAJOR,
 		DRISH_ENGINE_VERSION_MINOR);
-	
+
 	std::filesystem::path drishPath = std::filesystem::path("world.drish");
 	if (argc > 1) {
 		drishPath = std::filesystem::path(argv[1]);
@@ -71,14 +71,91 @@ int main(int argc, char* argv[]) {
 	Node* world = NodeCreator::createNode(Type::BASE, "World", &nodeRepository);
 	FileManager fileManager = FileManager(&assetRepository);
 	fileManager.projectFilesPath = drishPath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
-	fileManager.reload();
-	
+	//fileManager.reload();
+
 	GameConfig gameConfig;
-	if (DrishLoader::load(drishPath, world, &assetRepository, &gameConfig, &nodeRepository, &fileManager) == 0) {
-		logError("[GAME] Loading failed");
-		MessageBox(NULL, "Where is .drish file?", "Error", MB_ICONERROR | MB_OK);
+
+
+
+
+
+	std::map<std::string, File*> files;
+
+
+	std::ifstream data("data.bin", std::ifstream::binary);
+	if (data) {
+		char signature[5];
+
+		data.read(signature, 5);
+
+		if (std::string(signature) != "DRISH") {
+			logError("Signature not found");
+		}
+
+		uint64_t drishJsonSize = 0;
+		data.read((char*)(&drishJsonSize), sizeof(drishJsonSize));
+		logInfo("Json Drish size: ", drishJsonSize);
+
+		char* jsonFileData = new char[drishJsonSize];
+		data.read(jsonFileData, drishJsonSize);
+
+		
+
+		uint64_t filesCount = 0;
+		data.read((char*)(&filesCount), sizeof(filesCount));
+		logInfo("Files count: ", filesCount);
+
+		for (uint64_t i = 0; i < filesCount; i++) {
+			uint64_t filenameLength = 0;
+			data.read((char*)(&filenameLength), sizeof(filenameLength));
+			logInfo("Filename size: ", filenameLength);
+
+			char* filename = new char[filenameLength];
+			data.read(filename, filenameLength);
+			std::string filenameStr = std::string(filename, filenameLength);
+			logInfo("Filename: ", filenameStr);
+			
+
+
+			uint64_t dataSize = 0;
+			data.read((char*)(&dataSize), sizeof(dataSize));
+			logInfo("Data size: ", dataSize);
+
+			char* filedata = new char[dataSize];
+			data.read(filedata, dataSize);
+
+			File* file = new File();
+			file->name = filenameStr;
+			file->data = filedata;
+			file->dataSize = dataSize;
+
+
+			fileManager.projectFiles[file->name] = file;
+
+			delete[] filename;
+			//delete[] filedata;
+		}
+
+		fileManager.reload();
+
+		DrishLoader::load(drishPath, world, &assetRepository,
+			&gameConfig, &nodeRepository, &fileManager, jsonFileData, drishJsonSize
+		);
+
+		delete[] jsonFileData;
+
+		
+
+	}
+	else {
+		logError("[GAME] Loading failed - failed to open data.bin");
+		MessageBox(NULL, "Failed to open data.bin", "Error", MB_ICONERROR | MB_OK);
 		return 0;
 	}
+
+
+	
+
 	
 	
 

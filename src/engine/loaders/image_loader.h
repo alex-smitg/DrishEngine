@@ -22,6 +22,7 @@ public:
 		stbi_set_flip_vertically_on_load(true);
 	}
 
+
 	static ImageLoaderError loadImage(std::filesystem::path path, Texture *texture)
 	{
 		logDebug("[IMAGE LOADER] load image: ", path.generic_string().c_str());
@@ -59,12 +60,12 @@ public:
 		return ImageLoaderError::OK;
 	}
 
-	static void loadImage(unsigned char *imgData, int size, Texture *texture)
+	static ImageLoaderError loadImage(unsigned char *imgData, int size, Texture *texture)
 	{
 		unsigned char *data = stbi_load_from_memory(imgData, size,
 													&texture->width,
 													&texture->height,
-													&texture->channels, 0);
+													&texture->channels, 4);
 
 		glGenTextures(1, &texture->glid);
 		glBindTexture(GL_TEXTURE_2D, texture->glid);
@@ -72,5 +73,9 @@ public:
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture->glid);
+
+		stbi_image_free(data);
+
+		return ImageLoaderError::OK;
 	}
 };

@@ -26,6 +26,10 @@ public:
 
 	unsigned int icon = -1; //opengl texture
 
+
+	char* data;
+	uint64_t dataSize = 0;
+
 	FileType type = FileType::NONE;
 
 };
@@ -46,17 +50,17 @@ public:
 	}
 
 
-	void loadScript(Script* script) {
-		std::ifstream file(projectFilesPath / script->name);
-		if (file.is_open()) {
-			std::stringstream buf;
-			buf << file.rdbuf();
-			script->source = buf.str();
-		}
-		else {
-			logError("Script import stream is closed");
-		}
-	}
+	//void loadScript(Script* script) {
+	//	std::ifstream file(projectFilesPath / script->name);
+	//	if (file.is_open()) {
+	//		std::stringstream buf;
+	//		buf << file.rdbuf();
+	//		script->source = buf.str();
+	//	}
+	//	else {
+	//		logError("Script import stream is closed");
+	//	}
+	//}
 
 	void writeScript(Script* script) {
 		std::ofstream f(projectFilesPath / script->name);
@@ -65,26 +69,35 @@ public:
 		}
 	}
 
+
+	void load() {
+
+	}
+
 	void reload() {
 		std::map<std::string, Material*> materialsNeedTexture;
 		std::map<std::string, AssetHandle*> textures;
 
-		for (const std::filesystem::directory_entry& entry :
-			std::filesystem::directory_iterator(projectFilesPath)) {
+		/*for (const std::filesystem::directory_entry& entry :
+			std::filesystem::directory_iterator(projectFilesPath)) {*/
+		for (auto pair : projectFiles) {
+		
 
 
 
-			if (entry.is_directory()) {
+			//if (entry.is_directory()) {
+			if (false) {
 			}
 			else {
-				std::string filename = entry.path().filename().string();
-				std::string extension = entry.path().extension().string();
+				std::filesystem::path entry = pair.second->name;
+				std::string filename = entry.filename().string();
+				std::string extension = entry.extension().string();
 
-				if (projectFiles.contains(filename)) {
+				if (false) {
 
 				}
 				else {
-					logInfo("First load: ", entry.path());
+					logInfo("First load: ", entry);
 
 					File* file = new File();
 					file->name = filename;
@@ -98,26 +111,21 @@ public:
 						file->type = FileType::MATERIAL;
 
 
+						nlohmann::json json = nlohmann::json::parse(pair.second->data, pair.second->data +
+							pair.second->dataSize);
 
-						std::ifstream f(projectFilesPath / filename);
-						if (f.is_open()) {
-							nlohmann::json json = nlohmann::json::parse(f);
-							material->color.r = json["color"]["r"];
-							material->color.g = json["color"]["g"];
-							material->color.b = json["color"]["b"];
-							material->shine = json["shine"];
-							material->useLight = json["useLight"];
+						material->color.r = json["color"]["r"];
+						material->color.g = json["color"]["g"];
+						material->color.b = json["color"]["b"];
+						material->shine = json["shine"];
+						material->useLight = json["useLight"];
 
-							if (json.contains("texture")) {
-								materialsNeedTexture[json["texture"]] = material;
-							}
-
-							file->assetHandle = assetRepository->materials.add(material);
+						if (json.contains("texture")) {
+							materialsNeedTexture[json["texture"]] = material;
 						}
-						else {
-							delete material;
-							logError("Material import stream is closed");
-						}
+
+						file->assetHandle = assetRepository->materials.add(material);
+	
 								
 					}
 
@@ -127,7 +135,9 @@ public:
 						file->assetHandle = assetRepository->scripts.add(script);
 						file->type = FileType::SCRIPT;
 
-						loadScript(script);
+						script->source = std::string(pair.second->data, pair.second->dataSize);
+
+						//loadScript(script);
 						
 
 					}
@@ -137,10 +147,10 @@ public:
 
 						
 
-						ImageLoaderError err = ImageLoader::loadImage(entry.path(), texture);
+						ImageLoaderError err = ImageLoader::loadImage((unsigned char*)pair.second->data, pair.second->dataSize, texture);
 						if (err != ImageLoaderError::OK) {
 							delete texture;
-							logError("Error loading: ", entry.path().string());
+							logError("Error loading: ", entry.string());
 						}
 						else {
 							file->assetHandle = assetRepository->textures.add(texture);
@@ -155,7 +165,7 @@ public:
 						Vertices* vertices = new Vertices();
 						vertices->name = filename;
 
-						drishengine::loadObj(projectFilesPath / filename, vertices);
+						drishengine::loadObj(pair.second->data, pair.second->dataSize, vertices);
 						file->assetHandle = assetRepository->vertices.add(vertices);
 						file->type = FileType::MODEL;
 						logInfo("Generating buffers");

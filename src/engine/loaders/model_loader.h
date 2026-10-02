@@ -11,23 +11,24 @@
 
 
 namespace drishengine {
-	static int loadObj(std::filesystem::path path, Vertices* vertices) {
-		if (!std::filesystem::exists(path)) {
-			logError("[MODEL LOADER] ", path, " where?");
-			return 0;
-		}
+	static int loadObj(char * data, uint64_t size, Vertices* vertices) {
 		logInfo("[MODEL LOADER] Loading obj");
-
-		std::ifstream file(path);
 
 		std::vector<float> positions; 
 		std::vector<float> normals;
 		std::vector<float> textures; //uv coordinates
 		std::vector<std::string> faces;
 
-		std::string str;
+		std::string_view strview(data, size);
 
-		while (std::getline(file, str)) {
+		size_t start = 0;
+		while (start < strview.size()) {
+			size_t end = strview.find('\n', start);
+			
+			std::string_view str = strview.substr(start, end - start);
+
+			
+
 			if (str[0] == 'v' && str[1] == ' ') {
 				std::string out = "";
 				int size = str.size();
@@ -87,6 +88,8 @@ namespace drishengine {
 					}
 				}
 			}
+
+			start = end + 1;
 		}
 
 		for (int i = 0; i < (faces.size() / 3); i += 1) {

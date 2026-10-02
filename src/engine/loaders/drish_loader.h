@@ -21,25 +21,21 @@ public:
 	static int load(std::filesystem::path drishPath,
 		Node* world, AssetRepository* assetRepository,
 		GameConfig* gameConfig, NodeRepository* nodeRepository,
-		FileManager* fileManager) {
-		logDebug("[LOADER] ", "Load ", drishPath.string());
-
-		if (!std::filesystem::exists(drishPath)) {
-			logDebug("[LOADER] .drish where?");
-			return 0;
-		}
-
-	
-		std::ifstream js(drishPath);
+		FileManager* fileManager,
+		const char* drishData,
+		uint64_t dataLength) {
+		logDebug("[DRISH LOADER] ", "Load ", drishPath.string());
+		
 		try {
-			nlohmann::json json = nlohmann::json::parse(js);
+
+			nlohmann::json json = nlohmann::json::parse(drishData, drishData + dataLength);
 
 
-			logDebug("[LOADER] ", ".drish version: ", json["version"]);
+			logDebug("[DRISH LOADER] ", ".drish version: ", json[JSON_VERSION_MAJOR_KEY_NAME], ".", json[JSON_VERSION_MINOR_KEY_NAME]);
 
 			if (json[JSON_VERSION_MAJOR_KEY_NAME] != DRISH_ENGINE_VERSION_MAJOR ||
 				json[JSON_VERSION_MINOR_KEY_NAME] != DRISH_ENGINE_VERSION_MINOR) {
-				logWarning("[LOADER] Versions are different. Drish file version is ",
+				logWarning("[DRISH LOADER] Versions are different. Drish file version is ",
 					json[JSON_VERSION_MAJOR_KEY_NAME], ".", json[JSON_VERSION_MINOR_KEY_NAME], " and engine version is ",
 					DRISH_ENGINE_VERSION_MAJOR, ".", DRISH_ENGINE_VERSION_MINOR);
 
@@ -119,6 +115,11 @@ public:
 			}
 
 		}
+		catch (const nlohmann::json::parse_error& ex) {
+			logError("[DRISH LOADER] Drish file loading failed");
+			logError("[DRISH LOADER] ", ex.what(), " ", ex.byte);
+		}
+
 		catch (const std::exception& ex) {
 			logError("[DRISH LOADER] Drish file loading failed");
 			logError("[DRISH LOADER] ", ex.what());
