@@ -1,17 +1,148 @@
 {
-    "gameConfig": {
+    "game_config": {
         "height": 500,
         "title": "Game",
         "useFullscreen": false,
         "width": 500
     },
-    "materials": null,
-    "nextNodeId": 1,
-    "scripts": null,
-    "sounds": null,
-    "textures": null,
-    "ver_b": 0,
-    "ver_nbns": 2,
-    "ver_s": 4,
-    "vertices": null
+    "next_node_id": 12,
+    "nodes": [
+        {
+            "active": true,
+            "children": [
+                8
+            ],
+            "f_far": 1000.0,
+            "f_near": 1.399999976158142,
+            "fov": 67.69999694824219,
+            "id": 7,
+            "name": "camera",
+            "parent": 0,
+            "script": "test.lua",
+            "transform": {
+                "position": {
+                    "x": 0.0,
+                    "y": 3.4000000953674316,
+                    "z": 7.400000095367432
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 2
+        },
+        {
+            "id": 8,
+            "name": "node",
+            "parent": 7,
+            "transform": {
+                "position": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 0
+        },
+        {
+            "id": 9,
+            "material": "test.mat",
+            "name": "model",
+            "parent": 0,
+            "script": "ahreah.lua",
+            "transform": {
+                "position": {
+                    "x": 1.7000000476837158,
+                    "y": 1.399999976158142,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 58.85612869262695,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 1,
+            "vertices": "cube_tex.obj"
+        },
+        {
+            "color": {
+                "b": 1.0,
+                "g": 1.0,
+                "r": 1.0
+            },
+            "id": 10,
+            "name": "p_light",
+            "parent": 0,
+            "radius": 87.5999984741211,
+            "strength": 1.0,
+            "transform": {
+                "position": {
+                    "x": -0.5,
+                    "y": 2.0,
+                    "z": 1.5
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 3
+        },
+        {
+            "id": 11,
+            "material": "ahe.mat",
+            "name": "model",
+            "parent": 0,
+            "transform": {
+                "position": {
+                    "x": -0.6000000238418579,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 1.399999976158142,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                }
+            },
+            "type": 1,
+            "vertices": "cube_tex.obj"
+        }
+    ],
+    "version_major": 0,
+    "version_minor": 2
 }
