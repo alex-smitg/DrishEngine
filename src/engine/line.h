@@ -35,9 +35,9 @@ public:
 
 	void draw(Shader* shader) {
 		shader->use();
-		shader->setVec3("color", color);
-		shader->setMat4("model", model);
-		shader->setInt("useLight", 0);
+		shader->setVec3(shader->colorLocation, color);
+		shader->setMat4(shader->modelLocation, model);
+		shader->setInt(shader->useLightLocation, 0);
 
 		if (visible) {
 			glBindVertexArray(VAO);

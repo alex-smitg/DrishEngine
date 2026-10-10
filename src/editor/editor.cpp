@@ -40,9 +40,8 @@ int main(int argc, char *argv[])
 {	
 	
 	logInfo("Hello");
-	logInfo("Version: ", DRISH_ENGINE_VERSION_BIG, ".",
-		DRISH_ENGINE_VERSION_NOTBIGNOTSMALL, ".",
-		DRISH_ENGINE_VERSION_SMALL, "+", DRISH_ENGINE_VERSION_ST);
+	logInfo("Version: ", DRISH_ENGINE_VERSION_MAJOR, ".",
+		DRISH_ENGINE_VERSION_MINOR);
 
 	drishengine::Window window = drishengine::Window(800, 600);
 	Graphics graphics = Graphics();
@@ -61,13 +60,14 @@ int main(int argc, char *argv[])
 	Camera camera = Camera();
 	camera.create_view = false;
 	Editor editor(&window, &assetRepository, &nodeRepository, &scripter, &camera);
+	editor.world = world;
+	editor.graphics = &graphics;
 	
 	if (argc >= 2) {
 		editor.loadProject(std::filesystem::path(argv[1]));
 	}
 	
-	editor.world = world;
-	editor.graphics = &graphics;
+	
 
 	double lastTime = glfwGetTime();
 
@@ -91,8 +91,8 @@ int main(int argc, char *argv[])
 			ImGui::NewFrame();
 
 			lineShader.use();
-			lineShader.setMat4("projection", editor.camera->perspective);
-			lineShader.setMat4("view", editor.camera->view);
+			lineShader.setMat4(lineShader.projectionLocation, editor.camera->perspective);
+			lineShader.setMat4(lineShader.viewLocation, editor.camera->view);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			editor.loop(delta);

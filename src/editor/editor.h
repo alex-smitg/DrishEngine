@@ -21,6 +21,7 @@
 #include "../engine/loaders/model_loader.h"
 #include "../engine/filedialogs.h"
 
+
 #include "executor.h"
 
 #include "user_interface/log_window.h"
@@ -30,8 +31,10 @@
 #include "user_interface/viewport_window.h"
 
 #include "../engine/resource.h"
+#include "../engine/file_manager.h"
 
 #include "../version.h"
+#include "../consts.h"
 
 class Editor {
 public:
@@ -79,6 +82,8 @@ public:
 	PropertiesWindow* propertiesWindow = nullptr;
 	ViewportWindow* viewportWindow = nullptr;
 
+	FileManager* fileManager = nullptr;
+
 	Editor(drishengine::Window *window,
 		AssetRepository *assetRepository,
 		NodeRepository *nodeRepository,
@@ -93,8 +98,10 @@ public:
 		this->canvas = new Canvas();
 		this->camera = camera;
 
-		this->assetWindow = new AssetWindow(assetRepository, &drishPath);
-		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner);
+		this->fileManager = new FileManager(this->assetRepository);
+
+		this->assetWindow = new AssetWindow(assetRepository, fileManager);
+		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner, fileManager);
 		this->propertiesWindow = new PropertiesWindow(assetRepository, luaRunner, &selectedNode);
 		this->viewportWindow = new ViewportWindow(canvas, camera, window);
 
@@ -158,37 +165,103 @@ public:
 		logInfo("Editor started");
 	}
 
+	void build() {
+		this->save();
+		logInfo("Begin export");
+		std::ofstream archive;
+		archive.open(drishPath.parent_path() / "data.bin", std::ios::out | std::ios::binary);
+		archive.write("DRISH", sizeof(char) * 5);
+		std::ifstream drishjson;
+		drishjson.open(drishPath);
+		char c;
+		std::vector<char> drishFileData;
+		while ((c = drishjson.get()) != EOF) {
+			//char xr = c ^ 'g';
+			drishFileData.push_back(c);
+		}
+		uint64_t dataSize = drishFileData.size();
+		archive.write((char*)&dataSize, sizeof(uint64_t));
+		archive.write((char*)&drishFileData[0], dataSize * sizeof(char));
+		logInfo("End export");
+
+		uint64_t filesCount = 0;
+
+		for (const std::filesystem::directory_entry& entry :
+			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
+		
+			if (entry.is_directory()) {
+			}
+			else {
+				filesCount++;
+			}
+		}
+
+		archive.write((char*)&filesCount, sizeof(uint64_t));
+
+		for (const std::filesystem::directory_entry& entry : 
+			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
+
+
+
+
+			if (entry.is_directory()) {
+			}
+			else {
+				std::string filename = entry.path().filename().string();
+
+				std::ifstream file(fileManager->projectFilesPath / filename, std::ios::binary);
+				if (file.is_open()) {
+					std::stringstream buf;
+					buf << file.rdbuf();
+
+					uint64_t filenameSize = filename.size();
+					archive.write((char*)&filenameSize, sizeof(uint64_t));
+					archive.write(filename.c_str(), filename.size());
+					
+					
+					uint64_t dataSize = buf.str().size();
+					archive.write((char*)&dataSize, sizeof(uint64_t));
+					archive << buf.str();
+				}
+				else {
+					logError("Script import stream is closed");
+				}
+			}
+		}
+
+	}
+
+
 	void save() {
 		timeSinceLastSave = 0;
 
 		logInfo("Save");
 
-
-
 		nlohmann::json j;
 
+		for (auto pair : fileManager->projectFiles) {
+			File* file = pair.second;
+			if (file->type == FileType::MATERIAL) {
+				auto mat = assetRepository->materials.get(file->assetHandle);
+				if (mat.has_value()) {
+					Material* material = mat.value();
+					
 
+					std::ofstream f(fileManager->projectFilesPath / pair.first);
+					if (f.is_open()) {
+						nlohmann::json json = *material;
 
-		std::unordered_map<int, int> texturesIndex = assetRepository->textures.save(j["textures"]);
-		std::unordered_map<int, int> materialsIndex = assetRepository->materials.save(j["materials"]);
-		std::unordered_map<int, int> verticesIndex = assetRepository->vertices.save(j["vertices"]);
-		std::unordered_map<int, int> soundsIndex = assetRepository->sounds.save(j["sounds"]);
-		std::unordered_map<int, int> scriptsIndex = assetRepository->scripts.save(j["scripts"]);
+						auto tex = assetRepository->textures.get(&material->textureHandle);
 
-		std::vector<Material*> materials = assetRepository->materials.getAssets();
-
-
-		for (int i = 0; i < materials.size(); i++) 
-		{
-			Material* material = materials[i];
-
-			std::optional<Material*> tex = assetRepository->materials.get(&material->textureHandle);
-
-			if (tex.has_value()) {
-				j["materials"][i]["texture_index"] = texturesIndex[material->textureHandle.index];
-			}
-			else {
-				j["materials"][i]["texture_index"] = nullptr;
+						if (tex.has_value()) {
+							json["texture"] = tex.value()->name;
+						}
+						f << std::setw(4) << json << std::endl;
+					}
+					else {
+						logError("Material save stream is closed");
+					}
+				}
 			}
 		}
 
@@ -199,62 +272,47 @@ public:
 			nlohmann::json jsonNode = *n;
 			std::optional<Script*> scr = assetRepository->scripts.get(&n->scriptHandle);
 			if (scr.has_value()) {
-				jsonNode["script_index"] = scriptsIndex[n->scriptHandle.index];
-			}
-			else {
-				jsonNode["script_index"] = nullptr;
+				jsonNode["script"] = scr.value()->name;
 			}
 
 
 			switch (n->type)
 			{
+			case Type::BASE:
+			{
+				j["nodes"].push_back(*n);
+			}
+				break;
 			case Type::MODEL:
-				{	
+			{
 				Model* model = static_cast<Model*>(n);
 				nlohmann::json jsonModel = *model;
 				std::optional<Material*> mat = assetRepository->materials.get(&model->materialHandle);
+				if (scr.has_value()) {
+					jsonModel["script"] = scr.value()->name;
+				}
 
 				if (mat.has_value()) {
-					jsonModel["material_index"] = materialsIndex[model->materialHandle.index];
+					jsonModel["material"] = mat.value()->name;
 				}
-				else {
-					jsonModel["material_index"] = nullptr;
-				}
-
-				if (scr.has_value()) {
-					jsonModel["script_index"] = scriptsIndex[n->scriptHandle.index];
-				}
-				else {
-					jsonModel["script_index"] = nullptr;
-				}
-
 
 				std::optional<Vertices*> ver = assetRepository->vertices.get(&model->verticesHandle);
 
 				if (ver.has_value()) {
-					jsonModel["vertices_index"] = verticesIndex[model->verticesHandle.index];
-				}
-				else {
-					jsonModel["vertices_index"] = nullptr;
+					jsonModel["vertices"] = ver.value()->name;
 				}
 
-
-				
 				j["nodes"].push_back(jsonModel);
+
 				break;
-				}
+			}
 			case Type::CAMERA:
 			{
 				Camera* camera = static_cast<Camera*>(n);
 				nlohmann::json jsonCamera = *camera;
-
 				if (scr.has_value()) {
-					jsonCamera["script_index"] = scriptsIndex[n->scriptHandle.index];
+					jsonCamera["script"] = scr.value()->name;
 				}
-				else {
-					jsonCamera["script_index"] = nullptr;
-				}
-
 				j["nodes"].push_back(jsonCamera);
 				break;
 			}
@@ -262,28 +320,21 @@ public:
 			{
 				PointLight* pointLight = static_cast<PointLight*>(n);
 				nlohmann::json jsonPointLight = *pointLight;
-
 				if (scr.has_value()) {
-					jsonPointLight["script_index"] = scriptsIndex[n->scriptHandle.index];
+					jsonPointLight["script"] = scr.value()->name;
 				}
-				else {
-					jsonPointLight["script_index"] = nullptr;
-				}
-
 				j["nodes"].push_back(jsonPointLight);
 				break;
 			}
 			default:
 				break;
 			}
-			
 		}
 
-		j["ver_b"] = DRISH_ENGINE_VERSION_BIG;
-		j["ver_nbns"] = DRISH_ENGINE_VERSION_NOTBIGNOTSMALL;
-		j["ver_s"] = DRISH_ENGINE_VERSION_SMALL;
-		j["gameConfig"] = gameConfig;
-		j["nextNodeId"] = nextNodeId;
+		j[JSON_VERSION_MAJOR_KEY_NAME] = DRISH_ENGINE_VERSION_MAJOR;
+		j[JSON_VERSION_MINOR_KEY_NAME] = DRISH_ENGINE_VERSION_MINOR;
+		j[JSON_GAME_CONFIG_KEY_NAME] = gameConfig;
+		j[JSON_NEXT_NODE_ID_KEY_NAME] = nextNodeId;
 
 		logDebug("Next node id: ", nextNodeId);
 		
@@ -292,7 +343,7 @@ public:
 			file << std::setw(4) << j << std::endl;
 		}
 
-		logDebug("Save success");
+		logInfo("Save success");
 	}
 
 	void showStartPopup() {
@@ -303,9 +354,8 @@ public:
 			ImGui::Image(icoTexture->glid, ImVec2(256, 256));
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
-			ImGui::Text("%d.%d.%d+%s", DRISH_ENGINE_VERSION_BIG,
-				DRISH_ENGINE_VERSION_NOTBIGNOTSMALL,
-				DRISH_ENGINE_VERSION_SMALL, DRISH_ENGINE_VERSION_ST);
+			ImGui::Text("%d.%d", DRISH_ENGINE_VERSION_MAJOR,
+				DRISH_ENGINE_VERSION_MINOR);
 			ImGui::PopStyleColor();
 
 			if (ImGui::Button("Load .drish project", ImVec2(-1.0f, 0.0f))) {
@@ -341,9 +391,33 @@ public:
 
 	void loadProject(std::filesystem::path drishFilePath) {
 		this->drishPath = drishFilePath;
-		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository);
-		this->assetWindow->reload();
-		this->assetWindow->projectRoot.absolutePath = drishFilePath.parent_path() / "project";
+		
+
+		this->fileManager->projectFilesPath = drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
+
+		if (std::filesystem::exists(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME)) {
+
+		}
+		else {
+			std::filesystem::create_directory(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
+		}
+
+		this->fileManager->readProjectFiles();
+		this->fileManager->reload();
+
+		
+		std::ifstream drishFile(drishFilePath, std::ios::binary);
+		if (drishFile.is_open()) {
+			drishFile.seekg(0, std::ios::end);
+			std::streampos size = drishFile.tellg();
+			drishFile.seekg(0, std::ios::beg);
+
+			char* data = new char[size];
+			drishFile.read(data, size);
+
+			DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository, fileManager, data, size);
+			delete[] data;
+		}
 	}
 
 	void loop(double delta) {
@@ -422,21 +496,7 @@ public:
 			}
 			if (ImGui::BeginMenu("Game")) {
 				if (ImGui::MenuItem("Export")) {
-					save();
-					std::ofstream archive;
-					archive.open(drishPath.parent_path() / "data.bin", std::ios::out | std::ios::binary);
-					archive.write("DRISH", sizeof(char) * 5);
-					std::ifstream drishjson;
-					drishjson.open(drishPath);
-					char c;
-					std::vector<char> drishFileData;
-					while ((c = drishjson.get()) != EOF) {
-						//char xr = c ^ 'g';
-						drishFileData.push_back(c);
-					}
-					size_t dataSize = drishFileData.size();
-					archive.write((char*)&dataSize, sizeof(size_t));
-					archive.write((char*)&drishFileData[0], dataSize * sizeof(char));
+					this->build();
 				}
 				ImGui::EndMenu();
 			}
@@ -452,7 +512,7 @@ public:
 				if (ImGui::BeginMenuBar()) {
 					ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 2.0);
 					if (ImGui::Button("Run")) {
-						this->save();
+						this->build();
 						drishexecutor::runGame(window, "game.exe", drishPath.parent_path());
 					}
 					ImGui::EndMenuBar();

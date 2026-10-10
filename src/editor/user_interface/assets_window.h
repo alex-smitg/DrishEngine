@@ -5,11 +5,10 @@
 #include <typeinfo>
 
 #include "imgui_docking/imgui.h"
-#include "imgui_docking/imgui_impl_glfw.h"
-#include "imgui_docking/imgui_impl_opengl3.h"
 
 #include "../../engine/asset_repository.h"
-#include "../../engine/loaders/image_loader.h"
+
+#include "../../engine/file_manager.h"
 
 #include "../../engine/logger.h"
 
@@ -19,217 +18,18 @@
 #include <map>
 
 
-class FsItem {
-public:
-	std::string name;
-
-	FsItem* parent = nullptr;
-
-	std::filesystem::path absolutePath;
-
-	unsigned int textureID = -1; // -1 = no texture
-	bool useTexture = false;
-	unsigned int color = 0xFF00FF;
-
-	virtual bool isDirectory() {
-		return false;
-	};
-
-	virtual void free() {};
-};
-
-class File : public FsItem
-{
-public:
-	bool isDirectory() override {
-		return false;
-	}
-
-	void free() override {
-		
-	}
-
-	File(std::string name) {
-		this->name = name;
-	}
-};
-
-
-class Directory: public FsItem
-{
-public:
-	std::map<std::string, FsItem*> content;
-
-	Directory(std::string name) {
-		this->name = name;
-	}
-
-	bool isDirectory() override {
-		return true;
-	}
-
-
-	void free() override {
-		for (auto a : content) {
-			a.second->free();
-			delete a.second;
-		}
-		content.clear();
-	}
-
-	File* addFile(std::string name) {
-		File* file = new File(name);
-		file->parent = this;
-
-		content[name] = file;
-
-		return file;
-	}
-
-	Directory* addDirectory(std::string name) {
-		Directory* childDirectory = new Directory(name);
-		childDirectory->parent = this;
-		
-		content[name] = childDirectory;
-		
-		return childDirectory;
-	}
-};
-
 class AssetWindow: public EditorWindowBase
 {
 private:
-	AssetRepository *assetRepository;
+	AssetRepository *assetRepository = nullptr;
+	FileManager * fileManager = nullptr;
 
 public:
-	std::filesystem::path *drishPath = nullptr;
-
-	Directory projectRoot = Directory("project");
-
-	std::vector<Directory*> currentDirectoryPath;
-	Directory* currentDirectory = &projectRoot; 
-
-	AssetWindow(AssetRepository *assetRepository, std::filesystem::path* drishPath)
+	AssetWindow(AssetRepository *assetRepository, FileManager* fileManager)
 	{
 		this->assetRepository = assetRepository;
-		this->drishPath = drishPath;
-	}
+		this->fileManager = fileManager;
 
-
-
-
-
-	Texture* importTexture() {
-		std::filesystem::path texturePath = drishengine::openImageOpenFileDialog();
-		if (!texturePath.empty())
-		{
-			std::filesystem::path filename = texturePath.filename();
-
-			Texture* texture = new Texture();
-			texture->name = filename.string();
-
-			ImageLoaderError err = ImageLoader::loadImage(texturePath, texture);
-			if (err != ImageLoaderError::OK) {
-				delete texture;
-				return nullptr;
-			}
-			
-			assetRepository->textures.add(texture);
-
-			if (drishPath != nullptr)
-			{
-				std::filesystem::path copyTo = currentDirectory->absolutePath / filename;
-				
-				if (std::filesystem::exists(copyTo)) {
-					logInfo("[ASSETS WINDOW] file already exist, no need to copy");
-				}
-				else {
-					std::filesystem::copy_file(texturePath, copyTo);
-				}
-			}	
-			else
-			{
-				logError("[ASSETS WINDOW] drishPath is null");
-			}
-			return texture;
-			
-		}
-		return nullptr;
-	}
-
-	void changeCurrentFolder(Directory* directory) {
-		currentDirectory = directory;
-
-		currentDirectoryPath.clear();
-
-		Directory* tempDirectory = directory;
-
-		while (tempDirectory != nullptr) {
-			currentDirectoryPath.push_back(tempDirectory);
-			tempDirectory = static_cast<Directory*>(tempDirectory->parent);
-		}
-
-	}
-
-	void processFile(File* file) {
-		std::string ext = file->absolutePath.extension().string();
-
-		if (ext == ".txt" || ext == ".TXT") {
-			file->color = 0xFF3A3A3A;
-		}
-		else if (ext == ".lua" || ext == ".LUA") {
-			file->color = 0xFF118A00;
-
-			Script* script = new Script();
-			script->name = file->name;
-
-			assetRepository->scripts.add(script);
-		}
-		else if (ext == ".png" || ext == ".PNG") {
-			file->useTexture = true;
-
-		}
-
-
-	}
-
-
-	void reload() {
-		changeCurrentFolder(&projectRoot);
-		projectRoot.free();
-		
-
-		std::map<std::string, FsItem*> index;
-
-		index[(drishPath->parent_path() / "project").string()] = &projectRoot;
-
-		for (const std::filesystem::directory_entry& entry :
-			std::filesystem::recursive_directory_iterator(drishPath->parent_path() / "project")) {
-			std::cout << entry << "\n";
-			
-			FsItem* parent = index[entry.path().parent_path().string()];
-			if (parent->isDirectory()) {
-				Directory* parentDirectory = static_cast<Directory*>(parent);
-
-				if (entry.is_directory()) {
-					Directory* childDirectory = parentDirectory->addDirectory(entry.path().filename().string());
-					index[entry.path().string()] = childDirectory;
-					childDirectory->absolutePath = entry.path().string();
-				}
-				else {
-					File* childFile = parentDirectory->addFile(entry.path().filename().string());
-					index[entry.path().string()] = childFile;
-					childFile->absolutePath = entry.path().string();
-					childFile->useTexture = false;
-
-					processFile(childFile);
-				}
-			}
-		}
-
-
-
-		
 	}
 
 	void draw() override
@@ -237,248 +37,229 @@ public:
 		if (open)
 		{
 			ImGui::Begin("Assets", &open);
-	
 
-			ImGui::SameLine();
 
-			if (ImGui::Button("Reload all")) {
-				reload();
+			if (ImGui::Button("Reload")) {
+				fileManager->reload();
 			}
+			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(1.0, 1.0));
+			if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+				ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 32.0f);
+				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+				ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
+				ImGui::TableHeadersRow();
 
 
-			bool endDisabled = false;
-			if (currentDirectory->parent == nullptr) {
-				ImGui::BeginDisabled();
-				endDisabled = true;
-			}
+				int n = 0;
+				for (auto const& pair : fileManager->projectFiles) {
 
-			
-			if (ImGui::Button("<")) {
-				if (currentDirectory->parent != nullptr) {
-					changeCurrentFolder(static_cast<Directory*>(currentDirectory->parent));
+
+
+					ImGui::TableNextRow();
+
+					
+					
+					ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
+					ImGui::TableNextColumn();
+					static bool selected = false;
+					ImGui::PushID(n);
+					ImGui::Selectable("##row", &selected, ImGuiSelectableFlags_SpanAllColumns |
+						ImGuiSelectableFlags_AllowOverlap, ImVec2(0, 32));
+					if (pair.second->assetHandle && ImGui::BeginDragDropSource()) {
+						int index = pair.second->assetHandle->index;
+
+						std::string payloadType = "SCRIPT";
+
+						if (pair.second->type == FileType::IMAGE) payloadType = "TEXTURE";
+						if (pair.second->type == FileType::SCRIPT) payloadType = "SCRIPT";
+						if (pair.second->type == FileType::MODEL) payloadType = "VERTICES";
+						if (pair.second->type == FileType::MATERIAL) payloadType = "MATERIAL";
+
+						ImGui::SetDragDropPayload(payloadType.c_str(), &index, sizeof(int));
+
+						ImGui::Text(pair.first.c_str());
+
+						if (pair.second->type == FileType::IMAGE) {
+							
+							ImGui::Image(pair.second->icon, ImVec2(128, 128));
+						}
+						
+
+						ImGui::EndDragDropSource();
+					}
+					ImGui::PopID();
+					ImGui::SameLine(0, 0);
+					ImGui::SetNextItemAllowOverlap();
+					if (pair.second->icon != -1) {
+						
+						ImGui::Image(pair.second->icon, ImVec2(32, 32));
+						if (ImGui::IsItemHovered())
+						{
+							ImGui::BeginTooltip();
+							ImGui::Image(pair.second->icon, ImVec2(256, 256));
+							ImGui::EndTooltip();
+						}
+					}
+
+					ImGui::PopStyleVar();
+
+
+
+					ImGui::TableNextColumn();
+					ImGui::Text(pair.first.c_str());
+					
+					ImGui::TableNextColumn();
+					if (pair.second->assetHandle != nullptr) {
+						ImGui::Text(std::to_string(pair.second->assetHandle->index).c_str());
+					}
+					n++;
 				}
+
+
+				ImGui::EndTable();
 			}
 
-			if (endDisabled) {
-				ImGui::EndDisabled();
-			}
+			ImGui::PopStyleVar();
 
-			ImGui::SameLine();
-
-			for (int i = currentDirectoryPath.size() - 1; i > 0; i--) {
-				if (ImGui::TextLink(currentDirectoryPath[i]->name.c_str())) {
-					changeCurrentFolder(currentDirectoryPath[i]);
-					break;
-				}
-				ImGui::SameLine();
-				ImGui::Text("/");
-				ImGui::SameLine();
-			}
-			ImGui::Text(currentDirectory->name.c_str());
-			ImGui::BeginChild("Content", { 0, 0 }, ImGuiChildFlags_Borders);
-
-
-			static bool isHoveringOverIcon = false;
 
 			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 			{
-				ImGui::OpenPopup("r");
-				isHoveringOverIcon = false;
+				ImGui::OpenPopup("menu");
 			}
 
-			int width = ImGui::GetWindowWidth();
-			const int ASSET_SIZE = 48;
-			int r = width / ASSET_SIZE;
 
-			if (r == 0) { r = 1; }
+			static bool createPopupOpened = false;
+			static FileType popupType = FileType::NONE;
 
-			ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign,
-				ImVec2(0.0f, 0.0f));
-
-			
-
-			static FsItem* rightClickedItem = nullptr;
-
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
-			if (currentDirectory != nullptr) {
-				int i = 0;
-				for (auto a : currentDirectory->content) {
-					if (a.second->isDirectory() == true) {
-						ImGui::PushID(i);
-						if (i % r != 0) {
-							ImGui::SameLine();
-						}
-
-						if (ImGui::Button(a.second->name.c_str(), { ASSET_SIZE, ASSET_SIZE })) {
-							changeCurrentFolder(static_cast<Directory*>(a.second));
-						}
-
-
-						if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-							rightClickedItem = a.second;
-						}
-
-
-
-						
-						isHoveringOverIcon |= ImGui::IsItemHovered();
-
-						ImGui::PopID();
-					}
-					else {
-						ImGui::PushID(i);
-						if (i % r != 0) {
-							ImGui::SameLine();
-						}
-
-						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.f, 0.f, 0.f, 0.f));
-						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
-						if (a.second->useTexture) {
-							if (ImGui::ImageButton(a.second->name.c_str(), a.second->textureID, { ASSET_SIZE, ASSET_SIZE })) {
-
-							}
-						}
-						else {
-							ImGui::PushStyleColor(ImGuiCol_Button, a.second->color);
-							if (ImGui::Button(a.second->name.c_str(), { ASSET_SIZE, ASSET_SIZE }));
-							ImGui::PopStyleColor();
-						}
-						ImGui::PopStyleColor(3);
-
-						if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-						{
-							ImGui::SetTooltip(a.second->name.c_str());
-						}
-
-						if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-							rightClickedItem = a.second;
-						}
-
-						isHoveringOverIcon |= ImGui::IsItemHovered();
-
-						ImGui::PopID();
-					}
-					i++;
-				}
-			}
-			ImGui::PopStyleVar();
-			ImGui::PopStyleVar();
-
-			
-			static bool renamePopupOpened = false;
-
-			if (ImGui::BeginPopup("r"))
+			if (ImGui::BeginPopup("menu"))
 			{
-
-				if (isHoveringOverIcon) {
-					if (ImGui::MenuItem("Rename")) {
-						renamePopupOpened = true;
-					}
-					if (ImGui::MenuItem("Delete")) {
-						changeCurrentFolder(&projectRoot);
-					}
-
+				if (ImGui::MenuItem("Create script")) {
+					createPopupOpened = true;
+					popupType = FileType::SCRIPT;
 				}
-				else {
-					if (ImGui::BeginMenu("Add")) {
-						if (ImGui::MenuItem("New folder")) {
-							try
-							{
-								std::filesystem::path pathTo = currentDirectory->absolutePath / "New folder";
-								logInfo("Create new folder ", pathTo);
-
-								if (std::filesystem::create_directory(pathTo)) {
-									Directory* directory = currentDirectory->addDirectory("New folder");
-								}
-							}
-
-							catch (std::filesystem::filesystem_error const& ex)
-							{
-								logError(ex.what());
-							}
-						}
-						if (ImGui::MenuItem("New material")) {
-
-						}
-						if (ImGui::MenuItem("New script")) {
-							std::filesystem::path pathTo = currentDirectory->absolutePath / "script.lua";
-							
-							std::ofstream stream(pathTo);
-							if (stream.is_open()) {
-								currentDirectory->addFile("script.lua");
-							}
-
-							stream.close();
-							
-						}
-						ImGui::EndMenu();
-					}
+				if (ImGui::MenuItem("Create material")) {
+					createPopupOpened = true;
+					popupType = FileType::MATERIAL;
 				}
-
 
 
 				ImGui::EndPopup();
 			}
+			
+			
 
-			static std::string str = "";
-
-			if (renamePopupOpened) {
-				ImGui::OpenPopup("Rename Popup", 0);
-				
-				if (rightClickedItem != nullptr && str.empty()) {
-					str = rightClickedItem->name;
-				}
+			if (createPopupOpened) {
+				ImGui::OpenPopup("Popup", 0);
 			}
-			
 
-			
+			if (ImGui::BeginPopupModal("Popup")) {
 
-			if (ImGui::BeginPopupModal("Rename Popup")) {
+				static bool buttonDisabled = false;
 
+				std::string ext = "";
+				static std::string name = "";
 
-				ImGui::InputText("Text", &str, ImGuiInputTextFlags_ElideLeft, [](ImGuiInputTextCallbackData* data) {
-					return 0; });
+				if (popupType == FileType::MATERIAL) {
+					ext = ".mat";
+					ImGui::Text("Create material");
+				}
+				if (popupType == FileType::SCRIPT) {
+					ext = ".lua";
+					ImGui::Text("Create script");
+				}
+
+				if (ImGui::InputText(ext.c_str(), &name, ImGuiInputTextFlags_ElideLeft |
+														ImGuiInputTextFlags_CallbackCharFilter | 
+														ImGuiInputTextFlags_EnterReturnsTrue
+					, [](ImGuiInputTextCallbackData* data) {
+					const ImWchar c = data->EventChar;
+
+					/*if (!(c >= 'A' && c <= 'Z')) {
+						return 1;
+					}*/
+
+					return 0; })) {
+					
+				}
+
+				if (ImGui::IsItemEdited()) {
+					buttonDisabled = false;
+					if (this->fileManager->projectFiles.contains(name + ext)) {
+						buttonDisabled = true;
+					}
+				}
+
 
 
 				if (ImGui::Button("Cancel")) {
 					ImGui::CloseCurrentPopup();
-					renamePopupOpened = false;
-					str = "";
+					createPopupOpened = false;
+					name = "";
 				}
 				ImGui::SameLine();
 
-				if (ImGui::Button("Rename")) {
-					
-					ImGui::CloseCurrentPopup();
-					renamePopupOpened = false;
-					
+				
 
-					if (rightClickedItem->parent != nullptr) {
-						if (rightClickedItem->parent->isDirectory()) {
-							Directory* directory = static_cast<Directory*>(rightClickedItem->parent);
-							auto nh = directory->content.extract(rightClickedItem->name);
-							nh.key() = str;
-							directory->content.insert(std::move(nh));
+				if (name.empty()) {
+					buttonDisabled = true;
+				}
 
-							rightClickedItem->name = str;
+				if (buttonDisabled) ImGui::BeginDisabled();
+
+				if (ImGui::Button("Add")) {
+
+					std::string filename = name + ext;
+
+					std::filesystem::path pathTo = fileManager->projectFilesPath / filename;
+
+
+					AssetHandle* assHandle = nullptr;
+
+
+					
+					std::ofstream stream(pathTo);
+					if (stream.is_open()) {
+						File* file = new File();
+						file->name = name;
+
+						if (popupType == FileType::MATERIAL) {
+							Material* material = new Material();
+							material->shader = &assetRepository->defaultShader;
+							material->name = filename;
+							assHandle = assetRepository->materials.add(material);
+							nlohmann::json j = *material;
+							stream << std::setw(4) << j << std::endl;
 
 						}
+						if (popupType == FileType::SCRIPT) {
+							Script* script = new Script();
+							script->name = filename;
+							assHandle = assetRepository->scripts.add(script);
+						}
+
+						file->assetHandle = assHandle;
+						this->fileManager->projectFiles[filename] = file;
+
+					}
+					else {
+						logError("Stream is closed");
 					}
 
+					stream.close();
 
-					str = "";
 
-					
-					
+
+					ImGui::CloseCurrentPopup();
+					createPopupOpened = false;
+
+					name = "";
 				};
-				
-				
+
+				if (buttonDisabled) ImGui::EndDisabled();
+
 				ImGui::EndPopup();
 			}
-			
 
-			ImGui::EndChild();
 	
 			ImGui::End();
 		}

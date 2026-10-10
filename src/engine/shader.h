@@ -137,6 +137,17 @@ void main() {
 	const char* fCode = fragmentCode.c_str();
 
 
+	int colorLocation = -1;
+	int useTextureLocation = -1;
+	int modelLocation = -1;
+	int useLightLocation = -1;
+	int shineLocation = -1;
+	int pointLightsCountLocation = -1;
+	int viewPosLocation = -1;
+	int projectionLocation = -1;
+	int viewLocation = -1;
+
+
 	void recompile() {
 		glDeleteProgram(id_);
 
@@ -186,6 +197,19 @@ void main() {
 		glLinkProgram(id_);
 		checkCompileErrors(id_, "PROGRAM");
 
+		colorLocation = glGetUniformLocation(id_, "color");
+		useTextureLocation = glGetUniformLocation(id_, "useTexture");
+		modelLocation = glGetUniformLocation(id_, "model");
+		useLightLocation = glGetUniformLocation(id_, "useLight");
+		shineLocation = glGetUniformLocation(id_, "shine");
+		pointLightsCountLocation = glGetUniformLocation(id_, "pointLightsCount");
+		viewPosLocation = glGetUniformLocation(id_, "viewPos");
+		projectionLocation = glGetUniformLocation(id_, "projection");
+		viewLocation = glGetUniformLocation(id_, "view");
+
+		logInfo("Shader locations:", colorLocation, useTextureLocation, modelLocation, useLightLocation, shineLocation,
+			pointLightsCountLocation, viewPosLocation, projectionLocation, viewLocation);
+
 		glDeleteShader(vertexShader);
 		glDeleteShader(fragmentShader);
 	}
@@ -196,6 +220,10 @@ void main() {
 
 	void use() {
 		glUseProgram(id_);
+	}
+
+	int getLocation(const std::string& name) {
+		return glGetUniformLocation(id_, name.c_str());
 	}
 
 	void checkCompileErrors(GLuint shader, std::string type) {
@@ -217,22 +245,22 @@ void main() {
 			}
 		}
 	}
-	void setFloat(const std::string& name, const float value) const
+	void setFloat(const int location, const float value) const
 	{
-		glUniform1f(glGetUniformLocation(id_, name.c_str()), value);
+		glUniform1f(location, value);
 	}
 
-	void setInt(const std::string& name, const int value) const
+	void setInt(const int location, const int value) const
 	{
-		glUniform1i(glGetUniformLocation(id_, name.c_str()), value);
+		glUniform1i(location, value);
 	}
-	void setMat4(const std::string& name, const glm::mat4& mat) const
+	void setMat4(const int location, const glm::mat4& mat) const
 	{
-		glUniformMatrix4fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+		glUniformMatrix4fv(location, 1, GL_FALSE, &mat[0][0]);
 	}
-	void setVec3(const std::string& name, const glm::vec3& vec) const
+	void setVec3(const int location, const glm::vec3& vec) const
 	{
-		glUniform3f(glGetUniformLocation(id_, name.c_str()), vec.x, vec.y, vec.z);
+		glUniform3f(location, vec.x, vec.y, vec.z);
 	}
 
 private:

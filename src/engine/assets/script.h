@@ -14,6 +14,5 @@ public:
 };
 
 inline void to_json(nlohmann::json& j, const Script& script) {
-	nlohmann::to_json(j, static_cast<Asset>(script));
 	j["source"] = script.source;
 }

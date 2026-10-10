@@ -23,6 +23,3 @@ public:
 
 	Asset();
 };
-
-void to_json(nlohmann::json& j, const Asset& asset);
-void from_json(const nlohmann::json& j, Asset& asset);
