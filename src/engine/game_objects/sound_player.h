@@ -1,7 +1,6 @@
 #pragma once
 
 #include "node.h"
-#include "../transform.h"
 
 class SoundPlayer : public Node {
 public:
@@ -18,3 +17,10 @@ public:
 		addField(Field("Loop", FieldType::Boolean, &loop));
 	}
 };
+
+inline void to_json(nlohmann::json& j, const SoundPlayer& soundPlayer)
+{
+	nlohmann::to_json(j, static_cast<Node>(soundPlayer));
+	j["volume"] = soundPlayer.volume;
+	j["loop"] = soundPlayer.loop;
+}

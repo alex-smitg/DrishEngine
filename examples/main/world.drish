@@ -3,144 +3,158 @@
         "height": 500,
         "title": "Game",
         "useFullscreen": false,
-        "width": 500
+        "width": 1000
     },
-    "next_node_id": 12,
+    "next_node_id": 13,
     "nodes": [
         {
-            "active": true,
+            "Active": true,
+            "Far": 1000.0,
+            "Fov": 45.0,
+            "Name": "camera",
+            "Near": 0.10000000149011612,
+            "Position": [
+                0.30000001192092896,
+                0.30000001192092896,
+                5.5
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "Script": "test.lua",
             "children": [
                 8
             ],
-            "f_far": 1000.0,
-            "f_near": 1.399999976158142,
-            "fov": 67.69999694824219,
             "id": 7,
-            "name": "camera",
             "parent": 0,
-            "script": "test.lua",
-            "transform": {
-                "position": {
-                    "x": 0.0,
-                    "y": 3.4000000953674316,
-                    "z": 7.400000095367432
-                },
-                "rotation": {
-                    "x": 0.0,
-                    "y": 0.0,
-                    "z": 0.0
-                },
-                "scale": {
-                    "x": 1.0,
-                    "y": 1.0,
-                    "z": 1.0
-                }
-            },
             "type": 2
         },
         {
+            "Name": "node",
+            "Position": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
             "id": 8,
-            "name": "node",
             "parent": 7,
-            "transform": {
-                "position": {
-                    "x": 0.0,
-                    "y": 0.0,
-                    "z": 0.0
-                },
-                "rotation": {
-                    "x": 0.0,
-                    "y": 0.0,
-                    "z": 0.0
-                },
-                "scale": {
-                    "x": 1.0,
-                    "y": 1.0,
-                    "z": 1.0
-                }
-            },
             "type": 0
         },
         {
+            "Material": "test.mat",
+            "Name": "model",
+            "Position": [
+                -1.2000000476837158,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                1.2000000476837158,
+                1.100000023841858,
+                0.8999999761581421
+            ],
+            "Script": "ahreah.lua",
+            "Vertices": "cube_tex.obj",
             "id": 9,
-            "material": "test.mat",
-            "name": "model",
             "parent": 0,
-            "script": "ahreah.lua",
-            "transform": {
-                "position": {
-                    "x": 1.7000000476837158,
-                    "y": 1.399999976158142,
-                    "z": 0.0
-                },
-                "rotation": {
-                    "x": 58.85612869262695,
-                    "y": 0.0,
-                    "z": 0.0
-                },
-                "scale": {
-                    "x": 1.0,
-                    "y": 1.0,
-                    "z": 1.0
-                }
-            },
-            "type": 1,
-            "vertices": "cube_tex.obj"
+            "type": 1
         },
         {
-            "color": {
-                "b": 1.0,
-                "g": 1.0,
-                "r": 1.0
-            },
+            "Color": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "Name": "p_light",
+            "Position": [
+                0.10000000149011612,
+                0.8999999761581421,
+                4.0
+            ],
+            "Radius": 23.399999618530273,
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "Strength": 1.2000000476837158,
             "id": 10,
-            "name": "p_light",
             "parent": 0,
-            "radius": 87.5999984741211,
-            "strength": 1.0,
-            "transform": {
-                "position": {
-                    "x": -0.5,
-                    "y": 2.0,
-                    "z": 1.5
-                },
-                "rotation": {
-                    "x": 0.0,
-                    "y": 0.0,
-                    "z": 0.0
-                },
-                "scale": {
-                    "x": 1.0,
-                    "y": 1.0,
-                    "z": 1.0
-                }
-            },
             "type": 3
         },
         {
+            "Material": "ahe.mat",
+            "Name": "model",
+            "Position": [
+                2.0,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "Vertices": "cube_tex.obj",
             "id": 11,
-            "material": "ahe.mat",
-            "name": "model",
             "parent": 0,
-            "transform": {
-                "position": {
-                    "x": -0.6000000238418579,
-                    "y": 0.0,
-                    "z": 0.0
-                },
-                "rotation": {
-                    "x": 1.399999976158142,
-                    "y": 0.0,
-                    "z": 0.0
-                },
-                "scale": {
-                    "x": 1.0,
-                    "y": 1.0,
-                    "z": 1.0
-                }
-            },
-            "type": 1,
-            "vertices": "cube_tex.obj"
+            "type": 1
+        },
+        {
+            "Loop": true,
+            "Name": "Sound Player",
+            "Position": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "Script": "test.lua",
+            "Volume": 0.6209999918937683,
+            "id": 12,
+            "parent": 0,
+            "type": 5
         }
     ],
     "version_major": 0,

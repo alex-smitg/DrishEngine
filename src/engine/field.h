@@ -4,6 +4,7 @@
 
 
 enum FieldType {
+	Int,
 	Float,
 	FloatVec3,
 	String,
@@ -22,10 +23,15 @@ public:
 	std::string name = "";
 	FieldType type;
 	void* ptr;
+	bool serializable = true;
+	bool showInInspector = true;
 
-	Field(std::string name, FieldType type, void* ptr) {
+	Field(std::string name, FieldType type, void* ptr, bool serializable = true,
+		bool showInInspector = true) {
 		this->name = name;
 		this->type = type;
 		this->ptr = ptr;
+		this->serializable = serializable;
+		this->showInInspector = showInInspector;
 	}
 };

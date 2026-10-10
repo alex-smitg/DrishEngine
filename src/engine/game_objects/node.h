@@ -38,6 +38,7 @@ public:
 		addField(Field("Rotation", FieldType::FloatVec3, &transform.rotation));
 		addField(Field("Scale", FieldType::FloatVec3, &transform.scale));
 		addField(Field("Script", FieldType::ScriptHandle, &scriptHandle));
+		addField(Field("id", FieldType::Int, &id, true, false));
 	}
 	
 
@@ -73,12 +74,8 @@ public:
 };
 
 inline void to_json(nlohmann::json& j, const Node& node) {
-	j["name"] = node.name;
-	j["transform"] = node.transform;
 	j["type"] = node.type;
 	j["parent"] = node.parent->id;
-	j["id"] = node.id;
-	
 	for (int i = 0; i < node.children.size(); i++) {
 		j["children"].push_back(node.children[i]->id);
 	}

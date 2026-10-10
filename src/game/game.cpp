@@ -51,7 +51,7 @@ const double frameDuration = 1.0 / targetFPS;
 
 int main(int argc, char* argv[]) {
 	logInfo("Hello");
-	logInfo("Version", DRISH_ENGINE_VERSION_MAJOR,
+	logInfo("Drish Engine version ", DRISH_ENGINE_VERSION_MAJOR, ".", 
 		DRISH_ENGINE_VERSION_MINOR);
 
 	std::filesystem::path drishPath = std::filesystem::path("world.drish");
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 	Looper looper;
 	AssetRepository assetRepository;
 	NodeRepository nodeRepository;
-	Node* world = NodeCreator::createNode(Type::BASE, "World", &nodeRepository);
+	Node* world = NodeCreator::createNode(Type::BASE, "Root", &nodeRepository);
 	FileManager fileManager = FileManager(&assetRepository);
 	fileManager.projectFilesPath = drishPath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
 	//fileManager.reload();
@@ -86,8 +86,9 @@ int main(int argc, char* argv[]) {
 
 		data.read(signature, 5);
 
-		if (std::string(signature) != "DRISH") {
+		if (std::string(signature, 5) != "DRISH") {
 			logError("Signature not found");
+			logDebug(std::string(signature, 5));
 		}
 
 		uint64_t drishJsonSize = 0;
@@ -101,23 +102,24 @@ int main(int argc, char* argv[]) {
 
 		uint64_t filesCount = 0;
 		data.read((char*)(&filesCount), sizeof(filesCount));
+		logInfo("Loading files");
 		logInfo("Files count: ", filesCount);
 
 		for (uint64_t i = 0; i < filesCount; i++) {
 			uint64_t filenameLength = 0;
 			data.read((char*)(&filenameLength), sizeof(filenameLength));
-			logInfo("Filename size: ", filenameLength);
+			//logInfo("Filename size: ", filenameLength);
 
 			char* filename = new char[filenameLength];
 			data.read(filename, filenameLength);
 			std::string filenameStr = std::string(filename, filenameLength);
-			logInfo("Filename: ", filenameStr);
+			//logInfo("Filename: ", filenameStr);
 			
 
 
 			uint64_t dataSize = 0;
 			data.read((char*)(&dataSize), sizeof(dataSize));
-			logInfo("Data size: ", dataSize);
+			//logInfo("Data size: ", dataSize);
 
 			char* filedata = new char[dataSize];
 			data.read(filedata, dataSize);

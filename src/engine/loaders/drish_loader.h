@@ -19,19 +19,15 @@ class Node;
 class DrishLoader {
 public:
 	static int load(std::filesystem::path drishPath,
-		Node* world, AssetRepository* assetRepository,
+		Node* root, AssetRepository* assetRepository,
 		GameConfig* gameConfig, NodeRepository* nodeRepository,
 		FileManager* fileManager,
 		const char* drishData,
 		uint64_t dataLength) {
 		logDebug("[DRISH LOADER] ", "Load ", drishPath.string());
 
-
-		
 		try {
-
 			nlohmann::json json = nlohmann::json::parse(drishData, drishData + dataLength);
-
 
 			logDebug("[DRISH LOADER] ", ".drish version: ", json[JSON_VERSION_MAJOR_KEY_NAME], ".", json[JSON_VERSION_MINOR_KEY_NAME]);
 
@@ -49,64 +45,70 @@ public:
 			gameConfig->useFullscreen = json[JSON_GAME_CONFIG_KEY_NAME]["useFullscreen"];
 
 			std::map<long long, Node*> nodes;
-			nodes[0] = world;
+			nodes[0] = root;
 		
 			nextNodeId = json[JSON_NEXT_NODE_ID_KEY_NAME];
 
-
-			for (const auto& item : json["nodes"].items())
-			{
+			for (const auto& item : json["nodes"].items()) {
 				long long id = item.value()["id"];
-				Node* node = NodeCreator::createNode(item.value()["type"], item.value()["name"], nodeRepository, id);
+				Node* node = NodeCreator::createNode(item.value()["type"], item.value()["Name"], nodeRepository, id);
 
-				if (item.value().contains("script")) {
-					node->scriptHandle = *(fileManager->projectFiles.at(item.value()["script"])->assetHandle);
-				}
+				for (const Field field : node->getFields()) {
+					if (item.value().contains(field.name)) {
+						switch (field.type)
+						{
+						case FieldType::String:
+							*static_cast<std::string*>(field.ptr) = item.value()[field.name];
+							break;
+						case FieldType::Int:
+							*static_cast<int*>(field.ptr) = item.value()[field.name];
+							break;
+						case FieldType::Float:
+							*static_cast<float*>(field.ptr) = item.value()[field.name];
+							break;
+						case FieldType::Boolean:
+							*static_cast<bool*>(field.ptr) = item.value()[field.name];
+							break;
+						case FieldType::Color3:
+						case FieldType::FloatVec3:
+						{
+							glm::vec3 vec;
+							vec[0] = item.value()[field.name][0];
+							vec[1] = item.value()[field.name][1];
+							vec[2] = item.value()[field.name][2];
+							*static_cast<glm::vec3*>(field.ptr) = vec;
+							break;
+						}
+						case FieldType::MaterialHandle:
+						case FieldType::TextureHandle:
+						case FieldType::VerticesHandle:
+						case FieldType::SoundHandle:
+						case FieldType::ScriptHandle:
+						{
+							AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+							*handle = *(fileManager->projectFiles.at(item.value()[field.name])->assetHandle);
+							break;
+						}
 
-				switch (node->type)
-				{
-				case Type::MODEL: {
-					Model* model = static_cast<Model*>(node);
-					if (item.value().contains("vertices")) {
-						model->verticesHandle = *(fileManager->projectFiles.at(item.value()["vertices"])->assetHandle);
+
+						default:
+							break;
+						}
 					}
-					if (item.value().contains("material")) {
-						model->materialHandle = *(fileManager->projectFiles.at(item.value()["material"])->assetHandle);
-					}
-					break;
-				}
-				case Type::POINT_LIGHT:
-				{
-					PointLight* pointLight = static_cast<PointLight*>(node);
-					pointLight->color = glm::vec3(item.value()["color"]["r"],
-						item.value()["color"]["g"],
-						item.value()["color"]["b"]);
-					pointLight->radius = item.value()["radius"];
-					pointLight->strength = item.value()["strength"];
+
 					
-					break;
 				}
-				case Type::CAMERA:
-				{
+				if (node->type == Type::CAMERA) {
 					Camera* camera = static_cast<Camera*>(node);
-					camera->fov = item.value()["fov"];
-					camera->f_near = item.value()["f_near"];
-					camera->f_far = item.value()["f_far"];
-					camera->active = item.value()["active"];
-					break;
+					camera->setWindowAspectRatio(gameConfig->width, gameConfig->height);
 				}
-				default:
-					break;
-				}
-				node->transform = item.value()["transform"].get<Transform>();
-				
 
 				if (nodes.contains(id)) {
 					logError("[LOADER] Same ids");
 					throw 1;
 				}
-
 				nodes[id] = node;
+
 			}
 
 			for (const auto& item : json["nodes"].items())
@@ -131,65 +133,4 @@ public:
 		}
 		return 1;
 	}
-
-private:
-	//static void loadAssets(nlohmann::json& json, std::filesystem::path projectPath, AssetRepository* assetRepository) {
-	//	logInfo("[DRISH_LOADER] load assets");
-
-	//	if (json.contains("scripts")) {
-	//		for (const auto& item : json["scripts"].items())
-	//		{
-	//			Script* script = new Script();
-	//			script->name = item.value()["name"];
-	//			script->source = item.value()["source"];
-	//			assetRepository->scripts.appendNewSlot(script);
-	//		}
-	//	}
-
-
-	//	if (json.contains("vertices")) {
-	//		for (const auto& item : json["vertices"].items())
-	//		{
-	//			Vertices* vertices = new Vertices();
-	//			vertices->name = item.value()["name"];
-	//			//drishengine::loadModelData(projectPath / vertices->path, &vertices->data);
-	//			vertices->createBuffers();
-
-	//			assetRepository->vertices.appendNewSlot(vertices);
-	//		}
-	//	}
-
-
-	//	if (json.contains("textures")) {
-	//		for (const auto& item : json["textures"].items())
-	//		{
-	//			Texture* texture = new Texture();
-	//			texture->name = item.value()["name"];
-	//			std::string strpath = item.value()["path"];
-	//			//ImageLoader::loadImage(projectPath / texture->path, texture);
-
-	//			assetRepository->textures.appendNewSlot(texture);
-	//		}
-	//	}
-
-
-	//	if (json.contains("materials")) {
-	//		for (const auto& item : json["materials"].items())
-	//		{
-	//			Material* material = new Material();
-	//			material->name = item.value()["name"];
-	//			material->color.r = item.value()["color"]["r"];
-	//			material->color.g = item.value()["color"]["g"];
-	//			material->color.b = item.value()["color"]["b"];
-	//			material->shader = &assetRepository->defaultShader;
-
-	//			assetRepository->materials.appendNewSlot(material);
-	//				
-	//			
-	//			if (!item.value()["texture_index"].is_null()) {
-	//				material->textureHandle.index = item.value()["texture_index"];
-	//			}
-	//		}
-	//	}
-	//}
 };

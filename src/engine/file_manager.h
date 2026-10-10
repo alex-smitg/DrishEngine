@@ -74,6 +74,7 @@ public:
 
 
 	void readProjectFiles() {
+		logInfo("[FILE MANAGER] Read files from project directory");
 
 		std::map<std::string, Material*> materialsNeedTexture;
 		std::map<std::string, AssetHandle*> textures;
@@ -108,7 +109,7 @@ public:
 	}
 
 	void reload() {
-		logDebug("Reload");
+		logInfo("[FILE MANAGER] Reload files");
 
 		std::map<std::string, Material*> materialsNeedTexture;
 		std::map<std::string, AssetHandle*> textures;
@@ -120,7 +121,7 @@ public:
 				std::string extension = entry.extension().string();
 
 
-			logInfo("First load: ", entry);
+			logInfo("[FILE MANAGER] First load: ", entry);
 
 			File* file = new File();
 			file->name = filename;

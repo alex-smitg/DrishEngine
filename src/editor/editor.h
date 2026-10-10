@@ -50,9 +50,6 @@ public:
 	Camera* camera = nullptr;
 	Camera* oldCamera = nullptr;
 
-	
-
-
 
 	std::filesystem::path drishPath;
 
@@ -265,70 +262,85 @@ public:
 			}
 		}
 
-
 		std::vector<Node*> nodes;
 		world->getAllChildNodes(world, &nodes);
 		for (Node* n : nodes) {
 			nlohmann::json jsonNode = *n;
-			std::optional<Script*> scr = assetRepository->scripts.get(&n->scriptHandle);
-			if (scr.has_value()) {
-				jsonNode["script"] = scr.value()->name;
-			}
 
+			for (Field field : n->getFields()) {
+				if (field.serializable) {
+					switch (field.type) {
+					case FieldType::String:
+						jsonNode[field.name] = *static_cast<std::string*>(field.ptr);
+						break;
+					case FieldType::Int:
+						jsonNode[field.name] = *static_cast<int*>(field.ptr);
+						break;
+					case FieldType::Float:
+						jsonNode[field.name] = *static_cast<float*>(field.ptr);
+						break;
+					case FieldType::Boolean:
+						jsonNode[field.name] = *static_cast<bool*>(field.ptr);
+						break;
+					case FieldType::ScriptHandle:
+					{
+						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+						std::optional<Script*> scr = assetRepository->scripts.get(handle);
+						if (scr.has_value()) {
+							jsonNode[field.name] = scr.value()->name;
+						}
+						break;
+					}
+					case FieldType::SoundHandle:
+					{
+						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+						std::optional<Sound*> sound = assetRepository->sounds.get(handle);
+						if (sound.has_value()) {
+							jsonNode[field.name] = sound.value()->name;
+						}
+						break;
+					}
+					case FieldType::MaterialHandle:
+					{
+						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+						std::optional<Material*> mat = assetRepository->materials.get(handle);
+						if (mat.has_value()) {
+							jsonNode[field.name] = mat.value()->name;
+						}
+						break;
+					}
+					case FieldType::TextureHandle:
+					{
+						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+						std::optional<Texture*> tex = assetRepository->textures.get(handle);
+						if (tex.has_value()) {
+							jsonNode[field.name] = tex.value()->name;
+						}
+						break;
+					}
+					case FieldType::VerticesHandle:
+					{
+						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+						std::optional<Vertices*> vert = assetRepository->vertices.get(handle);
+						if (vert.has_value()) {
+							jsonNode[field.name] = vert.value()->name;
+						}
+						break;
+					}
 
-			switch (n->type)
-			{
-			case Type::BASE:
-			{
-				j["nodes"].push_back(*n);
-			}
-				break;
-			case Type::MODEL:
-			{
-				Model* model = static_cast<Model*>(n);
-				nlohmann::json jsonModel = *model;
-				std::optional<Material*> mat = assetRepository->materials.get(&model->materialHandle);
-				if (scr.has_value()) {
-					jsonModel["script"] = scr.value()->name;
+					case FieldType::Color3:
+					case FieldType::FloatVec3: {
+						glm::vec3 vec = *static_cast<glm::vec3*>(field.ptr);
+						float arr[3] = { vec.x, vec.y, vec.z };
+						jsonNode[field.name] = arr;
+						break;
+					}
+					}
 				}
-
-				if (mat.has_value()) {
-					jsonModel["material"] = mat.value()->name;
-				}
-
-				std::optional<Vertices*> ver = assetRepository->vertices.get(&model->verticesHandle);
-
-				if (ver.has_value()) {
-					jsonModel["vertices"] = ver.value()->name;
-				}
-
-				j["nodes"].push_back(jsonModel);
-
-				break;
+					
 			}
-			case Type::CAMERA:
-			{
-				Camera* camera = static_cast<Camera*>(n);
-				nlohmann::json jsonCamera = *camera;
-				if (scr.has_value()) {
-					jsonCamera["script"] = scr.value()->name;
-				}
-				j["nodes"].push_back(jsonCamera);
-				break;
-			}
-			case Type::POINT_LIGHT:
-			{
-				PointLight* pointLight = static_cast<PointLight*>(n);
-				nlohmann::json jsonPointLight = *pointLight;
-				if (scr.has_value()) {
-					jsonPointLight["script"] = scr.value()->name;
-				}
-				j["nodes"].push_back(jsonPointLight);
-				break;
-			}
-			default:
-				break;
-			}
+
+			j["nodes"].push_back(jsonNode);
 		}
 
 		j[JSON_VERSION_MAJOR_KEY_NAME] = DRISH_ENGINE_VERSION_MAJOR;
@@ -527,7 +539,7 @@ public:
 		}
 		
 
-		ImGui::Begin("Info");
+		/*ImGui::Begin("Info");
 		if (ImGui::Button("Test all script nodes")) {
 			luaRunner->updateNodesScriptEnvironment(world, assetRepository);
 		}
@@ -556,11 +568,11 @@ public:
 		}
 		ImGui::Text("Delta %f", delta);
 		ImGui::End();
-
+		*/
 		ImGui::Begin("Tree");
 		drawTree(world);
 		ImGui::End();
-
+		/*
 		ImGui::Begin("Shader", NULL);
 		
 		static bool edited = false;
@@ -570,7 +582,7 @@ public:
 			edited = false;
 			assetRepository->defaultShader.recompile();
 		}
-		ImGui::End();
+		ImGui::End();*/
 		
 		if (createPopupPopened) {
 			ImGui::OpenPopup("Create Node");
