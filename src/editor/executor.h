@@ -3,12 +3,20 @@
 #include "../engine/logger.h"
 
 namespace drishexecutor {
-	#include <Windows.h>
+	#include <Windows.h> 
+
+	HANDLE game = INVALID_HANDLE_VALUE;
 
 	void runGame(drishengine::Window *editorWindow, std::filesystem::path gamePath, std::filesystem::path projectFolderPath) {
 		logInfo("Run game");
 		logDebug ("[EXECUTOR] game path: ", gamePath.string().c_str());
 		logDebug("[EXECUTOR] game project foolder path ", projectFolderPath.string().c_str());
+
+		if (game != INVALID_HANDLE_VALUE) {
+			TerminateProcess(game, 1);
+			CloseHandle(game);
+			game = INVALID_HANDLE_VALUE;
+		}
 
 		STARTUPINFO info = { sizeof(info) };
 		LPSTR commandLineArg = strdup(projectFolderPath.string().c_str());
@@ -16,9 +24,10 @@ namespace drishexecutor {
 		if (CreateProcessA("game.exe", commandLineArg, NULL, NULL,
 			TRUE, NULL, NULL, projectFolderPath.string().c_str(),
 			&info, &processInfo)) {
-			CloseHandle(processInfo.hProcess);
+			game = processInfo.hProcess;
 			CloseHandle(processInfo.hThread);
 		}
+		
 
 		wchar_t buf[256];
 		FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
