@@ -402,10 +402,22 @@ public:
 			std::filesystem::create_directory(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
 		}
 
+		this->fileManager->readProjectFiles();
 		this->fileManager->reload();
 
-		DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository, fileManager);
+		
+		std::ifstream drishFile(drishFilePath, std::ios::binary);
+		if (drishFile.is_open()) {
+			drishFile.seekg(0, std::ios::end);
+			std::streampos size = drishFile.tellg();
+			drishFile.seekg(0, std::ios::beg);
 
+			char* data = new char[size];
+			drishFile.read(data, size);
+
+			DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository, fileManager, data, size);
+			delete[] data;
+		}
 	}
 
 	void loop(double delta) {
@@ -500,7 +512,7 @@ public:
 				if (ImGui::BeginMenuBar()) {
 					ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 2.0);
 					if (ImGui::Button("Run")) {
-						this->save();
+						this->build();
 						drishexecutor::runGame(window, "game.exe", drishPath.parent_path());
 					}
 					ImGui::EndMenuBar();

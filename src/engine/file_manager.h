@@ -70,114 +70,131 @@ public:
 	}
 
 
-	void load() {
 
-	}
 
-	void reload() {
+
+	void readProjectFiles() {
+
 		std::map<std::string, Material*> materialsNeedTexture;
 		std::map<std::string, AssetHandle*> textures;
 
-		/*for (const std::filesystem::directory_entry& entry :
-			std::filesystem::directory_iterator(projectFilesPath)) {*/
-		for (auto pair : projectFiles) {
-		
+		for (const std::filesystem::directory_entry& entry :
+			std::filesystem::directory_iterator(projectFilesPath)) {
 
-
-
-			//if (entry.is_directory()) {
-			if (false) {
+			if (entry.is_directory()) {
 			}
 			else {
-				std::filesystem::path entry = pair.second->name;
-				std::string filename = entry.filename().string();
-				std::string extension = entry.extension().string();
+				File* file = new File();
+				file->name = entry.path().filename().string();
+				projectFiles[file->name] = file;
 
-				if (false) {
+				std::ifstream f(entry.path(), std::ios::binary);
+				if (f.is_open()) {
+					f.seekg(0, std::ios::end);
+					std::streampos size = f.tellg();
+					f.seekg(0, std::ios::beg);
 
+					char* data = new char[size];
+					f.read(data, size);
+
+					file->data = data;
+					file->dataSize = size;
 				}
 				else {
-					logInfo("First load: ", entry);
+					logError("Failed to open");
+				}
+			}	
+		}
+	}
 
-					File* file = new File();
-					file->name = filename;
-					projectFiles[filename] = file;
+	void reload() {
+		logDebug("Reload");
 
-					if (extension == ".mat") {
-						Material* material = new Material();
-						material->name = filename;
-						material->shader = &assetRepository->defaultShader;
+		std::map<std::string, Material*> materialsNeedTexture;
+		std::map<std::string, AssetHandle*> textures;
+
+		
+		for (auto pair : projectFiles) {
+			std::filesystem::path entry = pair.second->name;
+			std::string filename = entry.filename().string();
+				std::string extension = entry.extension().string();
+
+
+			logInfo("First load: ", entry);
+
+			File* file = new File();
+			file->name = filename;
+			projectFiles[filename] = file;
+
+			if (extension == ".mat") {
+				Material* material = new Material();
+				material->name = filename;
+				material->shader = &assetRepository->defaultShader;
 						
-						file->type = FileType::MATERIAL;
+				file->type = FileType::MATERIAL;
 
 
-						nlohmann::json json = nlohmann::json::parse(pair.second->data, pair.second->data +
-							pair.second->dataSize);
+				nlohmann::json json = nlohmann::json::parse(pair.second->data, pair.second->data +
+					pair.second->dataSize);
 
-						material->color.r = json["color"]["r"];
-						material->color.g = json["color"]["g"];
-						material->color.b = json["color"]["b"];
-						material->shine = json["shine"];
-						material->useLight = json["useLight"];
+				material->color.r = json["color"]["r"];
+				material->color.g = json["color"]["g"];
+				material->color.b = json["color"]["b"];
+				material->shine = json["shine"];
+				material->useLight = json["useLight"];
 
-						if (json.contains("texture")) {
-							materialsNeedTexture[json["texture"]] = material;
-						}
-
-						file->assetHandle = assetRepository->materials.add(material);
-	
-								
-					}
-
-					if (extension == ".lua") {
-						Script* script = new Script();
-						script->name = filename;
-						file->assetHandle = assetRepository->scripts.add(script);
-						file->type = FileType::SCRIPT;
-
-						script->source = std::string(pair.second->data, pair.second->dataSize);
-
-						//loadScript(script);
-						
-
-					}
-					if (extension == ".png" || extension == ".jpg" || extension == "jpeg") {
-						Texture* texture = new Texture();
-						texture->name = filename;
-
-						
-
-						ImageLoaderError err = ImageLoader::loadImage((unsigned char*)pair.second->data, pair.second->dataSize, texture);
-						if (err != ImageLoaderError::OK) {
-							delete texture;
-							logError("Error loading: ", entry.string());
-						}
-						else {
-							file->assetHandle = assetRepository->textures.add(texture);
-							textures[texture->name] = file->assetHandle;
-							
-							file->type = FileType::IMAGE;
-							file->icon = texture->glid;
-						}
-
-					}
-					if (extension == ".obj") {
-						Vertices* vertices = new Vertices();
-						vertices->name = filename;
-
-						drishengine::loadObj(pair.second->data, pair.second->dataSize, vertices);
-						file->assetHandle = assetRepository->vertices.add(vertices);
-						file->type = FileType::MODEL;
-						logInfo("Generating buffers");
-						vertices->createBuffers();
-
-					}
+				if (json.contains("texture")) {
+					materialsNeedTexture[json["texture"]] = material;
 				}
 
-
-
+				file->assetHandle = assetRepository->materials.add(material);
+	
+								
 			}
 
+			if (extension == ".lua") {
+				Script* script = new Script();
+				script->name = filename;
+				file->assetHandle = assetRepository->scripts.add(script);
+				file->type = FileType::SCRIPT;
+
+				script->source = std::string(pair.second->data, pair.second->dataSize);
+
+				//loadScript(script);
+						
+
+			}
+			if (extension == ".png" || extension == ".jpg" || extension == "jpeg") {
+				Texture* texture = new Texture();
+				texture->name = filename;
+
+						
+
+				ImageLoaderError err = ImageLoader::loadImage((unsigned char*)pair.second->data, pair.second->dataSize, texture);
+				if (err != ImageLoaderError::OK) {
+					delete texture;
+					logError("Error loading: ", entry.string());
+				}
+				else {
+					file->assetHandle = assetRepository->textures.add(texture);
+					textures[texture->name] = file->assetHandle;
+							
+					file->type = FileType::IMAGE;
+					file->icon = texture->glid;
+				}
+
+			}
+			if (extension == ".obj") {
+				Vertices* vertices = new Vertices();
+				vertices->name = filename;
+
+				drishengine::loadObj(pair.second->data, pair.second->dataSize, vertices);
+				file->assetHandle = assetRepository->vertices.add(vertices);
+				file->type = FileType::MODEL;
+				logInfo("Generating buffers");
+				vertices->createBuffers();
+
+			}
 		}
 
 		for (auto pair : textures) {
@@ -185,6 +202,5 @@ public:
 				materialsNeedTexture[pair.first]->textureHandle = *pair.second;
 			}
 		}
-
 	}
 };

@@ -82,7 +82,7 @@ public:
 							editor.Render("Script");
 
 							if (ImGui::Button("Reload from disk")) {
-								fileManager->loadScript(script);
+								//fileManager->loadScript(script);
 							}
 							ImGui::EndTabItem();
 

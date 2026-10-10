@@ -80,8 +80,6 @@ int main(int argc, char* argv[]) {
 
 
 	std::map<std::string, File*> files;
-
-
 	std::ifstream data("data.bin", std::ifstream::binary);
 	if (data) {
 		char signature[5];

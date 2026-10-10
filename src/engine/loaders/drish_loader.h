@@ -25,6 +25,8 @@ public:
 		const char* drishData,
 		uint64_t dataLength) {
 		logDebug("[DRISH LOADER] ", "Load ", drishPath.string());
+
+
 		
 		try {
 
