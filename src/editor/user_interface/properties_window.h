@@ -26,7 +26,7 @@ public:
 	}
 
 	template <typename T>
-	void Selector(Field* field, std::function<std::optional<T*>(AssetHandle*)> assetGetter,
+	void Selector(const Field* field, std::function<std::optional<T*>(AssetHandle*)> assetGetter,
 		std::string payload_name,
 		std::string ass_name) {
 
@@ -56,25 +56,30 @@ public:
 		}
 		ImGui::EndGroup();
 		if (asset.has_value()) {
-			drawFields(asset.value()->getFields(), ass_name);
+			ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 4.0f);
+
+			if (asset.value()->getFields().size() != 0) {
+				if (ImGui::TreeNodeEx(asset.value()->name.c_str())) {
+					drawFields(asset.value()->getFields(), ass_name);
+					ImGui::TreePop();
+				}
+			}
+			ImGui::PopStyleVar();
 		}
 	}
 
 	void drawFields(const std::vector<Field>& fields, std::string name) {
 		Node* selectedNode = *selectedPtr;
 
-		ImGui::TableNextRow();
-		ImGui::TableNextColumn();
-		ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg,
-			ImGui::GetColorU32(ImVec4(0.0f, 0.1f, 0.2f, 1.0f)));
-		ImGui::TextColored(ImVec4(0.1, 0.7, 0.8, 1.0), name.c_str());
-		ImGui::TableNextColumn();
-		ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg,
-			ImGui::GetColorU32(ImVec4(0.0f, 0.1f, 0.2f, 1.0f))); 
 
 
-		for (int i = 0; i < fields.size(); i++) {
-			Field field = fields.at(i);
+
+		for (const Field& field : fields) {
+
+			if (!field.showInInspector) {
+				continue;
+			}
+
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::AlignTextToFramePadding();

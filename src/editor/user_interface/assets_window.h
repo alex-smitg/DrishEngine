@@ -43,9 +43,10 @@ public:
 				fileManager->reload();
 			}
 			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(1.0, 1.0));
-			if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+			if (ImGui::BeginTable("Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
 				ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 32.0f);
 				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+				ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed);
 				ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
 				ImGui::TableHeadersRow();
 
@@ -90,6 +91,18 @@ public:
 					ImGui::PopID();
 					ImGui::SameLine(0, 0);
 					ImGui::SetNextItemAllowOverlap();
+
+					if (pair.second->type == FileType::MATERIAL) {
+						/*if (ImGui::IsItemHovered())
+						{
+							std::optional<Material*> mat = assetRepository->materials.get(pair.second->assetHandle);
+							if (mat.has_value()) {
+								ImGui::ColorTooltip(pair.second->name.c_str(), (float*) mat.value(),
+									ImGuiColorEditFlags_DisplayRGB);
+							}
+						}*/
+					}
+
 					if (pair.second->icon != -1) {
 						
 						ImGui::Image(pair.second->icon, ImVec2(32, 32));
@@ -107,6 +120,9 @@ public:
 
 					ImGui::TableNextColumn();
 					ImGui::Text(pair.first.c_str());
+
+					ImGui::TableNextColumn();
+					ImGui::Text("%d", (int)pair.second->type);
 					
 					ImGui::TableNextColumn();
 					if (pair.second->assetHandle != nullptr) {
