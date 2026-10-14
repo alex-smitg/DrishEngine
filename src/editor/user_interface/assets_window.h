@@ -40,10 +40,10 @@ public:
 
 
 			if (ImGui::Button("Reload")) {
-				fileManager->reload();
+				fileManager->readProjectFiles();
 			}
 			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(1.0, 1.0));
-			if (ImGui::BeginTable("Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+			if (ImGui::BeginTable("Table", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
 				ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 32.0f);
 				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
 				ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed);
@@ -117,12 +117,17 @@ public:
 					ImGui::PopStyleVar();
 
 
-
+					if (pair.second->modified) {
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 0.0, 0.0, 1.0));
+					}
 					ImGui::TableNextColumn();
 					ImGui::Text(pair.first.c_str());
+					if (pair.second->modified) {
+						ImGui::PopStyleColor();
+					}
 
 					ImGui::TableNextColumn();
-					ImGui::Text("%d", (int)pair.second->type);
+					ImGui::Text(FILE_TYPE_STR[(int)pair.second->type]);
 					
 					ImGui::TableNextColumn();
 					if (pair.second->assetHandle != nullptr) {

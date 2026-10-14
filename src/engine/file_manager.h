@@ -18,17 +18,29 @@ enum class FileType {
 	OTHER
 };
 
+const char* FILE_TYPE_STR[] = {
+	"NONE",
+	"IMAGE",
+	"SCRIPT",
+	"MATERIAL",
+	"MODEL",
+	"OTHER"
+};
+
 
 class File {
 public:
-	std::string name = "";
+	std::string name;
 	AssetHandle* assetHandle = nullptr;
 
-	unsigned int icon = -1; //opengl texture
-
+	int icon = -1; //opengl texture
+	
+	std::filesystem::file_time_type lastWriteTime{};
 
 	char* data;
 	uint64_t dataSize = 0;
+
+	bool modified = false;
 
 	FileType type = FileType::NONE;
 
@@ -40,7 +52,7 @@ class FileManager {
 public:
 	std::filesystem::path projectFilesPath;
 
-	std::map<std::string, File*> projectFiles;
+	std::unordered_map<std::string, File*> projectFiles;
 
 	AssetRepository * assetRepository = nullptr;
 
@@ -71,23 +83,42 @@ public:
 
 
 
-
-
 	void readProjectFiles() {
 		logInfo("[FILE MANAGER] Read files from project directory");
-
-		std::map<std::string, Material*> materialsNeedTexture;
-		std::map<std::string, AssetHandle*> textures;
 
 		for (const std::filesystem::directory_entry& entry :
 			std::filesystem::directory_iterator(projectFilesPath)) {
 
+		
 			if (entry.is_directory()) {
 			}
 			else {
-				File* file = new File();
-				file->name = entry.path().filename().string();
-				projectFiles[file->name] = file;
+				File* file = nullptr;
+
+				if (auto it = projectFiles.find(entry.path().filename().string());
+					it != projectFiles.end()) {
+
+					std::filesystem::file_time_type lastWriteTime = entry.last_write_time();
+					
+					file = projectFiles.at(it->first);
+
+					if (lastWriteTime != it->second->lastWriteTime ) {
+						logInfo("[FILE MANAGER] file ", file->name," modified");
+
+						
+						file->modified = true;
+
+					}
+					
+				}
+				else {
+					logInfo("[FILE MANAGER] First load: ", entry);
+					file = new File();
+					file->name = entry.path().filename().string();
+					file->lastWriteTime = std::filesystem::last_write_time(entry.path());
+					projectFiles[file->name] = file;
+				}
+
 
 				std::ifstream f(entry.path(), std::ios::binary);
 				if (f.is_open()) {
@@ -111,21 +142,24 @@ public:
 	void reload() {
 		logInfo("[FILE MANAGER] Reload files");
 
-		std::map<std::string, Material*> materialsNeedTexture;
-		std::map<std::string, AssetHandle*> textures;
+		std::unordered_map<std::string, Material*> materialsNeedTexture;
+		std::unordered_map<std::string, AssetHandle*> textures;
 
 		
 		for (auto pair : projectFiles) {
 			std::filesystem::path entry = pair.second->name;
 			std::string filename = entry.filename().string();
-				std::string extension = entry.extension().string();
+			std::string extension = entry.extension().string();
 
 
-			logInfo("[FILE MANAGER] First load: ", entry);
+			
 
-			File* file = new File();
-			file->name = filename;
-			projectFiles[filename] = file;
+			
+
+			
+
+
+			File* file = projectFiles.at(filename);
 
 			if (extension == ".mat") {
 				Material* material = new Material();
