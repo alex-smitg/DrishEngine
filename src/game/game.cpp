@@ -45,12 +45,14 @@
 #include "../engine/looper.h"
 #include "../consts.h"
 #include "../engine/file_manager.h"
+#include "../engine/importer.h"
 
 const double targetFPS = 60.0;
 const double frameDuration = 1.0 / targetFPS;
 
 int main(int argc, char* argv[]) {
 	logInfo("Hello");
+	logInfo("Made with Drish;Engine https://github.com/alex-smitg/DrishEngine");
 	logInfo("Drish Engine version ", DRISH_ENGINE_VERSION_MAJOR, ".", 
 		DRISH_ENGINE_VERSION_MINOR);
 
@@ -69,9 +71,9 @@ int main(int argc, char* argv[]) {
 	AssetRepository assetRepository;
 	NodeRepository nodeRepository;
 	Node* world = NodeCreator::createNode(Type::BASE, "Root", &nodeRepository);
-	FileManager fileManager = FileManager(&assetRepository);
-	fileManager.projectFilesPath = drishPath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
-	//fileManager.reload();
+	logDebug("Zero arg: ", argv[0]);
+	FileManager fileManager = FileManager(argv[0]);
+
 
 	GameConfig gameConfig;
 
@@ -129,18 +131,22 @@ int main(int argc, char* argv[]) {
 			file->data = filedata;
 			file->dataSize = dataSize;
 
+		
 
-			fileManager.projectFiles[file->name] = file;
+
+			fileManager.addFile(file);
 
 			delete[] filename;
 			//delete[] filedata;
 		}
 
-		fileManager.reload();
+		
 
 		DrishLoader::load(drishPath, world, &assetRepository,
 			&gameConfig, &nodeRepository, &fileManager, jsonFileData, drishJsonSize
 		);
+
+		Importer::importAll(&fileManager, &assetRepository);
 
 		delete[] jsonFileData;
 

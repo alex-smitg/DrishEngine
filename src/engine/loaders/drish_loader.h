@@ -86,7 +86,15 @@ public:
 						case FieldType::ScriptHandle:
 						{
 							AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
-							*handle = *(fileManager->projectFiles.at(item.value()[field.name])->assetHandle);
+							auto file = fileManager->getFile(item.value()[field.name]);
+							if (file.has_value()) {
+								//*handle = *(file.value()->assetHandle);
+							}
+							else {
+								logError("[DRISH LOADER] File manager cannot get file named ",
+									item.value()[field.name]);
+							}
+							
 							break;
 						}
 

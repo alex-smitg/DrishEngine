@@ -70,11 +70,11 @@ public:
 							}
 							lastIndex = assetSlot->index;
 
-							if (ImGui::Button("Save")) {
+							/*if (ImGui::Button("Save")) {
 								script->source = editor.GetText();
 								fileManager->writeScript(script);
 								logDebug("[SCRIPT WINDOW] Script saved");
-							}
+							}*/
 							ImGui::SameLine(0.0, 1.0);
 							ImGui::Spacing();
 							

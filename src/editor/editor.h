@@ -20,7 +20,9 @@
 #include "../engine/loaders/drish_loader.h"
 #include "../engine/loaders/model_loader.h"
 #include "../engine/filedialogs.h"
-
+#include "../engine/resource.h"
+#include "../engine/file_manager.h"
+#include "../engine/importer.h"
 
 #include "executor.h"
 
@@ -29,9 +31,6 @@
 #include "user_interface/script_window.h"
 #include "user_interface/properties_window.h"
 #include "user_interface/viewport_window.h"
-
-#include "../engine/resource.h"
-#include "../engine/file_manager.h"
 
 #include "../version.h"
 #include "../consts.h"
@@ -95,7 +94,7 @@ public:
 		this->canvas = new Canvas();
 		this->camera = camera;
 
-		this->fileManager = new FileManager(this->assetRepository);
+		this->fileManager = nullptr;
 
 		this->assetWindow = new AssetWindow(assetRepository, fileManager);
 		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner, fileManager);
@@ -183,7 +182,7 @@ public:
 
 		uint64_t filesCount = 0;
 
-		for (const std::filesystem::directory_entry& entry :
+		/*for (const std::filesystem::directory_entry& entry :
 			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
 		
 			if (entry.is_directory()) {
@@ -224,7 +223,7 @@ public:
 					logError("Script import stream is closed");
 				}
 			}
-		}
+		}*/
 
 	}
 
@@ -236,7 +235,7 @@ public:
 
 		nlohmann::json j;
 
-		for (auto pair : fileManager->projectFiles) {
+		/*for (auto pair : fileManager->projectFiles) {
 			File* file = pair.second;
 			if (file->type == FileType::MATERIAL) {
 				auto mat = assetRepository->materials.get(file->assetHandle);
@@ -260,7 +259,7 @@ public:
 					}
 				}
 			}
-		}
+		}*/
 
 		std::vector<Node*> nodes;
 		world->getAllChildNodes(world, &nodes);
@@ -404,9 +403,6 @@ public:
 	void loadProject(std::filesystem::path drishFilePath) {
 		this->drishPath = drishFilePath;
 		
-
-		this->fileManager->projectFilesPath = drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME;
-
 		if (std::filesystem::exists(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME)) {
 
 		}
@@ -414,8 +410,12 @@ public:
 			std::filesystem::create_directory(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
 		}
 
+		
+		
+		this->fileManager = new FileManager(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
+		this->assetWindow->setFileManager(this->fileManager);
 		this->fileManager->readProjectFiles();
-		this->fileManager->reload();
+		Importer::importAll(this->fileManager, this->assetRepository);
 
 		
 		std::ifstream drishFile(drishFilePath, std::ios::binary);
