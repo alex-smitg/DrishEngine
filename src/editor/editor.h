@@ -2,7 +2,6 @@
 
 #include <math.h>
 
-
 #include "../engine/asset_repository.h"
 #include "../engine/loaders/image_loader.h"
 #include "../engine/shader.h"
@@ -23,6 +22,7 @@
 #include "../engine/resource.h"
 #include "../engine/file_manager.h"
 #include "../engine/importer.h"
+#include "../engine/audio_manager.h"
 
 #include "executor.h"
 
@@ -35,31 +35,28 @@
 #include "../version.h"
 #include "../consts.h"
 
-class Editor {
+class Editor
+{
 public:
 	drishengine::Window *window = nullptr;
 
-	Node* world = nullptr;
-	LuaRunner* luaRunner = nullptr;
-	AssetRepository* assetRepository = nullptr;
-	NodeRepository* nodeRepository = nullptr;
-	Graphics* graphics = nullptr;
+	Node *world = nullptr;
+	LuaRunner *luaRunner = nullptr;
+	AssetRepository *assetRepository = nullptr;
+	NodeRepository *nodeRepository = nullptr;
+	Graphics *graphics = nullptr;
 
-
-	Camera* camera = nullptr;
-	Camera* oldCamera = nullptr;
-
+	Camera *camera = nullptr;
+	Camera *oldCamera = nullptr;
 
 	std::filesystem::path drishPath;
 
-	Node* selectedNode = nullptr;
-	Node* selectedTreeNode = nullptr;
+	Node *selectedNode = nullptr;
+	Node *selectedTreeNode = nullptr;
 
 	float timeSinceLastSave = 0;
 
-	Texture* icoTexture = nullptr;
-
-
+	Texture *icoTexture = nullptr;
 
 	GameConfig gameConfig;
 
@@ -68,85 +65,79 @@ public:
 
 	bool previewCamera = false;
 
-	Canvas* canvas;
-
+	Canvas *canvas;
 
 	LogWindow logWindow;
 
-	AssetWindow* assetWindow = nullptr;
-	ScriptWindow* scriptWindow = nullptr;
-	PropertiesWindow* propertiesWindow = nullptr;
-	ViewportWindow* viewportWindow = nullptr;
+	AssetWindow *assetWindow = nullptr;
+	ScriptWindow *scriptWindow = nullptr;
+	PropertiesWindow *propertiesWindow = nullptr;
+	ViewportWindow *viewportWindow = nullptr;
 
-	FileManager* fileManager = nullptr;
+	FileManager *fileManager = nullptr;
+	AudioManager* audioManager = nullptr;
 
 	Editor(drishengine::Window *window,
-		AssetRepository *assetRepository,
-		NodeRepository *nodeRepository,
-		LuaRunner* luaRunner,
-		Camera* camera) {
+		   AssetRepository *assetRepository,
+		   NodeRepository *nodeRepository,
+		   LuaRunner *luaRunner,
+		   Camera *camera)
+	{
 		this->window = window;
 		this->luaRunner = luaRunner;
 
 		this->assetRepository = assetRepository;
 		this->nodeRepository = nodeRepository;
+		
+		this->audioManager = new AudioManager();
 
 		this->canvas = new Canvas();
 		this->camera = camera;
 
 		this->fileManager = nullptr;
 
-		this->assetWindow = new AssetWindow(assetRepository, fileManager);
+		this->assetWindow = new AssetWindow(assetRepository, fileManager, audioManager);
 		this->scriptWindow = new ScriptWindow(assetRepository, luaRunner, fileManager);
 		this->propertiesWindow = new PropertiesWindow(assetRepository, luaRunner, &selectedNode);
 		this->viewportWindow = new ViewportWindow(canvas, camera, window);
 
-		
-
 		logWarning("Drish;Engine is not drish enough");
-		
 
-
-		HMODULE hModule = GetModuleHandle(NULL); 
+		HMODULE hModule = GetModuleHandle(NULL);
 		HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(IDB_PNG1), RT_RCDATA);
 		HGLOBAL hMemory = LoadResource(hModule, hResource);
 		DWORD dwSize = SizeofResource(hModule, hResource);
 		LPVOID lpAddress = LockResource(hMemory);
 
-		unsigned char* bytes = new unsigned char[dwSize];
+		unsigned char *bytes = new unsigned char[dwSize];
 		memcpy(bytes, lpAddress, dwSize);
 
-		Texture* texture = new Texture();
+		Texture *texture = new Texture();
 		icoTexture = texture;
-		ImageLoader::loadImage(bytes, (int) dwSize, texture);
+		ImageLoader::loadImage(bytes, (int)dwSize, texture);
 
-
-		
 		HRSRC hResource2 = FindResource(hModule, MAKEINTRESOURCE(DR_FONT), RT_RCDATA);
 		HGLOBAL hMemory2 = LoadResource(hModule, hResource2);
 		DWORD dwSize2 = SizeofResource(hModule, hResource2);
 		LPVOID lpAddress2 = LockResource(hMemory2);
 
-		unsigned char* bytes2 = new unsigned char[dwSize2];
+		unsigned char *bytes2 = new unsigned char[dwSize2];
 		memcpy(bytes2, lpAddress2, dwSize2);
-		
-
-
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGui_ImplGlfw_InitForOpenGL(window->getWindow(), true);
 		ImGui_ImplOpenGL3_Init();
 
-		ImGuiIO& io = ImGui::GetIO();
+		ImGuiIO &io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.IniFilename = NULL;
 
-		ImGuiStyle& style = ImGui::GetStyle();
+		ImGuiStyle &style = ImGui::GetStyle();
 
-		//ImFont* font_body = io.Fonts->AddFontFromFileTTF("AdwaitaMonoNerdFont-Regular.ttf", 17.0f, NULL, io.Fonts->GetGlyphRangesDefault());
-		ImFont* font_body = io.Fonts->AddFontFromMemoryTTF(bytes2, (int)dwSize2, 17.0);
+		// ImFont* font_body = io.Fonts->AddFontFromFileTTF("AdwaitaMonoNerdFont-Regular.ttf", 17.0f, NULL, io.Fonts->GetGlyphRangesDefault());
+		ImFont *font_body = io.Fonts->AddFontFromMemoryTTF(bytes2, (int)dwSize2, 17.0);
 		style.Alpha = 1.0f;
 		style.DockingSeparatorSize = 1.0f;
 		style.WindowBorderSize = 1.0f;
@@ -154,14 +145,13 @@ public:
 		style.FramePadding = ImVec2(15, 2);
 		style.Colors[ImGuiCol_ModalWindowDimBg] = ImColor(0.0f, 0.0f, 0.0f, 0.5f);
 
-
-		
-		//ImageLoader::loadImage(std::filesystem::path("icon.png"), texture);
+		// ImageLoader::loadImage(std::filesystem::path("icon.png"), texture);
 
 		logInfo("Editor started");
 	}
 
-	void build() {
+	void build()
+	{
 		this->save();
 		logInfo("Begin export");
 		std::ofstream archive;
@@ -171,20 +161,21 @@ public:
 		drishjson.open(drishPath);
 		char c;
 		std::vector<char> drishFileData;
-		while ((c = drishjson.get()) != EOF) {
-			//char xr = c ^ 'g';
+		while ((c = drishjson.get()) != EOF)
+		{
+			// char xr = c ^ 'g';
 			drishFileData.push_back(c);
 		}
 		uint64_t dataSize = drishFileData.size();
-		archive.write((char*)&dataSize, sizeof(uint64_t));
-		archive.write((char*)&drishFileData[0], dataSize * sizeof(char));
+		archive.write((char *)&dataSize, sizeof(uint64_t));
+		archive.write((char *)&drishFileData[0], dataSize * sizeof(char));
 		logInfo("End export");
 
 		uint64_t filesCount = 0;
 
 		/*for (const std::filesystem::directory_entry& entry :
 			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
-		
+
 			if (entry.is_directory()) {
 			}
 			else {
@@ -194,7 +185,7 @@ public:
 
 		archive.write((char*)&filesCount, sizeof(uint64_t));
 
-		for (const std::filesystem::directory_entry& entry : 
+		for (const std::filesystem::directory_entry& entry :
 			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
 
 
@@ -213,8 +204,8 @@ public:
 					uint64_t filenameSize = filename.size();
 					archive.write((char*)&filenameSize, sizeof(uint64_t));
 					archive.write(filename.c_str(), filename.size());
-					
-					
+
+
 					uint64_t dataSize = buf.str().size();
 					archive.write((char*)&dataSize, sizeof(uint64_t));
 					archive << buf.str();
@@ -224,11 +215,10 @@ public:
 				}
 			}
 		}*/
-
 	}
 
-
-	void save() {
+	void save()
+	{
 		timeSinceLastSave = 0;
 
 		logInfo("Save");
@@ -241,7 +231,7 @@ public:
 				auto mat = assetRepository->materials.get(file->assetHandle);
 				if (mat.has_value()) {
 					Material* material = mat.value();
-					
+
 
 					std::ofstream f(fileManager->projectFilesPath / pair.first);
 					if (f.is_open()) {
@@ -261,82 +251,91 @@ public:
 			}
 		}*/
 
-		std::vector<Node*> nodes;
+		std::vector<Node *> nodes;
 		world->getAllChildNodes(world, &nodes);
-		for (Node* n : nodes) {
+		for (Node *n : nodes)
+		{
 			nlohmann::json jsonNode = *n;
 
-			for (Field field : n->getFields()) {
-				if (field.serializable) {
-					switch (field.type) {
+			for (Field field : n->getFields())
+			{
+				if (field.serializable)
+				{
+					switch (field.type)
+					{
 					case FieldType::String:
-						jsonNode[field.name] = *static_cast<std::string*>(field.ptr);
+						jsonNode[field.name] = *static_cast<std::string *>(field.ptr);
 						break;
 					case FieldType::Int:
-						jsonNode[field.name] = *static_cast<int*>(field.ptr);
+						jsonNode[field.name] = *static_cast<int *>(field.ptr);
 						break;
 					case FieldType::Float:
-						jsonNode[field.name] = *static_cast<float*>(field.ptr);
+						jsonNode[field.name] = *static_cast<float *>(field.ptr);
 						break;
 					case FieldType::Boolean:
-						jsonNode[field.name] = *static_cast<bool*>(field.ptr);
+						jsonNode[field.name] = *static_cast<bool *>(field.ptr);
 						break;
 					case FieldType::ScriptHandle:
 					{
-						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
-						std::optional<Script*> scr = assetRepository->scripts.get(handle);
-						if (scr.has_value()) {
+						AssetHandle *handle = static_cast<AssetHandle *>(field.ptr);
+						std::optional<Script *> scr = assetRepository->scripts.get(handle);
+						if (scr.has_value())
+						{
 							jsonNode[field.name] = scr.value()->name;
 						}
 						break;
 					}
 					case FieldType::SoundHandle:
 					{
-						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
-						std::optional<Sound*> sound = assetRepository->sounds.get(handle);
-						if (sound.has_value()) {
+						AssetHandle *handle = static_cast<AssetHandle *>(field.ptr);
+						std::optional<Sound *> sound = assetRepository->sounds.get(handle);
+						if (sound.has_value())
+						{
 							jsonNode[field.name] = sound.value()->name;
 						}
 						break;
 					}
 					case FieldType::MaterialHandle:
 					{
-						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
-						std::optional<Material*> mat = assetRepository->materials.get(handle);
-						if (mat.has_value()) {
+						AssetHandle *handle = static_cast<AssetHandle *>(field.ptr);
+						std::optional<Material *> mat = assetRepository->materials.get(handle);
+						if (mat.has_value())
+						{
 							jsonNode[field.name] = mat.value()->name;
 						}
 						break;
 					}
 					case FieldType::TextureHandle:
 					{
-						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
-						std::optional<Texture*> tex = assetRepository->textures.get(handle);
-						if (tex.has_value()) {
+						AssetHandle *handle = static_cast<AssetHandle *>(field.ptr);
+						std::optional<Texture *> tex = assetRepository->textures.get(handle);
+						if (tex.has_value())
+						{
 							jsonNode[field.name] = tex.value()->name;
 						}
 						break;
 					}
 					case FieldType::VerticesHandle:
 					{
-						AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
-						std::optional<Vertices*> vert = assetRepository->vertices.get(handle);
-						if (vert.has_value()) {
+						AssetHandle *handle = static_cast<AssetHandle *>(field.ptr);
+						std::optional<Vertices *> vert = assetRepository->vertices.get(handle);
+						if (vert.has_value())
+						{
 							jsonNode[field.name] = vert.value()->name;
 						}
 						break;
 					}
 
 					case FieldType::Color3:
-					case FieldType::FloatVec3: {
-						glm::vec3 vec = *static_cast<glm::vec3*>(field.ptr);
-						float arr[3] = { vec.x, vec.y, vec.z };
+					case FieldType::FloatVec3:
+					{
+						glm::vec3 vec = *static_cast<glm::vec3 *>(field.ptr);
+						float arr[3] = {vec.x, vec.y, vec.z};
 						jsonNode[field.name] = arr;
 						break;
 					}
 					}
 				}
-					
 			}
 
 			j["nodes"].push_back(jsonNode);
@@ -348,46 +347,56 @@ public:
 		j[JSON_NEXT_NODE_ID_KEY_NAME] = nextNodeId;
 
 		logDebug("Next node id: ", nextNodeId);
-		
+
 		std::ofstream file(drishPath, std::ofstream::trunc);
-		if (file.is_open()) {
+		if (file.is_open())
+		{
 			file << std::setw(4) << j << std::endl;
 		}
 
 		logInfo("Save success");
 	}
 
-	void showStartPopup() {
-		if (startPopupPopened) {
+	void showStartPopup()
+	{
+		if (startPopupPopened)
+		{
 			ImGui::OpenPopup("Start");
 		}
-		if (ImGui::BeginPopupModal("Start", (bool*)0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar)) {
+		if (ImGui::BeginPopupModal("Start", (bool *)0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar))
+		{
 			ImGui::Image(icoTexture->glid, ImVec2(256, 256));
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
 			ImGui::Text("%d.%d", DRISH_ENGINE_VERSION_MAJOR,
-				DRISH_ENGINE_VERSION_MINOR);
+						DRISH_ENGINE_VERSION_MINOR);
 			ImGui::PopStyleColor();
 
-			if (ImGui::Button("Load .drish project", ImVec2(-1.0f, 0.0f))) {
+			if (ImGui::Button("Load .drish project", ImVec2(-1.0f, 0.0f)))
+			{
 				drishPath = drishengine::openDrishOpenFileDialog();
-				
-				if (drishPath.empty()) {} 
-				else {
+
+				if (drishPath.empty())
+				{
+				}
+				else
+				{
 					loadProject(drishPath);
 
 					startPopupPopened = false;
 					ImGui::CloseCurrentPopup();
 				}
 			};
-			
-			if (ImGui::Button("Create new project", ImVec2(-1.0f, 0.0f))) {
+
+			if (ImGui::Button("Create new project", ImVec2(-1.0f, 0.0f)))
+			{
 				drishPath = drishengine::openDrishSaveDialog();
 
-				
-
-				if (drishPath.empty()) {}
-				else {
+				if (drishPath.empty())
+				{
+				}
+				else
+				{
 					this->save();
 					std::filesystem::create_directory(drishPath.parent_path() / "project");
 					startPopupPopened = false;
@@ -395,36 +404,36 @@ public:
 				}
 			}
 
-			
 			ImGui::EndPopup();
 		}
 	}
 
-	void loadProject(std::filesystem::path drishFilePath) {
+	void loadProject(std::filesystem::path drishFilePath)
+	{
 		this->drishPath = drishFilePath;
-		
-		if (std::filesystem::exists(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME)) {
 
+		if (std::filesystem::exists(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME))
+		{
 		}
-		else {
+		else
+		{
 			std::filesystem::create_directory(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
 		}
 
-		
-		
 		this->fileManager = new FileManager(drishFilePath.parent_path() / PROJECT_FILES_DIRECTORY_NAME);
-		this->assetWindow->setFileManager(this->fileManager);
 		this->fileManager->readProjectFiles();
-		Importer::importAll(this->fileManager, this->assetRepository);
+		this->assetWindow->setFileManager(this->fileManager);
 
-		
+		Importer::importAll(this->fileManager, this->assetRepository, this->audioManager);
+
 		std::ifstream drishFile(drishFilePath, std::ios::binary);
-		if (drishFile.is_open()) {
+		if (drishFile.is_open())
+		{
 			drishFile.seekg(0, std::ios::end);
 			std::streampos size = drishFile.tellg();
 			drishFile.seekg(0, std::ios::beg);
 
-			char* data = new char[size];
+			char *data = new char[size];
 			drishFile.read(data, size);
 
 			DrishLoader::load(drishFilePath, world, assetRepository, &gameConfig, nodeRepository, fileManager, data, size);
@@ -432,20 +441,21 @@ public:
 		}
 	}
 
-	void loop(double delta) {
+	void loop(double delta)
+	{
 		timeSinceLastSave += delta;
 
-		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGuiViewport *viewport = ImGui::GetMainViewport();
 		ImGuiID viewportDockedID = ImGui::DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
-
 		static bool docked = false;
-		if (!docked) {
+		if (!docked)
+		{
 			ImVec2 workCenter = ImGui::GetMainViewport()->GetWorkCenter();
 			ImGuiID id = ImGui::GetID("Drish Engine");
 			ImGui::DockBuilderRemoveNode(id);
 			ImGui::DockBuilderAddNode(id);
-			ImVec2 nodePosition{ 0, 0 };
+			ImVec2 nodePosition{0, 0};
 			ImGui::DockBuilderSetNodeSize(id, ImVec2(window->width, window->height));
 			ImGui::DockBuilderSetNodePos(id, nodePosition);
 			ImGuiID treeDock = ImGui::DockBuilderSplitNode(viewportDockedID, ImGuiDir_Left, 0.5f, nullptr, &viewportDockedID);
@@ -457,7 +467,7 @@ public:
 			ImGuiID configDock;
 			ImGuiID scriptEditorDock = ImGui::DockBuilderSplitNode(rightDock, ImGuiDir_Up, 0.6f, nullptr, &configDock);
 			ImGuiID logDock = ImGui::DockBuilderSplitNode(configDock, ImGuiDir_Down, 0.6f, nullptr, &configDock);
-			
+
 			ImGui::DockBuilderDockWindow("Tree", treeDock);
 			ImGui::DockBuilderDockWindow("Properties", inspectorDock);
 			ImGui::DockBuilderDockWindow("Log", logDock);
@@ -471,11 +481,13 @@ public:
 
 		ImGuiKeyChord chord = ImGuiMod_Ctrl | ImGuiKey_S;
 		bool isRouted = ImGui::GetShortcutRoutingData(chord)->RoutingCurr != ImGuiKeyOwner_NoOwner;
-		if (!isRouted && ImGui::IsKeyChordPressed(chord)) {
+		if (!isRouted && ImGui::IsKeyChordPressed(chord))
+		{
 			this->save();
 		}
 
-		if (drishPath.empty()) {
+		if (drishPath.empty())
+		{
 			showStartPopup();
 		}
 
@@ -483,12 +495,13 @@ public:
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Save project", ImGui::GetKeyChordName(chord))) {
+				if (ImGui::MenuItem("Save project", ImGui::GetKeyChordName(chord)))
+				{
 					this->save();
 				}
 				ImGui::EndMenu();
 			}
-			//if (ImGui::BeginMenu("Edit"))
+			// if (ImGui::BeginMenu("Edit"))
 			//{
 			//	//if (ImGui::MenuItem("Undo", "Ctrl+Z")) {}
 			//	//if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false)) {} // Disabled item
@@ -497,33 +510,49 @@ public:
 			//	//if (ImGui::MenuItem("Copy", "Ctrl+C")) {}
 			//	//if (ImGui::MenuItem("Paste", "Ctrl+V")) {}
 			//	ImGui::EndMenu();
-			//}
+			// }
 			if (ImGui::BeginMenu("View"))
 			{
-				if (ImGui::MenuItem("Log")) { logWindow.open = true; }
-				if (ImGui::MenuItem("Assets")) { assetWindow->open = true; }
-				if (ImGui::MenuItem("Script Editor")) { scriptWindow->open = true; }
-				if (ImGui::MenuItem("Properties")) { propertiesWindow->open = true; }
+				if (ImGui::MenuItem("Log"))
+				{
+					logWindow.open = true;
+				}
+				if (ImGui::MenuItem("Assets"))
+				{
+					assetWindow->open = true;
+				}
+				if (ImGui::MenuItem("Script Editor"))
+				{
+					scriptWindow->open = true;
+				}
+				if (ImGui::MenuItem("Properties"))
+				{
+					propertiesWindow->open = true;
+				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Game")) {
-				if (ImGui::MenuItem("Export")) {
+			if (ImGui::BeginMenu("Game"))
+			{
+				if (ImGui::MenuItem("Export"))
+				{
 					this->build();
 				}
 				ImGui::EndMenu();
 			}
 
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8, 0.5, 0.5, 1.0));
-			ImGui::Text("%i", (int) timeSinceLastSave);
+			ImGui::Text("%i", (int)timeSinceLastSave);
 			ImGui::PopStyleColor();
-			
 
 			ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_MenuBar;
 
-			if (ImGui::BeginViewportSideBar("#top", viewport, ImGuiDir_Up, 32, window_flags)) {
-				if (ImGui::BeginMenuBar()) {
+			if (ImGui::BeginViewportSideBar("#top", viewport, ImGuiDir_Up, 32, window_flags))
+			{
+				if (ImGui::BeginMenuBar())
+				{
 					ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 2.0);
-					if (ImGui::Button("Run")) {
+					if (ImGui::Button("Run"))
+					{
 						this->build();
 						drishexecutor::runGame(window, "game.exe", drishPath.parent_path());
 					}
@@ -532,12 +561,8 @@ public:
 				ImGui::End();
 			}
 
-
-
-
 			ImGui::EndMainMenuBar();
 		}
-		
 
 		/*ImGui::Begin("Info");
 		if (ImGui::Button("Test all script nodes")) {
@@ -545,7 +570,7 @@ public:
 		}
 		if (selectedNode != nullptr) {
 			if (selectedNode->type == Type::CAMERA) {
-				ImGui::Text("%i", camera);			
+				ImGui::Text("%i", camera);
 				if (ImGui::Checkbox("Camera Preview", &previewCamera)) {
 					if (previewCamera) {
 						oldCamera = camera;
@@ -574,7 +599,7 @@ public:
 		ImGui::End();
 		/*
 		ImGui::Begin("Shader", NULL);
-		
+
 		static bool edited = false;
 		edited |= ImGui::InputTextMultiline("Vertex", &assetRepository->defaultShader.vertexCode);
 		edited |= ImGui::InputTextMultiline("Fragment", &assetRepository->defaultShader.fragmentCode);
@@ -583,15 +608,18 @@ public:
 			assetRepository->defaultShader.recompile();
 		}
 		ImGui::End();*/
-		
-		if (createPopupPopened) {
+
+		if (createPopupPopened)
+		{
 			ImGui::OpenPopup("Create Node");
 		}
-		if (ImGui::BeginPopupModal("Create Node", &createPopupPopened, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if (ImGui::BeginPopupModal("Create Node", &createPopupPopened, ImGuiWindowFlags_AlwaysAutoResize))
+		{
 			ImGui::Text("Create node");
 
-			if (ImGui::Button("Node")) {
-				Node* n = NodeCreator::createNode(Type::BASE, "node", nodeRepository);
+			if (ImGui::Button("Node"))
+			{
+				Node *n = NodeCreator::createNode(Type::BASE, "node", nodeRepository);
 				selectedTreeNode->appendChild(n);
 
 				createPopupPopened = false;
@@ -599,17 +627,19 @@ public:
 			};
 			ImGui::SetItemTooltip("Simple node");
 
-			if (ImGui::Button("Model")) {
-				Node* n = NodeCreator::createNode(Type::MODEL, "model", nodeRepository);
+			if (ImGui::Button("Model"))
+			{
+				Node *n = NodeCreator::createNode(Type::MODEL, "model", nodeRepository);
 				selectedTreeNode->appendChild(n);
-				
+
 				createPopupPopened = false;
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SetItemTooltip("3d model");
 
-			if (ImGui::Button("Camera")) {
-				Node* n = NodeCreator::createNode(Type::CAMERA, "camera", nodeRepository);
+			if (ImGui::Button("Camera"))
+			{
+				Node *n = NodeCreator::createNode(Type::CAMERA, "camera", nodeRepository);
 				selectedTreeNode->appendChild(n);
 
 				createPopupPopened = false;
@@ -617,8 +647,9 @@ public:
 			}
 			ImGui::SetItemTooltip("Camera");
 
-			if (ImGui::Button("PointLight")) {
-				Node* n = NodeCreator::createNode(Type::POINT_LIGHT, "p_light", nodeRepository);
+			if (ImGui::Button("PointLight"))
+			{
+				Node *n = NodeCreator::createNode(Type::POINT_LIGHT, "p_light", nodeRepository);
 				selectedTreeNode->appendChild(n);
 
 				createPopupPopened = false;
@@ -626,8 +657,9 @@ public:
 			}
 			ImGui::SetItemTooltip("Light");
 
-			if (ImGui::Button("Sound Player")) {
-				Node* n = NodeCreator::createNode(Type::SOUND_PLAYER, "Sound Player", nodeRepository);
+			if (ImGui::Button("Sound Player"))
+			{
+				Node *n = NodeCreator::createNode(Type::SOUND_PLAYER, "Sound Player", nodeRepository);
 				selectedTreeNode->appendChild(n);
 
 				createPopupPopened = false;
@@ -644,7 +676,6 @@ public:
 		propertiesWindow->draw();
 		viewportWindow->draw();
 
-
 		ImGui::Begin("Game config");
 
 		ImGui::InputInt("Width", &gameConfig.width);
@@ -655,20 +686,22 @@ public:
 
 		ImGui::ShowDemoWindow();
 	}
-	void drawTree(Node* node) {
-		
+	void drawTree(Node *node)
+	{
 
 		ImGuiTreeNodeFlags flags;
 		flags = ImGuiTreeNodeFlags_DrawLinesToNodes |
-			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
-			ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen;
+				ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
+				ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen;
 
-		if (selectedNode == node) {
+		if (selectedNode == node)
+		{
 			flags |= ImGuiTreeNodeFlags_Selected;
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0, 1.0, 0.9, 1.0));
 		}
 
-		if (node->children.empty()) {
+		if (node->children.empty())
+		{
 			flags |= ImGuiTreeNodeFlags_Leaf;
 		}
 		ImGui::PushID(node->id);
@@ -682,38 +715,43 @@ public:
 		default:
 			break;
 		}
-		
+
 		ImGui::SameLine();*/
 		ImGui::SetNextItemAllowOverlap();
 		bool nodeOpen = ImGui::TreeNodeEx(node->name.c_str(), flags);
-		
-		if (ImGui::BeginDragDropSource()) {
-			ImGui::SetDragDropPayload("NODE_MOVE", static_cast<void*>(node), sizeof(Node*));
+
+		if (ImGui::BeginDragDropSource())
+		{
+			ImGui::SetDragDropPayload("NODE_MOVE", static_cast<void *>(node), sizeof(Node *));
 			/*ImGui::Text(node->name.c_str());
 			ImGui::Text("Dragging object %p", static_cast<void*>(node));*/
 			ImGui::EndDragDropSource();
 		}
-		if (ImGui::BeginDragDropTarget()) {
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("NODE_MOVE")) {
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("NODE_MOVE"))
+			{
 				/*Node* payload_node = (Node*)payload->Data;
 				std::cout << (Node*)payload->Data << std::endl;
 				std::cout << static_cast<Node*>(payload->Data);
 				std::cout << payload->Data << std::endl;
 				std::cout << payload_node->name;*/
-				
 			}
 			ImGui::EndDragDropTarget();
-			
 		}
 
-		if (selectedNode == node) {
+		if (selectedNode == node)
+		{
 			ImGui::PopStyleColor();
 		}
-		if (ImGui::IsItemClicked()) {
-			if (selectedNode == node) {
+		if (ImGui::IsItemClicked())
+		{
+			if (selectedNode == node)
+			{
 				selectedNode = node;
 			}
-			else {
+			else
+			{
 				selectedNode = node;
 			}
 		}
@@ -726,37 +764,37 @@ public:
 
 			selectedTreeNode = node;
 
-
-			if (ImGui::MenuItem("Create child node")) {
+			if (ImGui::MenuItem("Create child node"))
+			{
 				ImGui::OpenPopup("Create Node");
 				createPopupPopened = true;
 				logDebug("[EDITOR] ", "createPopupPopened: ", createPopupPopened);
 			}
 
-			if (node->name != "World") {
+			if (node->name != "World")
+			{
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 0.0, 0.0, 1.0));
-				if (ImGui::MenuItem("Delete")) { 
+				if (ImGui::MenuItem("Delete"))
+				{
 					nodeRepository->deleteNode(node);
-					node->destroy(); 
+					node->destroy();
 					selectedNode = nullptr;
 				}
 				ImGui::PopStyleColor();
-
 			}
 
 			ImGui::EndPopup();
 		}
 
-		if (nodeOpen) {
-			for (Node* node : node->children) {
+		if (nodeOpen)
+		{
+			for (Node *node : node->children)
+			{
 				drawTree(node);
 			}
 
 			ImGui::TreePop();
-
 		}
 		ImGui::PopID();
 	};
-
-	
 };

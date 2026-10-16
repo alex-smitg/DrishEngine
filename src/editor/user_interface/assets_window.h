@@ -3,98 +3,99 @@
 #include <string>
 #include <filesystem>
 #include <typeinfo>
+#include <algorithm>
 
 #include "imgui_docking/imgui.h"
 
 #include "../../engine/asset_repository.h"
-
 #include "../../engine/file_manager.h"
-
 #include "../../engine/logger.h"
+#include "../../engine/importer.h"
 
 #include "editor_window_base.h"
 
-
 #include <map>
 
-
-class AssetWindow: public EditorWindowBase
+class AssetWindow : public EditorWindowBase
 {
 private:
 	AssetRepository *assetRepository = nullptr;
-	FileManager * fileManager = nullptr;
+	FileManager *fileManager = nullptr;
+	AudioManager* audioManager = nullptr;
 
 public:
-
-	void setFileManager(FileManager* fileManager) {
+	void setFileManager(FileManager *fileManager)
+	{
 		this->fileManager = fileManager;
 	}
 
-	AssetWindow(AssetRepository *assetRepository, FileManager* fileManager)
+	AssetWindow(AssetRepository *assetRepository, FileManager *fileManager, AudioManager* audioManager)
 	{
 		this->assetRepository = assetRepository;
 		this->fileManager = fileManager;
-
+		this->audioManager = audioManager;
 	}
 
 	void draw() override
 	{
 		if (open)
 		{
-			
 
 			ImGui::Begin("Assets", &open);
 
-			if (fileManager != nullptr) {
+			if (fileManager != nullptr)
+			{
 
-				if (ImGui::Button("Reload")) {
+				if (ImGui::Button("Reload"))
+				{
 					fileManager->readProjectFiles();
+					Importer::importAll(this->fileManager, this->assetRepository, this->audioManager);
 				}
 				ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(1.0, 1.0));
-				if (ImGui::BeginTable("Table", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
+				if (ImGui::BeginTable("Table", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit))
+				{
 					ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 32.0f);
 					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
 					ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed);
 					ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed);
 					ImGui::TableHeadersRow();
 
-
 					int n = 0;
 
-
-					for (auto const& pair : fileManager->getProjectFiles()) {
-
-
+					for (auto const &pair : fileManager->getProjectFiles())
+					{
 
 						ImGui::TableNextRow();
-
-
 
 						ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
 						ImGui::TableNextColumn();
 						static bool selected = false;
 						ImGui::PushID(n);
-						ImGui::Selectable("##row", &selected, ImGuiSelectableFlags_SpanAllColumns |
-							ImGuiSelectableFlags_AllowOverlap, ImVec2(0, 32));
-						if (pair.second->assetHandle && ImGui::BeginDragDropSource()) {
+						ImGui::Selectable("##row", &selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap, ImVec2(0, 32));
+						if (pair.second->assetHandle && ImGui::BeginDragDropSource())
+						{
 							int index = pair.second->assetHandle->index;
 
 							std::string payloadType = "SCRIPT";
 
-							if (pair.second->type == FileType::IMAGE) payloadType = "TEXTURE";
-							if (pair.second->type == FileType::SCRIPT) payloadType = "SCRIPT";
-							if (pair.second->type == FileType::MODEL) payloadType = "VERTICES";
-							if (pair.second->type == FileType::MATERIAL) payloadType = "MATERIAL";
+							if (pair.second->type == FileType::IMAGE)
+								payloadType = "TEXTURE";
+							if (pair.second->type == FileType::SCRIPT)
+								payloadType = "SCRIPT";
+							if (pair.second->type == FileType::MODEL)
+								payloadType = "VERTICES";
+							if (pair.second->type == FileType::MATERIAL)
+								payloadType = "MATERIAL";
 
 							ImGui::SetDragDropPayload(payloadType.c_str(), &index, sizeof(int));
 
 							ImGui::Text(pair.first.c_str());
 
-							if (pair.second->type == FileType::IMAGE) {
+							if (pair.second->type == FileType::IMAGE)
+							{
 
 								ImGui::Image(pair.second->icon, ImVec2(128, 128));
 							}
-
 
 							ImGui::EndDragDropSource();
 						}
@@ -102,7 +103,28 @@ public:
 						ImGui::SameLine(0, 0);
 						ImGui::SetNextItemAllowOverlap();
 
-						if (pair.second->type == FileType::MATERIAL) {
+						if (pair.second->type == FileType::SCRIPT)
+						{
+							if (ImGui::IsItemHovered())
+							{
+
+								std::optional<Script *> scr = assetRepository->scripts.get(pair.second->assetHandle);
+								if (scr.has_value())
+								{
+									ImGui::BeginTooltip();
+
+									Script *script = scr.value();
+									int length = std::min((int)script->source.length(), 50);
+
+									ImGui::TextUnformatted(script->source.c_str(), script->source.c_str() + length);
+
+									ImGui::EndTooltip();
+								}
+							}
+						}
+
+						if (pair.second->type == FileType::MATERIAL)
+						{
 							/*if (ImGui::IsItemHovered())
 							{
 								std::optional<Material*> mat = assetRepository->materials.get(pair.second->assetHandle);
@@ -113,7 +135,8 @@ public:
 							}*/
 						}
 
-						if (pair.second->icon != -1) {
+						if (pair.second->icon != -1)
+						{
 
 							ImGui::Image(pair.second->icon, ImVec2(32, 32));
 							if (ImGui::IsItemHovered())
@@ -126,13 +149,14 @@ public:
 
 						ImGui::PopStyleVar();
 
-
-						if (!pair.second->imported) {
+						if (!pair.second->imported)
+						{
 							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0, 0.0, 0.0, 1.0));
 						}
 						ImGui::TableNextColumn();
 						ImGui::Text(pair.first.c_str());
-						if (!pair.second->imported) {
+						if (!pair.second->imported)
+						{
 							ImGui::PopStyleColor();
 						}
 
@@ -140,77 +164,76 @@ public:
 						ImGui::Text(FILE_TYPE_STR[(int)pair.second->type]);
 
 						ImGui::TableNextColumn();
-						if (pair.second->assetHandle != nullptr) {
+						if (pair.second->assetHandle != nullptr)
+						{
 							ImGui::Text(std::to_string(pair.second->assetHandle->index).c_str());
 						}
 						n++;
 					}
-
 
 					ImGui::EndTable();
 				}
 
 				ImGui::PopStyleVar();
 
-
 				if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 				{
 					ImGui::OpenPopup("menu");
 				}
-
 
 				static bool createPopupOpened = false;
 				static FileType popupType = FileType::NONE;
 
 				if (ImGui::BeginPopup("menu"))
 				{
-					if (ImGui::MenuItem("Create script")) {
+					if (ImGui::MenuItem("Create script"))
+					{
 						createPopupOpened = true;
 						popupType = FileType::SCRIPT;
 					}
-					if (ImGui::MenuItem("Create material")) {
+					if (ImGui::MenuItem("Create material"))
+					{
 						createPopupOpened = true;
 						popupType = FileType::MATERIAL;
 					}
 
-
 					ImGui::EndPopup();
 				}
 
-
-
-				if (createPopupOpened) {
+				if (createPopupOpened)
+				{
 					ImGui::OpenPopup("Popup", 0);
 				}
 
-				if (ImGui::BeginPopupModal("Popup")) {
+				if (ImGui::BeginPopupModal("Popup"))
+				{
 
 					static bool buttonDisabled = false;
 
 					std::string ext = "";
 					static std::string name = "";
 
-					if (popupType == FileType::MATERIAL) {
+					if (popupType == FileType::MATERIAL)
+					{
 						ext = ".mat";
 						ImGui::Text("Create material");
 					}
-					if (popupType == FileType::SCRIPT) {
+					if (popupType == FileType::SCRIPT)
+					{
 						ext = ".lua";
 						ImGui::Text("Create script");
 					}
 
-					if (ImGui::InputText(ext.c_str(), &name, ImGuiInputTextFlags_ElideLeft |
-						ImGuiInputTextFlags_CallbackCharFilter |
-						ImGuiInputTextFlags_EnterReturnsTrue
-						, [](ImGuiInputTextCallbackData* data) {
+					if (ImGui::InputText(ext.c_str(), &name, ImGuiInputTextFlags_ElideLeft | ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_EnterReturnsTrue, [](ImGuiInputTextCallbackData *data)
+										 {
 							const ImWchar c = data->EventChar;
 
 							/*if (!(c >= 'A' && c <= 'Z')) {
 								return 1;
 							}*/
 
-							return 0; })) {
-
+							return 0; }))
+					{
 					}
 
 					/*if (ImGui::IsItemEdited()) {
@@ -220,22 +243,21 @@ public:
 						}
 					}*/
 
-
-
-					if (ImGui::Button("Cancel")) {
+					if (ImGui::Button("Cancel"))
+					{
 						ImGui::CloseCurrentPopup();
 						createPopupOpened = false;
 						name = "";
 					}
 					ImGui::SameLine();
 
-
-
-					if (name.empty()) {
+					if (name.empty())
+					{
 						buttonDisabled = true;
 					}
 
-					if (buttonDisabled) ImGui::BeginDisabled();
+					if (buttonDisabled)
+						ImGui::BeginDisabled();
 
 					/*if (ImGui::Button("Add")) {
 
@@ -286,12 +308,17 @@ public:
 						name = "";
 					};*/
 
-					if (buttonDisabled) ImGui::EndDisabled();
+					if (buttonDisabled)
+						ImGui::EndDisabled();
 
 					ImGui::EndPopup();
 				}
 			}
-	
+			else
+			{
+				ImGui::Text("Empty");
+			}
+
 			ImGui::End();
 		}
 	}

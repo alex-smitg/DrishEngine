@@ -12,99 +12,98 @@
 #include "assets/vertices.h"
 #include "assets/sound.h"
 
-
 #include "loaders/image_loader.h"
 #include "loaders/model_loader.h"
 #include "logger.h"
 
 template <typename T>
-class AssetSlot {
+class AssetSlot
+{
 public:
-	T* asset = nullptr;
+	T *asset = nullptr;
 	int index = -1;
 	bool is_valid = false;
 };
 
-
 template <typename T>
-class AssetsContainer {
+class AssetsContainer
+{
 public:
-	std::vector<AssetSlot<T>*> slots;
+	std::vector<AssetSlot<T> *> slots;
 
-	void remove(int index) {
+	void remove(int index)
+	{
 		slots[index]->asset = nullptr;
 		slots[index]->is_valid = false;
 	}
 
-	int size() {
+	int size()
+	{
 		return slots.size();
 	}
 
-
-
-	std::vector<T*> getAssets() {
-		std::vector<T*> assets;
-		for (AssetSlot<Material>* assSlot : slots) {
-			if (assSlot->is_valid) {
-				assets.push_back(assSlot->asset);
-			}
-		}
-		return assets;
-	}
-
-	AssetHandle* appendNewSlot(T* asset) {
-		AssetSlot<T>* slot = new AssetSlot<T>();
+	AssetHandle *appendNewSlot(T *asset)
+	{
+		AssetSlot<T> *slot = new AssetSlot<T>();
 		slot->index = slots.size();
 		slots.push_back(slot);
 		slot->asset = asset;
 		slot->is_valid = true;
 
-
-		AssetHandle* assHandle = new AssetHandle();
+		AssetHandle *assHandle = new AssetHandle();
 		assHandle->index = slot->index;
 		return assHandle;
 	}
 
+	AssetHandle *add(T *asset)
+	{
+		AssetSlot<T> *freeSlot = nullptr;
 
-	AssetHandle* add(T* asset){
-		AssetSlot<T>* freeSlot = nullptr;
-
-		for (AssetSlot<T>* assetSlot : slots) {
-			if (!assetSlot->is_valid) {
+		for (AssetSlot<T> *assetSlot : slots)
+		{
+			if (!assetSlot->is_valid)
+			{
 				freeSlot = assetSlot;
 
 				break;
 			}
 		}
-		if (freeSlot) {
+		if (freeSlot)
+		{
 			freeSlot->asset = asset;
 			freeSlot->is_valid = true;
-			AssetHandle* assHandle = new AssetHandle();
+			AssetHandle *assHandle = new AssetHandle();
 			assHandle->index = freeSlot->index;
 			return assHandle;
 		}
-		else {
+		else
+		{
 			return appendNewSlot(asset);
 		}
 	}
 
-	std::optional<T*> get(AssetHandle* assHolder) {
-		if (assHolder->index == INVALID_INDEX) {
+	std::optional<T *> get(AssetHandle *assHolder)
+	{
+		if (!assHolder) {
 			return {};
 		}
-		AssetSlot<T>* container = slots[assHolder->index];
 
+		if (assHolder->index == INVALID_INDEX)
+		{
+			return {};
+		}
+		AssetSlot<T> *container = slots[assHolder->index];
 
-		if (container->is_valid) {
+		if (container->is_valid)
+		{
 			return container->asset;
 		}
-		else {
+		else
+		{
 			return {};
 		}
 	}
 };
-
-
 
 class AssetRepository
 {
@@ -114,9 +113,6 @@ public:
 	AssetsContainer<Texture> textures;
 	AssetsContainer<Vertices> vertices;
 	AssetsContainer<Sound> sounds;
-
-
-
 
 	Shader defaultShader;
 };

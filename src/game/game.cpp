@@ -2,7 +2,6 @@
 
 #pragma comment(lib, "opengl32.lib")
 
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -23,7 +22,8 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include "sol/sol.hpp"
 
-
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"
 
 #include "../engine/asset_repository.h"
 #include "../engine/loaders/image_loader.h"
@@ -46,22 +46,24 @@
 #include "../consts.h"
 #include "../engine/file_manager.h"
 #include "../engine/importer.h"
+#include "../engine/audio_manager.h"
 
 const double targetFPS = 60.0;
 const double frameDuration = 1.0 / targetFPS;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
 	logInfo("Hello");
 	logInfo("Made with Drish;Engine https://github.com/alex-smitg/DrishEngine");
-	logInfo("Drish Engine version ", DRISH_ENGINE_VERSION_MAJOR, ".", 
-		DRISH_ENGINE_VERSION_MINOR);
+	logInfo("Drish Engine version ", DRISH_ENGINE_VERSION_MAJOR, ".",
+			DRISH_ENGINE_VERSION_MINOR);
 
 	std::filesystem::path drishPath = std::filesystem::path("world.drish");
-	if (argc > 1) {
+	if (argc > 1)
+	{
 		drishPath = std::filesystem::path(argv[1]);
 	}
 	logInfo("Drish file path: ", drishPath.string().c_str());
-
 
 	drishengine::Window window = drishengine::Window(500, 500);
 	Graphics graphics = Graphics();
@@ -70,133 +72,111 @@ int main(int argc, char* argv[]) {
 	Looper looper;
 	AssetRepository assetRepository;
 	NodeRepository nodeRepository;
-	Node* world = NodeCreator::createNode(Type::BASE, "Root", &nodeRepository);
+	Node *world = NodeCreator::createNode(Type::BASE, "Root", &nodeRepository);
 	logDebug("Zero arg: ", argv[0]);
 	FileManager fileManager = FileManager(argv[0]);
 
-
 	GameConfig gameConfig;
 
-
-
-
-
-	std::map<std::string, File*> files;
+	std::map<std::string, File *> files;
 	std::ifstream data("data.bin", std::ifstream::binary);
-	if (data) {
+	if (data)
+	{
 		char signature[5];
 
 		data.read(signature, 5);
 
-		if (std::string(signature, 5) != "DRISH") {
+		if (std::string(signature, 5) != "DRISH")
+		{
 			logError("Signature not found");
 			logDebug(std::string(signature, 5));
 		}
 
 		uint64_t drishJsonSize = 0;
-		data.read((char*)(&drishJsonSize), sizeof(drishJsonSize));
+		data.read((char *)(&drishJsonSize), sizeof(drishJsonSize));
 		logInfo("Json Drish size: ", drishJsonSize);
 
-		char* jsonFileData = new char[drishJsonSize];
+		char *jsonFileData = new char[drishJsonSize];
 		data.read(jsonFileData, drishJsonSize);
 
-		
-
 		uint64_t filesCount = 0;
-		data.read((char*)(&filesCount), sizeof(filesCount));
+		data.read((char *)(&filesCount), sizeof(filesCount));
 		logInfo("Loading files");
 		logInfo("Files count: ", filesCount);
 
-		for (uint64_t i = 0; i < filesCount; i++) {
+		for (uint64_t i = 0; i < filesCount; i++)
+		{
 			uint64_t filenameLength = 0;
-			data.read((char*)(&filenameLength), sizeof(filenameLength));
-			//logInfo("Filename size: ", filenameLength);
+			data.read((char *)(&filenameLength), sizeof(filenameLength));
+			// logInfo("Filename size: ", filenameLength);
 
-			char* filename = new char[filenameLength];
+			char *filename = new char[filenameLength];
 			data.read(filename, filenameLength);
 			std::string filenameStr = std::string(filename, filenameLength);
-			//logInfo("Filename: ", filenameStr);
-			
-
+			// logInfo("Filename: ", filenameStr);
 
 			uint64_t dataSize = 0;
-			data.read((char*)(&dataSize), sizeof(dataSize));
-			//logInfo("Data size: ", dataSize);
+			data.read((char *)(&dataSize), sizeof(dataSize));
+			// logInfo("Data size: ", dataSize);
 
-			char* filedata = new char[dataSize];
-			data.read(filedata, dataSize);
-
-			File* file = new File();
+			File *file = new File();
+			data.read(file->data.data(), dataSize);
 			file->name = filenameStr;
-			file->data = filedata;
-			file->dataSize = dataSize;
-
-		
-
 
 			fileManager.addFile(file);
 
 			delete[] filename;
-			//delete[] filedata;
 		}
 
-		
+		AudioManager audioManager;
 
 		DrishLoader::load(drishPath, world, &assetRepository,
-			&gameConfig, &nodeRepository, &fileManager, jsonFileData, drishJsonSize
-		);
+						  &gameConfig, &nodeRepository, &fileManager, jsonFileData, drishJsonSize);
 
-		Importer::importAll(&fileManager, &assetRepository);
+		Importer::importAll(&fileManager, &assetRepository, &audioManager);
 
 		delete[] jsonFileData;
-
-		
-
 	}
-	else {
+	else
+	{
 		logError("[GAME] Loading failed - failed to open data.bin");
 		MessageBox(NULL, "Failed to open data.bin", "Error", MB_ICONERROR | MB_OK);
 		return 0;
 	}
 
-
-	
-
-	
-	
-
-
 	logDebug("[GAME] Width: ", gameConfig.width);
 	logDebug("[GAME] Height: ", gameConfig.height);
-	logDebug("[GAME] Title: ", gameConfig.title);;
-	logDebug("[GAME] Use Fullscreen: ", gameConfig.useFullscreen);;
+	logDebug("[GAME] Title: ", gameConfig.title);
+	;
+	logDebug("[GAME] Use Fullscreen: ", gameConfig.useFullscreen);
+	;
 	window.resize(gameConfig.width, gameConfig.height);
 	window.renameTitle(gameConfig.title);
-	if (gameConfig.useFullscreen) {
-		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-		const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+	if (gameConfig.useFullscreen)
+	{
+		GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+		const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
 		glfwSetWindowMonitor(window.getWindow(), glfwGetPrimaryMonitor(), 0, 0, gameConfig.width,
-			gameConfig.height, targetFPS);
+							 gameConfig.height, targetFPS);
 	}
 
-	
 	LuaRunner luaRunner;
 	luaRunner.setGetKey(&window);
-
 
 	glViewport(0, 0, gameConfig.width, gameConfig.height);
 
 	luaRunner.updateNodesScriptEnvironment(world, &assetRepository);
 
-
 	double lastTime = glfwGetTime();
 
-	while (!window.shouldClose()) {
+	while (!window.shouldClose())
+	{
 		double currentTime = glfwGetTime();
 		double delta = currentTime - lastTime;
 
-		if (delta >= frameDuration) {
+		if (delta >= frameDuration)
+		{
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			world->update(delta);
 			looper.loop(&nodeRepository, &assetRepository);

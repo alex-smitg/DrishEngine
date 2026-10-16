@@ -5,8 +5,16 @@
 #include <ios>
 #include <fstream>
 #include <chrono>
+#include <source_location>
+#include <ostream>
+#include <iostream>
+#include <filesystem>
 
+inline std::string getSourceLocation(const std::source_location& loc = std::source_location::current()) {
+	return "[" + std::string(std::filesystem::path(loc.file_name()).filename().string()) + ":" + std::to_string(loc.line()) + "]";
+}
 
+#define SOURCE_LOCATION getSourceLocation()
 
 #define IMAGE_LOADER "IMAGE LOADER "
 
@@ -25,7 +33,7 @@ inline std::vector<Message> logMessages;
 template<class... Args>
 void log(LogType type, Args&&... args) {
 	std::ostringstream oss;
-	(oss << ... << args);
+	((oss << args << ' '), ...);
 	std::string textStr = oss.str();
 
 
@@ -46,22 +54,22 @@ void log(LogType type, Args&&... args) {
 };
 
 template<class... Args>
-void logInfo(Args... args) {
+void logInfo(Args&&... args) {
 	log(LogType::Info, std::forward<Args>(args)...);
 }
 
 template<class... Args>
-void logError(Args... args) {
+void logError(Args&&... args) {
 	log(LogType::Error, std::forward<Args>(args)...);
 }
 
 template<class... Args>
-void logWarning(Args... args) {
+void logWarning(Args&&... args) {
 	log(LogType::Warning, std::forward<Args>(args)...);
 }
 
 template<class... Args>
-void logDebug(Args... args) {
+void logDebug(Args&&... args) {
 	log(LogType::Debug, std::forward<Args>(args)...);
 }
 

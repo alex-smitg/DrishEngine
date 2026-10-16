@@ -1,6 +1,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #pragma comment(lib, "opengl32.lib")
 
+#define NOMINMAX
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -40,7 +42,7 @@ int main(int argc, char *argv[])
 {	
 	
 	logInfo("Hello");
-	logInfo("Version: ", DRISH_ENGINE_VERSION_MAJOR, ".",
+	logInfo("Version:", DRISH_ENGINE_VERSION_MAJOR, ".",
 		DRISH_ENGINE_VERSION_MINOR);
 
 	drishengine::Window window = drishengine::Window(800, 600);
