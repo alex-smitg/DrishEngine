@@ -7,8 +7,10 @@
 
 namespace drishengine {
 
-	void error_callback(int error, const char* description);
-	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+	inline void error_callback(int error, const char* description);
+	inline void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+	
 
 	class Window {
 	public:
@@ -25,6 +27,15 @@ namespace drishengine {
 			this->width = width;
 			this->title = title;
 			this->useFullscreen = useFullscreen;
+			
+			
+		}
+
+
+		void resizeCallback(int width, int height) {
+			this->height = height;
+			this->width = width;
+			this->windowAspectRatio = (float) width / height;
 		}
 
 		bool shouldClose() {
@@ -39,10 +50,15 @@ namespace drishengine {
 				window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);	
 			}
 
+
+			glfwSetWindowUserPointer(window, this);
+
 			if (window == nullptr) {
 				logError("[WINDOW]", "Can't create window");
 				return -1;
 			}
+			glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 			return 0;
 		}
 
@@ -59,6 +75,15 @@ namespace drishengine {
 			glfwSetWindowTitle(window, title.c_str());
 		}
 	};
+
+
+	void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+		glViewport(0, 0, width, height);
+
+		Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+		win->resizeCallback(width, height);
+	}
 }
 
 //void error_callback(int error, const char* description) {
@@ -66,15 +91,3 @@ namespace drishengine {
 //	system("pause");
 //}
 //
-//void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-//	glViewport(0, 0, width, height);
-//	windowWidth = width;
-//	windowHeight = height;
-//	float aspect = 1.0f;
-//	
-//	if (windowHeight != 0) {
-//		aspect = (float)windowWidth / (float)windowHeight;
-//	}
-//	camera.setWindowAspectRatio(aspect);
-//	
-//}
