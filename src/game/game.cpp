@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		logError("[GAME] Loading failed - failed to open data.bin");
+		logError(SOURCE_LOCATION, "Loading failed - failed to open data.bin");
 		MessageBox(NULL, "Failed to open data.bin", "Error", MB_ICONERROR | MB_OK);
 		return 0;
 	}
