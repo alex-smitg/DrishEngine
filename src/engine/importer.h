@@ -78,7 +78,7 @@ public:
 
 	static void importTextureFile(File *file,
 		AssetRepository *assetRepository,
-		const std::map<std::string, Material*> &needsTexture)
+		std::map<std::string, AssetHandle*> &textures)
 	{
 		if (file->imported == false)
 		{
@@ -116,9 +116,8 @@ public:
 				{
 					file->assetHandle = assetRepository->textures.add(texture);
 
-					if (auto it = needsTexture.find(file->name); it != needsTexture.end()) {
-						it->second->textureHandle = *file->assetHandle;
-					}
+					textures[file->name] = file->assetHandle;
+
 
 				}
 				// textures[texture->name] = file->assetHandle;
@@ -133,13 +132,34 @@ public:
 	static void importAll(FileManager *fileManager, AssetRepository *assetRepository, AudioManager* audioManager)
 	{
 
-		std::map<std::string, Material*> needsTexture;
+		std::map<std::string, AssetHandle*> loadedTextures;
 
-
-		//Importing materials first, because material contains texture;
+		//Loading textures first for later usage for materials;
 		for (auto const& pair : fileManager->getProjectFiles())
 		{
 			File* file = pair.second;
+
+			if (file->imported == false)
+			{
+				if (file->extension == ".png" ||
+					file->extension == ".jpg" ||
+					file->extension == ".tga" ||
+					file->extension == "jpeg")
+				{
+					Importer::importTextureFile(file, assetRepository, loadedTextures);
+				}
+			}
+		}
+
+
+
+		logInfo(SOURCE_LOCATION, "import all");
+		for (auto const &pair : fileManager->getProjectFiles())
+		{
+			File *file = pair.second;
+
+
+
 
 			if (file->imported == false)
 			{
@@ -175,31 +195,20 @@ public:
 						material->shine = json["shine"];
 						material->useLight = json["useLight"];
 						if (json.contains("texture")) {
-							needsTexture[json["texture"]] = material;
+							std::string textureName = json["texture"];
+
+							if (auto it = loadedTextures.find(textureName); it != loadedTextures.end()) {
+								material->textureHandle = *it->second;
+							}
+							else {
+								logError(SOURCE_LOCATION, "texture", textureName, "not found");
+							}
+							logDebug(SOURCE_LOCATION, material->name, "require texture", textureName);
 						}
 
 						file->imported = true;
 						file->type = FileType::MATERIAL;
 					}
-				}
-			}
-		}
-
-
-
-		logInfo(SOURCE_LOCATION, "import all");
-		for (auto const &pair : fileManager->getProjectFiles())
-		{
-			File *file = pair.second;
-
-			if (file->imported == false)
-			{
-				if (file->extension == ".png" ||
-					file->extension == ".jpg" ||
-					file->extension == ".tga" ||
-					file->extension == "jpeg")
-				{
-					Importer::importTextureFile(file, assetRepository, needsTexture);
 				}
 
 				if (file->extension == ".lua")

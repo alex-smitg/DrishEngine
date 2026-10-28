@@ -108,21 +108,26 @@ int main(int argc, char *argv[])
 		{
 			uint64_t filenameLength = 0;
 			data.read((char *)(&filenameLength), sizeof(filenameLength));
-			// logInfo("Filename size: ", filenameLength);
+			logDebug("Filename len: ", filenameLength);
 
 			char *filename = new char[filenameLength];
 			data.read(filename, filenameLength);
 			std::string filenameStr = std::string(filename, filenameLength);
-			// logInfo("Filename: ", filenameStr);
+			logDebug("Filename: ", filenameStr);
 
 			uint64_t dataSize = 0;
+			
 			data.read((char *)(&dataSize), sizeof(dataSize));
-			// logInfo("Data size: ", dataSize);
+			logDebug("Data len: ", dataSize);
 
 			File *file = new File();
+			file->data.resize(dataSize);
+			
 			data.read(file->data.data(), dataSize);
 			file->name = filenameStr;
 
+			std::filesystem::path f = filenameStr;
+			file->extension = f.filename().extension().string();
 			fileManager.addFile(file);
 
 			delete[] filename;
@@ -130,10 +135,12 @@ int main(int argc, char *argv[])
 
 		AudioManager audioManager;
 
+		Importer::importAll(&fileManager, &assetRepository, &audioManager);
+
 		DrishLoader::load(drishPath, world, &assetRepository,
 						  &gameConfig, &nodeRepository, &fileManager, jsonFileData, drishJsonSize);
 
-		Importer::importAll(&fileManager, &assetRepository, &audioManager);
+		
 
 		delete[] jsonFileData;
 	}

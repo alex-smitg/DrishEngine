@@ -153,7 +153,7 @@ public:
 	void build()
 	{
 		this->save();
-		logInfo("Begin export");
+		logInfo(SOURCE_LOCATION, "Begin export");
 		std::ofstream archive;
 		archive.open(drishPath.parent_path() / "data.bin", std::ios::out | std::ios::binary);
 		archive.write("DRISH", sizeof(char) * 5);
@@ -169,52 +169,12 @@ public:
 		uint64_t dataSize = drishFileData.size();
 		archive.write((char *)&dataSize, sizeof(uint64_t));
 		archive.write((char *)&drishFileData[0], dataSize * sizeof(char));
-		logInfo("End export");
 
-		uint64_t filesCount = 0;
+		fileManager->writeArchive(archive);
 
-		/*for (const std::filesystem::directory_entry& entry :
-			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
+		logInfo(SOURCE_LOCATION, "End export");
 
-			if (entry.is_directory()) {
-			}
-			else {
-				filesCount++;
-			}
-		}
-
-		archive.write((char*)&filesCount, sizeof(uint64_t));
-
-		for (const std::filesystem::directory_entry& entry :
-			std::filesystem::directory_iterator(fileManager->projectFilesPath)) {
-
-
-
-
-			if (entry.is_directory()) {
-			}
-			else {
-				std::string filename = entry.path().filename().string();
-
-				std::ifstream file(fileManager->projectFilesPath / filename, std::ios::binary);
-				if (file.is_open()) {
-					std::stringstream buf;
-					buf << file.rdbuf();
-
-					uint64_t filenameSize = filename.size();
-					archive.write((char*)&filenameSize, sizeof(uint64_t));
-					archive.write(filename.c_str(), filename.size());
-
-
-					uint64_t dataSize = buf.str().size();
-					archive.write((char*)&dataSize, sizeof(uint64_t));
-					archive << buf.str();
-				}
-				else {
-					logError("Script import stream is closed");
-				}
-			}
-		}*/
+		
 	}
 
 	void save()
@@ -225,31 +185,27 @@ public:
 
 		nlohmann::json j;
 
-		/*for (auto pair : fileManager->projectFiles) {
+		for (auto pair : fileManager->getProjectFiles()) {
 			File* file = pair.second;
+
 			if (file->type == FileType::MATERIAL) {
 				auto mat = assetRepository->materials.get(file->assetHandle);
 				if (mat.has_value()) {
 					Material* material = mat.value();
 
+					nlohmann::json json = *material;
 
-					std::ofstream f(fileManager->projectFilesPath / pair.first);
-					if (f.is_open()) {
-						nlohmann::json json = *material;
+					auto tex = assetRepository->textures.get(&material->textureHandle);
 
-						auto tex = assetRepository->textures.get(&material->textureHandle);
-
-						if (tex.has_value()) {
-							json["texture"] = tex.value()->name;
-						}
-						f << std::setw(4) << json << std::endl;
+					if (tex.has_value()) {
+						json["texture"] = tex.value()->name;
 					}
-					else {
-						logError("Material save stream is closed");
-					}
+
+					fileManager->writeFile(json, file->name);
+
 				}
 			}
-		}*/
+		}
 
 		std::vector<Node *> nodes;
 		world->getAllChildNodes(world, &nodes);
@@ -564,7 +520,7 @@ public:
 			ImGui::EndMainMenuBar();
 		}
 
-		/*ImGui::Begin("Info");
+		ImGui::Begin("Info");
 		if (ImGui::Button("Test all script nodes")) {
 			luaRunner->updateNodesScriptEnvironment(world, assetRepository);
 		}
@@ -593,7 +549,9 @@ public:
 		}
 		ImGui::Text("Delta %f", delta);
 		ImGui::End();
-		*/
+		
+
+
 		ImGui::Begin("Tree");
 		drawTree(world);
 		ImGui::End();

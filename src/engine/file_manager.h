@@ -73,6 +73,19 @@ public:
 		}
 	}
 
+	template <typename T>
+	void writeFile(const T& data, std::string name) {
+		logInfo(SOURCE_LOCATION, "write file", name);
+		std::ofstream f(this->projectFilesPath / name);
+		if (f.is_open()) {
+			f << data << std::endl;
+			logInfo(SOURCE_LOCATION, "write ok");
+		}
+		else {
+			logError(SOURCE_LOCATION, "stream is closed, file:", name);
+		}
+	}
+
 	std::optional<File *> getFile(std::string name)
 	{
 		auto it = this->projectFiles.find(name);
@@ -84,6 +97,56 @@ public:
 
 		return it->second;
 	}
+
+	void writeArchive(std::ofstream& archive) {
+		logInfo(SOURCE_LOCATION, "Write files");
+		uint64_t filesCount = 0;
+
+		for (const std::filesystem::directory_entry& entry :
+			std::filesystem::directory_iterator(this->projectFilesPath)) {
+
+			if (entry.is_directory()) {
+			}
+			else {
+				filesCount++;
+			}
+		}
+
+		archive.write((char*)&filesCount, sizeof(uint64_t));
+
+		for (const std::filesystem::directory_entry& entry :
+			std::filesystem::directory_iterator(this->projectFilesPath)) {
+
+
+
+
+			if (entry.is_directory()) {
+			}
+			else {
+				std::string filename = entry.path().filename().string();
+
+				std::ifstream file(this->projectFilesPath / filename, std::ios::binary);
+				if (file.is_open()) {
+					std::stringstream buf;
+					buf << file.rdbuf();
+
+					uint64_t filenameSize = filename.size();
+					archive.write((char*)&filenameSize, sizeof(uint64_t));
+					archive.write(filename.c_str(), filename.size());
+
+
+					uint64_t dataSize = buf.str().size();
+					archive.write((char*)&dataSize, sizeof(uint64_t));
+					archive << buf.str();
+				}
+				else {
+					logError(SOURCE_LOCATION, "Script import stream is closed");
+				}
+			}
+		}
+	}
+
+
 
 	void loadArchive(std::filesystem::path path)
 	{
