@@ -44,7 +44,24 @@ void log(LogType type, Args&&... args) {
 		file << "[" << logTypeString[static_cast<unsigned int>(type)] << "] " << textStr << std::endl;
 	}
 
+	/*if (type == LogType::Warning) {
+		std::cout << "\033[33m";
+	}
+
+	if (type == LogType::Error) {
+		std::cout << "\033[31m";
+	}
+
+	if (type == LogType::Debug) {
+		std::cout << "\033[36m";
+	}*/
+
 	std::cout << "[" << logTypeString[static_cast<unsigned int>(type)] << "] ";
+
+	/*if (type == LogType::Warning || type == LogType::Error || type == LogType::Debug) {
+		std::cout << "\033[0m";
+	}*/
+
 	std::cout << textStr << std::endl;
 
 	Message message = Message();
