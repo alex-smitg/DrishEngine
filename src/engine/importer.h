@@ -76,7 +76,9 @@ public:
 		}
 	}
 
-	static void importTextureFile(File *file, AssetRepository *assetRepository)
+	static void importTextureFile(File *file,
+		AssetRepository *assetRepository,
+		const std::map<std::string, Material*> &needsTexture)
 	{
 		if (file->imported == false)
 		{
@@ -113,6 +115,11 @@ public:
 				if (file->assetHandle == nullptr)
 				{
 					file->assetHandle = assetRepository->textures.add(texture);
+
+					if (auto it = needsTexture.find(file->name); it != needsTexture.end()) {
+						it->second->textureHandle = *file->assetHandle;
+					}
+
 				}
 				// textures[texture->name] = file->assetHandle;
 
@@ -125,16 +132,19 @@ public:
 
 	static void importAll(FileManager *fileManager, AssetRepository *assetRepository, AudioManager* audioManager)
 	{
-		logInfo(SOURCE_LOCATION, "import all");
-		for (auto const &pair : fileManager->getProjectFiles())
+
+		std::map<std::string, Material*> needsTexture;
+
+
+		//Importing materials first, because material contains texture;
+		for (auto const& pair : fileManager->getProjectFiles())
 		{
-			File *file = pair.second;
+			File* file = pair.second;
 
 			if (file->imported == false)
 			{
-				if (file->extension == ".mat")
-				{
-					Material *material = nullptr;
+				if (file->extension == ".mat") {
+					Material* material = nullptr;
 
 					if (file->assetHandle)
 					{
@@ -157,24 +167,39 @@ public:
 					if (material)
 					{
 						nlohmann::json json = nlohmann::json::parse(file->data.data(), file->data.data() +
-																						   file->data.size());
+							file->data.size());
 
 						material->color.r = json["color"]["r"];
 						material->color.g = json["color"]["g"];
 						material->color.b = json["color"]["b"];
 						material->shine = json["shine"];
 						material->useLight = json["useLight"];
+						if (json.contains("texture")) {
+							needsTexture[json["texture"]] = material;
+						}
 
 						file->imported = true;
 						file->type = FileType::MATERIAL;
 					}
 				}
+			}
+		}
+
+
+
+		logInfo(SOURCE_LOCATION, "import all");
+		for (auto const &pair : fileManager->getProjectFiles())
+		{
+			File *file = pair.second;
+
+			if (file->imported == false)
+			{
 				if (file->extension == ".png" ||
 					file->extension == ".jpg" ||
 					file->extension == ".tga" ||
 					file->extension == "jpeg")
 				{
-					Importer::importTextureFile(file, assetRepository);
+					Importer::importTextureFile(file, assetRepository, needsTexture);
 				}
 
 				if (file->extension == ".lua")
@@ -187,15 +212,17 @@ public:
 				
 				}
 
-				if (file->extension == ".mp3") {
+				if (file->extension == ".mp3" ||
+					file->extension == ".wav") {
 
 					Sound* sound = new Sound();
 
 					sound->name = file->name;
+
 					ma_decoder_init_memory(file->data.data(), file->data.size(), NULL, &sound->decoder);
 					ma_sound_init_from_data_source(&audioManager->engine, &sound->decoder, NULL, NULL, &sound->sound);
 				
-					ma_sound_start(&sound->sound);
+					//ma_sound_start(&sound->sound);
 
 					file->imported = true;
 					file->type = FileType::SOUND;

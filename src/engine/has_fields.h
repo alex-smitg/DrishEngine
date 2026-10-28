@@ -13,7 +13,7 @@ public:
 		fields.push_back(f);
 	}
 
-	const std::vector<Field>& getFields() {
+	std::vector<Field>& getFields() {
 		return fields;
 	}
 

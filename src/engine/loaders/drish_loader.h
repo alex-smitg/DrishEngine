@@ -53,7 +53,7 @@ public:
 				long long id = item.value()["id"];
 				Node* node = NodeCreator::createNode(item.value()["type"], item.value()["Name"], nodeRepository, id);
 
-				for (const Field field : node->getFields()) {
+				for (Field field : node->getFields()) {
 					if (item.value().contains(field.name)) {
 						switch (field.type)
 						{
@@ -85,13 +85,18 @@ public:
 						case FieldType::SoundHandle:
 						case FieldType::ScriptHandle:
 						{
-							AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+							//AssetHandle* handle = static_cast<AssetHandle*> (field.ptr);
+							logDebug(SOURCE_LOCATION, "Field name", field.name);
+							logDebug(SOURCE_LOCATION, "Getting file name", item.value()[field.name]);
 							auto file = fileManager->getFile(item.value()[field.name]);
 							if (file.has_value()) {
+								logInfo(SOURCE_LOCATION, "File handle name", file.value()->name);
+								
+								*static_cast<AssetHandle*>(field.ptr) = *file.value()->assetHandle;
 								//*handle = *(file.value()->assetHandle);
 							}
 							else {
-								logError("[DRISH LOADER] File manager cannot get file named ",
+								logError(SOURCE_LOCATION, "File manager cannot get file named ",
 									item.value()[field.name]);
 							}
 							
