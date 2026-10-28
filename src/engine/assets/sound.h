@@ -14,7 +14,6 @@ public:
 	ma_sound sound;
 	ma_decoder decoder;
 	
-
 	Sound() {
 		type = AssetType::SOUND;
 	}
