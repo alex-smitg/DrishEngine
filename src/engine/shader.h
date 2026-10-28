@@ -122,7 +122,7 @@ void main() {
 		}
 	} else {
 		if (useTexture) {
-			result = texture(text, vec2(uv.x, uv.y)).rgb;
+			result = texture(text, vec2(uv.x, uv.y)).rgb * color;
 		} else {
 			result = color;
 		}
